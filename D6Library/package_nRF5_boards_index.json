@@ -44,6 +44,8 @@
             {"name": "Taida Century nRF52 mini board"},
             {"name": "TinyBLE"},
             {"name": "Waveshare BLE400"}
+          ],
+          "toolsDependencies": [
           ]
         }
       ]
