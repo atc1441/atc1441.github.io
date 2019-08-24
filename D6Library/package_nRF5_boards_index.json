@@ -17,9 +17,9 @@
           "help": {
             "online": "https://github.com/atc1441/arduino-nRF5/issues"
           },
-          "url": "https://github.com/atc1441/arduino-nRF5/archive/0.6.0.tar.gz",
-          "archiveFileName": "arduino-nRF52-0.6.0.tar.gz",
-          "checksum": "MD5:edee8046e7f58bb06c466bb1c67ac02f",
+          "url": "https://github.com/atc1441/arduino-nRF5/archive/6.0.1.tar.gz",
+          "archiveFileName": "arduino-nRF52-0.6.1.tar.gz",
+          "checksum": "MD5:146313832303ece5543c60e65043409f",
           "size": "577994",
           "boards": [
             {"name": "D6 Fitness Tracker"},
@@ -53,11 +53,6 @@
             },
             {
               "packager": "sandeepmistry",
-              "name": "openocd",
-              "version": "0.10.0-dev.nrf5"
-            }
-            {
-              "packager": "atc1441",
               "name": "openocd",
               "version": "0.10.0-dev.nrf5"
             }
