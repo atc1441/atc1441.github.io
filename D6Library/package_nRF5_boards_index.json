@@ -46,7 +46,63 @@
             {"name": "Waveshare BLE400"}
           ],
           "toolsDependencies": [
+          ]{
+  "packages": [
+    {
+      "name": "D6Fitness",
+      "maintainer": "ATC1441",
+      "websiteURL": "https://github.com/atc1441/arduino-nRF5",
+      "email": "d6library@43u.de",
+      "help": {
+        "online": "https://github.com/atc1441/arduino-nRF5/issues"
+      },
+      "platforms": [
+        {
+          "name": "Nordic Semiconductor nRF5 Boards",
+          "architecture": "nRF5",
+          "version": "0.6.0",
+          "category": "Contributed",
+          "help": {
+            "online": "https://github.com/atc1441/arduino-nRF5/issues"
+          },
+          "url": "https://github.com/atc1441/arduino-nRF5/archive/6.0.1.tar.gz",
+          "archiveFileName": "arduino-nRF52-0.6.1.tar.gz",
+          "checksum": "MD5:146313832303ece5543c60e65043409f",
+          "size": "577994",
+          "boards": [
+            {"name": "D6 Fitness Tracker"},
+            {"name": "BBC micro:bit"},
+            {"name": "Bluz DK"},
+            {"name": "Calliope mini"},
+            {"name": "Electronut labs bluey"},
+            {"name": "Electronut labs hackaBLE"},
+            {"name": "Generic nRF51822"},
+            {"name": "Generic nRF52823"},
+            {"name": "OSHChip"},
+            {"name": "ng-beacon"},
+            {"name": "nRF51 Dongle"},
+            {"name": "nRF51822 Development Kit"},
+            {"name": "nRF52 DK"},
+            {"name": "Nordic Beacon Kit"},
+            {"name": "RedBear BLE Nano 2"},
+            {"name": "RedBear Blend 2"},
+            {"name": "RedBearLab BLE Nano"},
+            {"name": "RedBearLab nRF51822"},
+            {"name": "Sino:bit"},
+            {"name": "Taida Century nRF52 mini board"},
+            {"name": "TinyBLE"},
+            {"name": "Waveshare BLE400"}
+          ],
+          "toolsDependencies": [
           ]
+        }
+      ],
+      "tools":[
+        }
+      ]
+    
+  ]
+}
         }
       ],
       "tools":[
