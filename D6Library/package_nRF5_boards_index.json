@@ -15,13 +15,14 @@
           "version": "0.6.0",
           "category": "Contributed",
           "help": {
-            "online": "https://github.com/sandeepmistry/arduino-nRF5/issues"
+            "online": "https://github.com/atc1441/arduino-nRF5/issues"
           },
-          "url": "https://github.com/sandeepmistry/arduino-nRF5/archive/0.6.0.tar.gz",
+          "url": "https://github.com/atc1441/arduino-nRF5/archive/0.6.0.tar.gz",
           "archiveFileName": "arduino-nRF52-0.6.0.tar.gz",
           "checksum": "MD5:edee8046e7f58bb06c466bb1c67ac02f",
           "size": "577994",
           "boards": [
+            {"name": "D6 Fitness Tracker"},
             {"name": "BBC micro:bit"},
             {"name": "Bluz DK"},
             {"name": "Calliope mini"},
@@ -52,6 +53,11 @@
             },
             {
               "packager": "sandeepmistry",
+              "name": "openocd",
+              "version": "0.10.0-dev.nrf5"
+            }
+            {
+              "packager": "atc1441",
               "name": "openocd",
               "version": "0.10.0-dev.nrf5"
             }
