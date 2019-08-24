@@ -17,10 +17,10 @@
           "help": {
             "online": "https://github.com/atc1441/arduino-nRF5/issues"
           },
-          "url": "https://github.com/atc1441/arduino-nRF5/archive/6.0.2.tar.gz",
-          "archiveFileName": "arduino-nRF52-0.6.2.tar.gz",
-          "checksum": "MD5:71a8ecc35611a80292c74c249edb1362",
-          "size": "577994",
+          "url": "https://github.com/atc1441/arduino-nRF5/archive/6.0.3.tar.gz",
+          "archiveFileName": "arduino-nRF52-0.6.3.tar.gz",
+          "checksum": "MD5:f0ca5c0a0006239a1bf47adef0ed6d5f",
+          "size": "10287947",
           "boards": [
             {"name": "D6 Fitness Tracker"},
             {"name": "BBC micro:bit"},
