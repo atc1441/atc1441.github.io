@@ -2,11 +2,11 @@
   "packages": [
     {
       "name": "nRF52D6Fitness",
-      "maintainer": "ATC1441",
-      "websiteURL": "https://github.com/sandeepmistry/arduino-nRF5",
-      "email": "sandeep.mistry@gmail.com",
+      "maintainer": "ATC1441, edited from sandeepmistry",
+      "websiteURL": "https://github.com/atc1441/arduino-nRF5",
+      "email": "D6Fitness@43u.de",
       "help": {
-        "online": "https://github.com/sandeepmistry/arduino-nRF5/issues"
+        "online": "https://github.com/atc1441/arduino-nRF5/issues"
       },
       "platforms": [
         {
@@ -15,7 +15,7 @@
           "version": "0.6.2",
           "category": "Contributed",
           "help": {
-            "online": "https://github.com/sandeepmistry/arduino-nRF5/issues"
+            "online": "https://github.com/atc1441/arduino-nRF5/issues"
           },
           "url": "https://github.com/atc1441/arduino-nRF5/archive/6.0.2.tar.gz",
           "archiveFileName": "arduino-nRF52-0.6.2.tar.gz",
