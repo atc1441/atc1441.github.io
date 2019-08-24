@@ -8,6 +8,7 @@
       "help": {
         "online": "https://github.com/atc1441/arduino-nRF5/issues"
       },
+      "platforms": [
         {
           "name": "Nordic Semiconductor nRF5 Boards",
           "architecture": "nRF5",
