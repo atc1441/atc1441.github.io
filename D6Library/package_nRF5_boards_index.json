@@ -12,14 +12,14 @@
         {
           "name": "Nordic Semiconductor nRF5 Boards",
           "architecture": "nRF5",
-          "version": "0.6.0",
+          "version": "0.6.2",
           "category": "Contributed",
           "help": {
             "online": "https://github.com/atc1441/arduino-nRF5/issues"
           },
-          "url": "https://github.com/atc1441/arduino-nRF5/archive/6.0.1.tar.gz",
-          "archiveFileName": "arduino-nRF52-0.6.1.tar.gz",
-          "checksum": "MD5:146313832303ece5543c60e65043409f",
+          "url": "https://github.com/atc1441/arduino-nRF5/archive/6.0.2.tar.gz",
+          "archiveFileName": "arduino-nRF52-0.6.2.tar.gz",
+          "checksum": "MD5:71a8ecc35611a80292c74c249edb1362",
           "size": "577994",
           "boards": [
             {"name": "D6 Fitness Tracker"},
