@@ -12,14 +12,14 @@
         {
           "name": "D6 Tracker",
           "architecture": "nRF5",
-          "version": "0.7.2",
+          "version": "0.7.3",
           "category": "Contributed",
           "help": {
             "online": "https://github.com/atc1441/D6-arduino-nRF5/issues"
           },
-          "url": "https://github.com/atc1441/D6-arduino-nRF5/archive/0.7.2.tar.gz",
-          "archiveFileName": "D6-arduino-nRF52-0.7.2.tar.gz",
-          "checksum": "MD5:2e27c6fd4b47fa9fd0dc0f7e711dadda",
+          "url": "https://github.com/atc1441/D6-arduino-nRF5/archive/0.7.3.tar.gz",
+          "archiveFileName": "D6-arduino-nRF52-0.7.3.tar.gz",
+          "checksum": "MD5:1726164253b7deb55640003b38d205e3",
           "size": "10287947",
           "boards": [
             {"name": "D6 Fitness Tracker"},
