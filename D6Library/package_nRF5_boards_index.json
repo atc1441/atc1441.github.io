@@ -12,6 +12,55 @@
         {
           "name": "D6 Tracker",
           "architecture": "nRF5",
+          "version": "0.7.4",
+          "category": "Contributed",
+          "help": {
+            "online": "https://github.com/atc1441/D6-arduino-nRF5/issues"
+          },
+          "url": "https://github.com/atc1441/D6-arduino-nRF5/archive/0.7.4.tar.gz",
+          "archiveFileName": "D6-arduino-nRF52-0.7.4.tar.gz",
+          "checksum": "MD5:103411922d03a2311030eb5db261ca79",
+          "size": "10287947",
+          "boards": [
+            {"name": "D6 Fitness Tracker"},
+            {"name": "BBC micro:bit"},
+            {"name": "Bluz DK"},
+            {"name": "Calliope mini"},
+            {"name": "Electronut labs bluey"},
+            {"name": "Electronut labs hackaBLE"},
+            {"name": "Generic nRF51822"},
+            {"name": "Generic nRF52823"},
+            {"name": "OSHChip"},
+            {"name": "ng-beacon"},
+            {"name": "nRF51 Dongle"},
+            {"name": "nRF51822 Development Kit"},
+            {"name": "nRF52 DK"},
+            {"name": "Nordic Beacon Kit"},
+            {"name": "RedBear BLE Nano 2"},
+            {"name": "RedBear Blend 2"},
+            {"name": "RedBearLab BLE Nano"},
+            {"name": "RedBearLab nRF51822"},
+            {"name": "Sino:bit"},
+            {"name": "Taida Century nRF52 mini board"},
+            {"name": "TinyBLE"},
+            {"name": "Waveshare BLE400"}
+          ],
+          "toolsDependencies": [
+            {
+              "packager": "nRF52D6Fitness",
+              "name": "gcc-arm-none-eabi",
+              "version": "5_2-2015q4"
+            },
+            {
+              "packager": "nRF52D6Fitness",
+              "name": "openocd",
+              "version": "0.10.0-dev.nrf5"
+            }
+          ]
+        },
+        {
+          "name": "D6 Tracker",
+          "architecture": "nRF5",
           "version": "0.7.3",
           "category": "Contributed",
           "help": {
