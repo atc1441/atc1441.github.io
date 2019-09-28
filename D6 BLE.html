@@ -1,0 +1,148 @@
+
+<!-- saved from url=(0026)https://atcnetz.de/D6.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <title>D6 BLE</title>
+  </head>
+  <body>
+    <script>
+	
+        let gattServer;
+        let Theservice;
+        let writeCharacteristic;
+        let readCharacteristic;
+        let busy = false;
+			
+        function resetVariables() {
+          busy = false;
+          gattServer = null;
+          Theservice = null;
+          writeCharacteristic = null;
+          readCharacteristic = null;
+		  document.getElementById("log").value = '';
+        }
+		
+        function handleError(error) {
+          console.log(error);
+          resetVariables();
+        }
+		
+        function sendCommand(cmd) {
+          if (writeCharacteristic) {
+            if (busy) {
+              return Promise.resolve();
+            }
+            busy = true;
+            return writeCharacteristic.writeValue(cmd).then(() => {
+              busy = false;
+            });
+          } else {
+            return Promise.resolve();
+          }
+        }
+		
+        function sendcmd(cmdTXT) {
+          console.log('SendCMDnow');
+          let cmd = str2ab(cmdTXT);
+			addLog('Send CMD: ' + cmdTXT);
+            console.log('Send CMD: ');
+            console.log(cmdTXT);
+            console.log('Send CMD bytes: ');
+            console.log(cmd);
+          sendCommand(cmd).then(() => {
+            console.log('CMD was Send');
+					
+          })
+          .catch(handleError);
+        }
+		
+        function disconnect() {
+            resetVariables();
+            console.log('Disconnected.');
+			addLog('Disconnected.');
+			document.getElementById("connectbutton").innerHTML ='Connected';
+        }
+		
+        function connect() {
+          if (gattServer != null && gattServer.connected) {
+            disconnect();
+          } else {
+            console.log('Connecting...');
+			addLog('Connecting...');
+            if (readCharacteristic == null) {
+             navigator.bluetooth.requestDevice({
+             optionalServices: [0x190a],
+			 acceptAllDevices: true
+        })
+              .then(device => {
+                console.log('> ' + device.name);
+                console.log('Connecting to GATT Server...');
+                return device.gatt.connect();
+              })
+              .then(server => {
+                console.log('> Found GATT server');
+                gattServer = server;
+                return gattServer.getPrimaryService(0x190a);
+              })
+              .then(service => {
+                console.log('> Found service');
+                Theservice = service;
+                return Theservice.getCharacteristic(0x0001);
+              })
+              .then(characteristic => {
+                console.log('> Found write characteristic');
+						addLog('> Found write characteristic');
+                writeCharacteristic = characteristic;
+                return Theservice.getCharacteristic(0x0002);
+              })
+              .then(characteristic => {
+                console.log('> Found read characteristic');
+						addLog('> Found read characteristic');
+						document.getElementById("connectbutton").innerHTML ='Disconnected';
+                readCharacteristic = characteristic;
+                return readCharacteristic.startNotifications().then(() => {
+                  readCharacteristic.addEventListener('characteristicvaluechanged', event => {
+                      let value = event.target.value;
+					  let a = [];
+					  let b = '';
+						for (let i = 0; i < value.byteLength; i++) {
+							a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
+							b += String.fromCharCode(value.getUint8(i));
+						}
+						console.log('> ' + a.join(' '));
+						console.log('> ' + b);
+						addLog('Answer: ' + b);
+                  });
+                });
+              })
+              .catch(handleError);
+            } else {
+			
+            }
+          }
+        }
+		
+function addLog(logTXT){
+document.getElementById("log").innerHTML += logTXT+ '<br>';
+}
+
+function str2ab(str) {
+  var buf = new ArrayBuffer((str.length)+2);
+  var bufView = new Uint8Array(buf);
+  for (var i=0, strLen=str.length; i<strLen; i++)
+    bufView[i] = str.charCodeAt(i);
+  bufView[strLen] = 0x0d;
+  bufView[strLen+1] = 0x0a;
+  return buf;
+}
+
+</script>
+Welcome to ATCnetz.de D6 WEB Bluetooth demo,<br>Click connect and select the D6 Tracker you want to talk to.<br><br>
+	
+  <button id="connectbutton" type="button" onclick="connect();">Connect</button><br><br>
+  <button type="button" onclick="sendcmd(&quot;BT+UPGB&quot;);">Set Bootloader</button>
+  <button type="button" onclick="sendcmd(&quot;BT+RESET&quot;);">Reboot</button><br><br>
+  <input type="text" id="cmdTXT" value="AT+VER">
+  <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">SendCMD</button><br>
+ <div id="log">Connecting...<br></div>
+  
+</body></html>
