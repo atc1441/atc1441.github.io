@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="600" height="600" style="border:1px solid #c3c3c3;"></canvas><br>
+Enable Slider: <input type="checkbox" id="myCheck">
+<input type="range" min="1" max="1000" value="500" id="sliderDiv">
+<p>Output: <span id="OutputText"></span></p>
+<p>Input: <span id="InputText"></span></p>
+<p>Current: <span id="currentText"></span></p>
+
+<script>
+var slider = document.getElementById("sliderDiv");
+var printdiv = document.getElementById("OutputText");
+var printdiv1 = document.getElementById("InputText");
+var printdiv2 = document.getElementById("currentText");
+var canvas = document.getElementById("myCanvas");
+var checkBox = document.getElementById("myCheck");
+var ctx = canvas.getContext("2d");
+let myarray = [];
+var output = 0;
+var input = 0;
+
+function drawPixel(x,y,y1){
+  ctx.beginPath();
+  ctx.moveTo(((canvas.width/1000)*x-1), ((canvas.height/1000)*y1));
+  ctx.lineTo(((canvas.width/1000)*x), ((canvas.height/1000)*y));
+  ctx.strokeStyle = 'blue';
+  ctx.stroke();
+}
+
+function drawGraph(newpoint){
+  var i;
+  for (i = 1000; i > 0; i--)myarray[i]=myarray[i-1];
+  myarray[0]=newpoint;
+  ctx.clearRect(0,0,canvas.width, canvas.height);
+  for (i = 0; i < 1000; i++)drawPixel(i,myarray[i],myarray[i-1]);
+}
+
+function calcit(invar,outvar){
+  var diff = invar-outvar;
+  var currentout = diff/100;
+  printdiv2.innerHTML = currentout;
+  return currentout;
+}
+
+function timedInterval(){
+  if(checkBox.checked)input = slider.value;
+	if (input > output)
+	  output+=calcit(input,output);
+	if (input < output)
+	  output-=calcit(output,input);
+  printdiv.innerHTML = output;
+  printdiv1.innerHTML = input;
+  drawGraph(output);
+  if(output>995)input=0;
+  if(output<5)input=1000;
+}
+
+myVar = setInterval(timedInterval, 10);
+</script>
+
+</body>
+</html>
