@@ -45,8 +45,8 @@ function drawGraph(newpoint){
 
 function calcit(invar,outvar){
   var diff = invar-outvar;
-  diff = Math.max(diff, 0);
-  diff = Math.min(diff, 0.5);
+  diff = Math.max(diff, 1);
+  diff = Math.min(diff, 2);
   currAccl += diff/50;
   var currentout =currAccl;
   printdiv2.innerHTML = currentout;
