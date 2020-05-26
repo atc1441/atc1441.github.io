@@ -21,11 +21,15 @@
                         {"name": "CH558"},
                         {"name": "CH559"}
                     ],
+                    "toolsDependencies": [                        
+                    ],
                     "url": "https://atcnetz.de/CH55xDuino_0.1.0.tar.bz2",
                     "archiveFileName": "CH55xDuino_0.1.0.tar.bz2",
                     "checksum": "MD5:1726164253b7deb55640003b38d205e3",
                     "size": "2263740"
-                }
+                }, 
+            "tools" : [              
+				]
             ]
         }
     ]
