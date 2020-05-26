@@ -2,7 +2,7 @@
     "packages": [
         {
             "name": "CH55xDuino",
-            "maintainer": "Aaron Christophel",
+            "maintainer": "Aaron Christophel, based on SDUINO",
             "websiteURL": "https://atcnetz.de",
             "email": "info@atcnetz.de",
             "help": {
