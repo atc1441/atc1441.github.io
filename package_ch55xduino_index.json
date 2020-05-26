@@ -1,0 +1,32 @@
+{
+    "packages": [
+        {
+            "name": "CH55xDuino",
+            "maintainer": "Aaron Christophel",
+            "websiteURL": "https://atcnetz.de",
+            "email": "info@atcnetz.de",
+            "help": {
+                "online": "https://atcnetz.de"
+            },
+            "platforms" : [
+                {
+                    "name": "CH55xDuino plain C core (non-C++)",
+                    "architecture": "ch55x",
+                    "version": "0.1.0",
+                    "category": "Contributed",
+                    "boards": [
+                        {"name": "CH551"},
+                        {"name": "CH552"},
+                        {"name": "CH554"},
+                        {"name": "CH558"},
+                        {"name": "CH559"}
+                    ],
+                    "url": "https://atcnetz.de/CH55xDuino_0.1.0.tar.bz2",
+                    "archiveFileName": "CH55xDuino_0.1.0.tar.bz2",
+                    "checksum": "MD5:1726164253b7deb55640003b38d205e3",
+                    "size": "2263740"
+                }
+            ]
+        }
+    ]
+}
