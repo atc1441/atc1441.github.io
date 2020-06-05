@@ -141,6 +141,7 @@ Welcome to ATCnetz.de D6 WEB Bluetooth demo,<br>Click connect and select the D6 
   <button id="connectbutton" type="button" onclick="connect();">Connect</button><br><br>
   <button type="button" onclick="sendcmd(&quot;BT+UPGB&quot;);">Set Bootloader</button>
   <button type="button" onclick="sendcmd(&quot;BT+RESET&quot;);">Reboot</button><br><br>
+  <button type="button" onclick="sendcmd(&quot;AT+ACCL&quot;);">Get Accl</button><br><br>
   <input type="text" id="cmdTXT" value="AT+VER">
   <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">SendCMD</button><br>
  <div id="log">Connecting...<br></div>
