@@ -488,11 +488,11 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   Select Firmware: <input type="file"/><br>
  <div id="percent">Status: waiting for you to connect a device</div><hr>
  <div id="tempHumiData">Temp/Humi: waiting for data</div><hr>
- Send data to 0x0010 or 0x0019 Characteristic:<br>
+ Send data to 0x0010 or 0x0019 Characteristic for debug:<br>
   <input type="text" id="cmdTXT" value="">
-  <button type="button" onclick="send10(document.getElementById(&quot;cmdTXT&quot;).value);">Send 10</button>
-  <button type="button" onclick="send19(document.getElementById(&quot;cmdTXT&quot;).value);">Send 19</button><br>
-  <br>
+  <button type="button" onclick="send10(document.getElementById(&quot;cmdTXT&quot;).value);">Send to 0x0010</button>
+  <button type="button" onclick="send19(document.getElementById(&quot;cmdTXT&quot;).value);">Send to 0x0019</button>
+  <br><hr>
   Own private key:<br>
   <input size="100" type="text" id="private_key" value=""><br>
   Own public Key:<br>
@@ -504,6 +504,12 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <input size="130" type="text" id="known_id" value=""><br>
   Device known id in ASCII:<br>
   <input size="130" type="text" id="known_id_ascii" value=""><br><br>
+  Shared Key:<br>
+  <input size="130" type="text" id="shared_key" value=""><br>
+  Mi Token:<br>
+  <input size="130" type="text" id="mi_token" value=""><br>
+  Mi Bind Key:<br>
+  <input size="130" type="text" id="mi_bind_key" value=""><br>
   Answer with id:<br>
   <input size="130" type="text" id="answer_id" value="dc8be6a26e6c935d672b01190f53003c07d59119908d8741"><br>
   <br>
