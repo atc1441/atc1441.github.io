@@ -172,6 +172,7 @@ function miAuthorization() {
                         else if (value == "010001000000") mainCharSend("00000100", enc_19).then(function(character) {
                                 mainCharSend("15000000", enc_10).then(function(character) {
                                         mainCharSend("000000030400", enc_19);
+										state = 1;
                                 }).catch(function(err) {
                                     updateFail(err);
                                 });
@@ -502,7 +503,7 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   Device known id:<br>
   <input size="130" type="text" id="known_id" value=""><br>
   Device known id in ASCII:<br>
-  <input size="130" type="text" id="known_id_ascii" value=""><br>
+  <input size="130" type="text" id="known_id_ascii" value=""><br><br>
   Answer with id:<br>
   <input size="130" type="text" id="answer_id" value="dc8be6a26e6c935d672b01190f53003c07d59119908d8741"><br>
   <br>
