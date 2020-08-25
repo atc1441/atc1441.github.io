@@ -141,6 +141,8 @@ function miAuthorization() {
 
                         if (value == "000000000100"){
 							is_activated = false;
+							document.getElementById("known_id").value = "";
+							document.getElementById("known_id_ascii").value = "";		
 							mainCharSend("00000101", enc_19);
 						}
 
@@ -182,10 +184,10 @@ function miAuthorization() {
 
                         else if ((state == 1) && (value == "00000101")) {
                             state = 2;
-                            mainCharSend("0100" + own_public_key.substring(36*0,(36*0)+36), enc_19).then(function(character) {
-                                    mainCharSend("0200" + own_public_key.substring(36*1,(36*1)+36), enc_19).then(function(character) {
-                                            mainCharSend("0300" + own_public_key.substring(36*2,(36*2)+36), enc_19).then(function(character) {
-                                                    mainCharSend("0400" + own_public_key.substring(36*3,(36*3)+36), enc_19);
+                            mainCharSend("0100" + own_public_key.substring((36*0)+2,(36*0)+36+2), enc_19).then(function(character) {
+                                    mainCharSend("0200" + own_public_key.substring((36*1)+2,(36*1)+36+2), enc_19).then(function(character) {
+                                            mainCharSend("0300" + own_public_key.substring((36*2)+2,(36*2)+36+2), enc_19).then(function(character) {
+                                                    mainCharSend("0400" + own_public_key.substring((36*3)+2,(36*3)+36+2), enc_19);
                                             }).catch(function(err) {
                                                 updateFail(err);
                                             });
@@ -200,7 +202,7 @@ function miAuthorization() {
                         else if (value == "000000030400") mainCharSend("00000101", enc_19);
 
                         else if ((state == 2) && value.substring(0, 4) == "0100") {
-							device_public_key = value.substring(4);
+							device_public_key = "04" + value.substring(4);
                         }
                         else if ((state == 2) && value.substring(0, 4) == "0200") {
 							device_public_key += value.substring(4);
@@ -468,6 +470,26 @@ var mainCharSend = function(data, characteristic) {
     });
 }
 
+//KEEEEEEEEEEEEEEEEEEEEEYYY STUFFFFF
+function makeSharedKey(){
+	var alicePublicKey = hex2Arr(document.getElementById("remote_key").value);
+	var ownPriv = hex2Arr(document.getElementById("private_key").value);
+	
+	var expDevPubKey = window.crypto.subtle.importKey('raw',alicePublicKey,{name: 'ECDH',namedCurve: 'P-256'},true,[]);
+	var theSharedKey = window.crypto.subtle.deriveBits({name: 'ECDH',namedCurve: 'P-256',public: expDevPubKey},ownPriv,256);
+	console.log("Device pup exp: "+ buf2Hex(theSharedKey));
+}
+
+function buf2Hex(data){
+	return new Uint8Array(data).reduce(function(memo, i) {return memo + ("0" + i.toString(16)).slice(-2);}, "");
+}
+
+function hex2Arr(hex){
+	for (var bytes = [], c = 0; c < hex.length; c += 2)
+		bytes.push(parseInt(hex.substr(c, 2), 16));
+	return new Uint8Array(bytes);
+}
+	
 function doGenerate() {
 	var ec = new KJUR.crypto.ECDSA({"curve": "secp256r1"});
 	keypair = ec.generateKeyPairHex();
@@ -497,11 +519,12 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <input size="100" type="text" id="private_key" value=""><br>
   Own public Key:<br>
   <input size="130" type="text" id="public_key" value=""><br>
+  <button type="button" onclick="makeSharedKey();">Make Shared key</button><br>
   <button type="button" onclick="doGenerate();">Generate own keys</button><br><br>
   Remote public Key:<br>
-  <input size="130" type="text" id="remote_key" value=""><br>
+  <input size="130" type="text" id="remote_key" value="0452cde9ed2002cc2982bdfff35e4f122630b90076e1046a823c52a574c5cb1de786b7888b69bedc074ac9381824a8f9fff6e6b067b9af8564883b92c61977230a"><br>
   Device known id:<br>
-  <input size="40" type="text" id="known_id" value=""><br>
+  <input size="50" type="text" id="known_id" value=""><br>
   Device known id in ASCII:<br>
   <input size="40" type="text" id="known_id_ascii" value=""><br><br>
   Shared Key:<br>
