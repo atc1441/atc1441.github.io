@@ -3,6 +3,7 @@
 <title>Telink Flasher</title>
 </head>
 <body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/8.0.20/jsrsasign-all-min.js"></script>
 <script>
 var firmwareArray = "";
 var startTime = 0;
@@ -26,7 +27,13 @@ var enc_main;
 var enc_10;
 var enc_19;
 
+var keypair;
+var own_public_key;
+var own_private_key;
+var device_public_key;
+var device_known_id;
 var state = 0;
+var miConnected = false;
 
 var one_value;
 
@@ -35,6 +42,7 @@ function resetVariables() {
     gattServer = null;
     Theservice = null;
     writeCharacteristic = null;
+	miConnected = false;
 }
 
 function handleError(error) {
@@ -55,6 +63,8 @@ function onDisconnected() {
 }
 
 function connect() {
+	if(bluetoothDevice!=null)bluetoothDevice.gatt.disconnect();
+	resetVariables();
     addLog("Searching for devices");
     connectTrys = 0;
     navigator.bluetooth.requestDevice({
@@ -111,6 +121,7 @@ function miAuthorization() {
         }).then(characteristic => {
             addLog('Found enc_19 char');
             enc_19 = characteristic;
+			miConnected = true;
             return enc_10.startNotifications().then(() => {
                 enc_10.addEventListener('characteristicvaluechanged', event => {
                     var value = new Uint8Array(event.target.value.buffer).reduce(function(memo, i) {
@@ -129,6 +140,28 @@ function miAuthorization() {
 
                         if (value == "000000000100") mainCharSend("00000101", enc_19);
 
+                        else if (value == "000000000200") mainCharSend("00000101", enc_19);
+
+						else if ((state == 0) && value.substring(0, 4) == "0100") {
+							device_known_id = value.substring(4);
+                        }
+                        else if ((state == 0) && value.substring(0, 4) == "0200") {
+							device_known_id += value.substring(4);
+							document.getElementById("known_id").value = device_known_id;
+							document.getElementById("known_id_ascii").value = hex2a(device_known_id.substring(10));							
+							
+							mainCharSend("00000100", enc_19).then(function(character) {
+                                mainCharSend("15000000", enc_10).then(function(character) {
+                                        mainCharSend("000000030400", enc_19);
+										state = 1;
+                                }).catch(function(err) {
+                                    updateFail(err);
+                                });
+                        }).catch(function(err) {
+                            updateFail(err);
+                        });
+                        }
+						
                         else if (value == "010001000000") mainCharSend("00000100", enc_19).then(function(character) {
                                 mainCharSend("15000000", enc_10).then(function(character) {
                                         mainCharSend("000000030400", enc_19);
@@ -139,12 +172,12 @@ function miAuthorization() {
                             updateFail(err);
                         });
 
-                        else if ((state == 0) && (value == "00000101")) {
-                            state = 1;
-                            mainCharSend("0100" + document.getElementById("key1_input").value, enc_19).then(function(character) {
-                                    mainCharSend("0200" + document.getElementById("key2_input").value, enc_19).then(function(character) {
-                                            mainCharSend("0300" + document.getElementById("key3_input").value, enc_19).then(function(character) {
-                                                    mainCharSend("0400" + document.getElementById("key4_input").value, enc_19);
+                        else if ((state == 1) && (value == "00000101")) {
+                            state = 2;
+                            mainCharSend("0100" + own_public_key.substring(36*0,(36*0)+36), enc_19).then(function(character) {
+                                    mainCharSend("0200" + own_public_key.substring(36*1,(36*1)+36), enc_19).then(function(character) {
+                                            mainCharSend("0300" + own_public_key.substring(36*2,(36*2)+36), enc_19).then(function(character) {
+                                                    mainCharSend("0400" + own_public_key.substring(36*3,(36*3)+36), enc_19);
                                             }).catch(function(err) {
                                                 updateFail(err);
                                             });
@@ -158,18 +191,19 @@ function miAuthorization() {
 
                         else if (value == "000000030400") mainCharSend("00000101", enc_19);
 
-                        else if (value.substring(0, 4) == "0100") {
-							document.getElementById("key1_back").value = value.substring(4);
+                        else if ((state == 2) && value.substring(0, 4) == "0100") {
+							device_public_key = value.substring(4);
                         }
-                        else if (value.substring(0, 4) == "0200") {
-							document.getElementById("key2_back").value = value.substring(4);
+                        else if ((state == 2) && value.substring(0, 4) == "0200") {
+							device_public_key += value.substring(4);
                         }
-                        else if (value.substring(0, 4) == "0300") {
-							document.getElementById("key3_back").value = value.substring(4);
+                        else if ((state == 2) && value.substring(0, 4) == "0300") {
+							device_public_key += value.substring(4);
                         }
 
-                        else if (value.substring(0, 4) == "0400") {
-							document.getElementById("key4_back").value = value.substring(4);
+                        else if ((state == 2) && value.substring(0, 4) == "0400") {
+							device_public_key += value.substring(4);
+							document.getElementById("remote_key").value = device_public_key;
                             mainCharSend("00000100", enc_19).then(function(character) {
                                     mainCharSend("000000000200", enc_19);
                             }).catch(function(err) {
@@ -177,16 +211,16 @@ function miAuthorization() {
                             });
                         }
 
-                        else if ((state == 1) && (value == "00000101")) {
-							state = 2;
-                            mainCharSend("0100" + document.getElementById("answ1_input").value, enc_19).then(function(character) {
-                                    mainCharSend("0200" + document.getElementById("answ2_input").value, enc_19);
+                        else if ((state == 2) && (value == "00000101")) {
+							state = 3;
+                            mainCharSend("0100" + document.getElementById("answer_id").value.substring(36*0,(36*0)+36), enc_19).then(function(character) {
+                                    mainCharSend("0200" + document.getElementById("answer_id").value.substring(36*1,(36*1)+36), enc_19);
                             }).catch(function(err) {
                                 updateFail(err);
                             });
                         }
 
-                        else if ((state == 2) && (value == "00000100")){
+                        else if ((state == 3) && (value == "00000100")){
                             state = 0;
 							mainCharSend("13000000", enc_10);
 						}
@@ -216,6 +250,8 @@ function doConnect() {
 }
 
 function reConnect() {
+	if(bluetoothDevice!=null)bluetoothDevice.gatt.disconnect();
+	resetVariables();
     addLog("Reconnect");
     connectTrys = 0;
     doConnect();
@@ -239,7 +275,9 @@ function send19(data) {
 }
 
 function sendMi() {
+	if(miConnected==false)return;
 	state = 0;
+	doGenerate();
     mainCharSend("a2000000", enc_10);
 }
 
@@ -296,6 +334,14 @@ function crc16_modbus(buffer) {
     }
     return crc;
 };
+
+function hex2a(hexx) {
+    var hex = hexx.toString();//force conversion
+    var str = '';
+    for (var i = 0; (i < hex.length && hex.substr(i, 2) !== '00'); i += 2)
+        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return str;
+}
 
 window.onload = function() {
     document.querySelector("input").addEventListener("change", function() {
@@ -413,6 +459,16 @@ var mainCharSend = function(data, characteristic) {
         });
     });
 }
+
+function doGenerate() {
+	var ec = new KJUR.crypto.ECDSA({"curve": "secp256r1"});
+	keypair = ec.generateKeyPairHex();
+	own_private_key = keypair.ecprvhex;
+	own_public_key = keypair.ecpubhex;
+	document.getElementById("private_key").value = own_private_key;
+	document.getElementById("public_key").value = own_public_key;
+}
+
 </script>
 <big><big>Telink Flasher for Mi Thermostat</big></big><br>
 Copyright: Aaron Christophel / Atc1441  https://atcnetz.de<br><br>
@@ -429,18 +485,19 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <button type="button" onclick="send10(document.getElementById(&quot;cmdTXT&quot;).value);">Send 10</button>
   <button type="button" onclick="send19(document.getElementById(&quot;cmdTXT&quot;).value);">Send 19</button><br>
   <br>
-  Key1:<input size="40" type="text" id="key1_input" value="6fba855d10cb11921f60a4e5d720ba3eb2b2"><br>
-  Key2:<input size="40" type="text" id="key2_input" value="6991c8d735d5f325a69e2b4dc4de1d01354e"><br>
-  Key3:<input size="40" type="text" id="key3_input" value="860aa6f64a1c35655bf039c25f45ef9e96f1"><br>
-  Key4:<input size="40" type="text" id="key4_input" value="199bbb3bcd7866485fde"><br>
-  <br>
-  Answ1:<input size="40" type="text" id="answ1_input" value="dc8be6a26e6c935d672b01190f53003c07d5"><br>
-  Answ2:<input size="40" type="text" id="answ2_input" value="9119908d8741"><br>
-  <br>
-  Key Back1:<input size="40" type="text" id="key1_back" value=""><br>
-  Key Back2:<input size="40" type="text" id="key2_back" value=""><br>
-  Key Back3:<input size="40" type="text" id="key3_back" value=""><br>
-  Key Back4:<input size="40" type="text" id="key4_back" value=""><br>
+  Own private key:<br>
+  <input size="100" type="text" id="private_key" value=""><br>
+  Own public Key:<br>
+  <input size="130" type="text" id="public_key" value=""><br>
+  <button type="button" onclick="doGenerate();">Generate own keys</button><br><br>
+  Remote public Key:<br>
+  <input size="130" type="text" id="remote_key" value=""><br>
+  Device known id:<br>
+  <input size="130" type="text" id="known_id" value=""><br>
+  Device known id in ASCII:<br>
+  <input size="130" type="text" id="known_id_ascii" value=""><br>
+  Answer with id:<br>
+  <input size="130" type="text" id="answer_id" value="dc8be6a26e6c935d672b01190f53003c07d59119908d8741"><br>
   <br>
   <button type="button" onclick="sendMi();">Send Mi</button><br>
   <hr>
