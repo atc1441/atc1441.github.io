@@ -34,6 +34,7 @@ var device_public_key;
 var device_known_id;
 var state = 0;
 var miConnected = false;
+var is_activated;
 
 var one_value;
 
@@ -138,14 +139,20 @@ function miAuthorization() {
                         one_value = value;
                         addClog("Enc_19: " + value);
 
-                        if (value == "000000000100") mainCharSend("00000101", enc_19);
+                        if (value == "000000000100"){
+							is_activated = false;
+							mainCharSend("00000101", enc_19);
+						}
 
-                        else if (value == "000000000200") mainCharSend("00000101", enc_19);
+                        else if (value == "000000000200"){
+							is_activated = true;
+							mainCharSend("00000101", enc_19);
+						}
 
-						else if ((state == 0) && value.substring(0, 4) == "0100") {
+						else if ((is_activated == true) && (state == 0) && value.substring(0, 4) == "0100") {
 							device_known_id = value.substring(4);
                         }
-                        else if ((state == 0) && value.substring(0, 4) == "0200") {
+                        else if ((is_activated == true) && (state == 0) && value.substring(0, 4) == "0200") {
 							device_known_id += value.substring(4);
 							document.getElementById("known_id").value = device_known_id;
 							document.getElementById("known_id_ascii").value = hex2a(device_known_id.substring(10));							
@@ -277,7 +284,7 @@ function send19(data) {
 function sendMi() {
 	if(miConnected==false)return;
 	state = 0;
-	doGenerate();
+	if(document.getElementById("private_key").value== "")doGenerate();
     mainCharSend("a2000000", enc_10);
 }
 
