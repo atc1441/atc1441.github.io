@@ -471,7 +471,6 @@ var mainCharSend = function(data, characteristic) {
     });
 }
 
-//KEEEEEEEEEEEEEEEEEEEEEYYY STUFFFFF not working :-(
 function makeSharedKey(){
 	device_public_key = document.getElementById("remote_key").value;
 	window.crypto.subtle.importKey('raw',hexToBytes(device_public_key),{name: 'ECDH',namedCurve: 'P-256'},true,[])
