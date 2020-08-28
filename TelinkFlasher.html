@@ -510,7 +510,9 @@ function deriveThe(){
 		document.getElementById("mi_token").value = derived_key.substring(0,24);
 		document.getElementById("mi_bind_key").value = derived_key.substring(24,56);
 		document.getElementById("mi_bind_A").value = derived_key.substring(56,88);
-		
+		//TODO: Find AESCCM algo to get the Answer encrypted so it can be send to the device.
+		// That does not work right now, the bind key should already be correct even if it can not be tested.
+		// In the code the Key length is set to 32 our key i only 16 bytes that is also still strange
 		
 		//From here it continiuos to make the writing of new did to the device
 		if(miConnected){
