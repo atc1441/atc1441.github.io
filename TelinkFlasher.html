@@ -35,6 +35,7 @@ var derived_key;
 var state = 0;
 var miConnected = false;
 var is_activated;
+var mode_register;
 
 var one_value;
 
@@ -134,101 +135,144 @@ function miAuthorization() {
                         var value = bytesToHex(event.target.value.buffer);
                         one_value = value;
                         addClog("Enc_19: " + value);
-
-                        if (value == "000000000100"){
-							is_activated = false;
-							document.getElementById("known_id").value = "";
-							document.getElementById("known_id_ascii").value = "";		
-							mainCharSend("00000101", enc_19);
-						}
-
-                        else if (value == "000000000200"){
-							is_activated = true;
-							mainCharSend("00000101", enc_19);
-						}
-
-						else if ((is_activated == true) && (state == 0) && value.substring(0, 4) == "0100") {
-							device_known_id = value.substring(4);
-                        }
-                        else if ((is_activated == true) && (state == 0) && value.substring(0, 4) == "0200") {
-							device_known_id += value.substring(4);
-							document.getElementById("known_id").value = device_known_id;
-							document.getElementById("known_id_ascii").value = hex2ascii(device_known_id.substring(10));							
-							
-							mainCharSend("00000100", enc_19).then(function(character) {
-                                mainCharSend("15000000", enc_10).then(function(character) {
-                                        mainCharSend("000000030400", enc_19);
-										state = 1;
-                                }).catch(function(err) {
-                                    updateFail(err);
-                                });
-                        }).catch(function(err) {
-                            updateFail(err);
-                        });
-                        }
 						
-                        else if (value == "010001000000") mainCharSend("00000100", enc_19).then(function(character) {
-                                mainCharSend("15000000", enc_10).then(function(character) {
-                                        mainCharSend("000000030400", enc_19);
-										state = 1;
-                                }).catch(function(err) {
-                                    updateFail(err);
-                                });
-                        }).catch(function(err) {
-                            updateFail(err);
-                        });
-
-                        else if ((state == 1) && (value == "00000101")) {
-                            state = 2;
-                            mainCharSend("0100" + own_public_key.substring((36*0)+2,(36*0)+36+2), enc_19).then(function(character) {
-                                    mainCharSend("0200" + own_public_key.substring((36*1)+2,(36*1)+36+2), enc_19).then(function(character) {
-                                            mainCharSend("0300" + own_public_key.substring((36*2)+2,(36*2)+36+2), enc_19).then(function(character) {
-                                                    mainCharSend("0400" + own_public_key.substring((36*3)+2,(36*3)+36+2), enc_19);
-                                            }).catch(function(err) {
-                                                updateFail(err);
-                                            });
-                                    }).catch(function(err) {
-                                        updateFail(err);
-                                    });
-                            }).catch(function(err) {
-                                updateFail(err);
-                            });
-                        }
-
-                        else if (value == "000000030400") mainCharSend("00000101", enc_19);
-
-                        else if ((state == 2) && value.substring(0, 4) == "0100") {
-							device_public_key = "04" + value.substring(4);
-                        }
-                        else if ((state == 2) && value.substring(0, 4) == "0200") {
-							device_public_key += value.substring(4);
-                        }
-                        else if ((state == 2) && value.substring(0, 4) == "0300") {
-							device_public_key += value.substring(4);
-                        }
-
-                        else if ((state == 2) && value.substring(0, 4) == "0400") {
-							device_public_key += value.substring(4);
-							document.getElementById("remote_key").value = device_public_key;
-                            mainCharSend("00000100", enc_19).then(function(character) {
-								makeSharedKey();
-                            }).catch(function(err) {
-                                updateFail(err);
-                            });
-                        }
-
-                        else if ((state == 2) && (value == "00000101")) {
-							state = 3;
-                            mainCharSend("0100" + document.getElementById("answer_id").value.substring(36*0,(36*0)+36), enc_19).then(function(character) {
-                                    mainCharSend("0200" + document.getElementById("answer_id").value.substring(36*1,(36*1)+36), enc_19);
-                            }).catch(function(err) {
-                                updateFail(err);
-                            });
-                        }
-
-                        else if ((state == 3) && (value == "00000100")){
-                            state = 0;
-							mainCharSend("13000000", enc_10);
+						if(mode_register == 1){
+							if (value == "000000000100"){
+								is_activated = false;
+								document.getElementById("known_id").value = "";
+								document.getElementById("known_id_ascii").value = "";		
+								mainCharSend("00000101", enc_19);
+							}
+	
+							else if (value == "000000000200"){
+								is_activated = true;
+								mainCharSend("00000101", enc_19);
+							}
+	
+							else if ((is_activated == true) && (state == 0) && value.substring(0, 4) == "0100") {
+								device_known_id = value.substring(4);
+							}
+							else if ((is_activated == true) && (state == 0) && value.substring(0, 4) == "0200") {
+								device_known_id += value.substring(4);
+								document.getElementById("known_id").value = device_known_id;
+								document.getElementById("known_id_ascii").value = hex2ascii(device_known_id.substring(10));							
+								
+								mainCharSend("00000100", enc_19).then(function(character) {
+									mainCharSend("15000000", enc_10).then(function(character) {
+											mainCharSend("000000030400", enc_19);
+											state = 1;
+									}).catch(function(err) {
+										updateFail(err);
+									});
+							}).catch(function(err) {
+								updateFail(err);
+							});
+							}
+							
+							else if (value == "010001000000") mainCharSend("00000100", enc_19).then(function(character) {
+									mainCharSend("15000000", enc_10).then(function(character) {
+											mainCharSend("000000030400", enc_19);
+											state = 1;
+									}).catch(function(err) {
+										updateFail(err);
+									});
+							}).catch(function(err) {
+								updateFail(err);
+							});
+	
+							else if ((state == 1) && (value == "00000101")) {
+								state = 2;
+								mainCharSend("0100" + own_public_key.substring((36*0)+2,(36*0)+36+2), enc_19).then(function(character) {
+										mainCharSend("0200" + own_public_key.substring((36*1)+2,(36*1)+36+2), enc_19).then(function(character) {
+												mainCharSend("0300" + own_public_key.substring((36*2)+2,(36*2)+36+2), enc_19).then(function(character) {
+														mainCharSend("0400" + own_public_key.substring((36*3)+2,(36*3)+36+2), enc_19);
+												}).catch(function(err) {
+													updateFail(err);
+												});
+										}).catch(function(err) {
+											updateFail(err);
+										});
+								}).catch(function(err) {
+									updateFail(err);
+								});
+							}
+	
+							else if (value == "000000030400") mainCharSend("00000101", enc_19);
+	
+							else if ((state == 2) && value.substring(0, 4) == "0100") {
+								device_public_key = "04" + value.substring(4);
+							}
+							else if ((state == 2) && value.substring(0, 4) == "0200") {
+								device_public_key += value.substring(4);
+							}
+							else if ((state == 2) && value.substring(0, 4) == "0300") {
+								device_public_key += value.substring(4);
+							}
+	
+							else if ((state == 2) && value.substring(0, 4) == "0400") {
+								device_public_key += value.substring(4);
+								document.getElementById("remote_key").value = device_public_key;
+								mainCharSend("00000100", enc_19).then(function(character) {
+									makeSharedKey();
+								}).catch(function(err) {
+									updateFail(err);
+								});
+							}
+	
+							else if ((state == 2) && (value == "00000101")) {
+								state = 3;
+								mainCharSend("0100" + document.getElementById("answer_id").value.substring(36*0,(36*0)+36), enc_19).then(function(character) {
+										mainCharSend("0200" + document.getElementById("answer_id").value.substring(36*1,(36*1)+36), enc_19);
+								}).catch(function(err) {
+									updateFail(err);
+								});
+							}
+	
+							else if ((state == 3) && (value == "00000100")){
+								state = 0;
+								mainCharSend("13000000", enc_10);
+							}
+						}else{//Mode Login
+							if ((state == 0) && (value == "00000101")) {
+								state = 1;
+								mainCharSend("0100" + document.getElementById("mi_random_key").value, enc_19);
+							}
+							else if ((state == 1) && (value == "0000000d0100")) {
+								state = 2;
+								mainCharSend("00000101", enc_19);
+							}
+							else if ((state == 2) && value.substring(0, 4) == "0100") {
+								state = 3;
+								document.getElementById("mi_random_key_recv").value = value.substring(4);
+								mainCharSend("00000100", enc_19);
+							}
+							else if ((state == 3) && (value == "0000000c0200")) {
+								state = 4;
+								mainCharSend("00000101", enc_19);
+							}
+							else if ((state == 4) && value.substring(0, 4) == "0100") {
+								state = 5;
+								document.getElementById("mi_device_info_recv").value = value.substring(4);
+							}
+							else if ((state == 5) && value.substring(0, 4) == "0200") {
+								state = 6;
+								document.getElementById("mi_device_info_recv").value += value.substring(4);
+								mainCharSend("00000100", enc_19).then(function(character) {
+									mainCharSend("0000000a0200", enc_19);
+								})
+							}
+							else if ((state == 6) && (value == "00000101")) {
+								state = 7;
+								mainCharSend("0100" + document.getElementById("mi_device_info_send").value.substring(36*0,(36*0)+36), enc_19).then(function(character) {
+										mainCharSend("0200" + document.getElementById("mi_device_info_send").value.substring(36*1,(36*1)+36), enc_19);
+								}).catch(function(err) {
+									updateFail(err);
+								});
+							}
+							else if (value == "000001050100") {
+								state = 8;
+								//mainCharSend("00000101", enc_19);
+							}
 						}
                     });
                 });
@@ -280,14 +324,29 @@ function send19(data) {
     mainCharSend(data, enc_19);
 }
 
-function sendMi() {
+function sendRegister() {
 	if(miConnected==false){
 		addLog("Not connected");
 		return;
 	}
 	state = 0;
+	mode_register=1;
 	doGenerate();
     mainCharSend("a2000000", enc_10);
+}
+
+function sendLogin() {
+	if(miConnected==false){
+		addLog("Not connected");
+		return;
+	}
+	state = 0;
+	mode_register=0;
+    mainCharSend("24000000", enc_10).then(function(character) {
+		mainCharSend("0000000b0100", enc_19);
+	}).catch(function(err) {
+		updateFail(err);
+	});
 }
 
 function addLog(logTXT) {
@@ -552,6 +611,7 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <button type="button" onclick="send10(document.getElementById(&quot;cmdTXT&quot;).value);">Send to 0x0010</button>
   <button type="button" onclick="send19(document.getElementById(&quot;cmdTXT&quot;).value);">Send to 0x0019</button>
   <br><hr>
+  From here it is the Activation of a new random key:<br>
   Own public Key:<br>
   <input size="130" type="text" id="public_key" value=""><br>
   <button type="button" onclick="doGenerate();">Generate own keypair</button><button type="button" onclick="makeSharedKey();">Make Shared key</button><br><br>
@@ -576,7 +636,17 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   Answer with id:<br>
   <input size="50" type="text" id="answer_id" value="dc8be6a26e6c935d672b01190f53003c07d59119908d8741"><br>
   <br>
-  <button type="button" onclick="sendMi();">Do Activation</button><br>
+  <button type="button" onclick="sendRegister();">Do Activation</button><br>
+  From here its login with a known key:<br>
+  Random Key:<br>
+  <input size="40" type="text" id="mi_random_key" value=""><br>
+  Random Key received:<br>
+  <input size="40" type="text" id="mi_random_key_recv" value=""><br>
+  Recv device info:<br>
+  <input size="40" type="text" id="mi_device_info_recv" value=""><br>
+  Send device info:<br>
+  <input size="40" type="text" id="mi_device_info_send" value=""><br>
+  <button type="button" onclick="sendLogin();">Do Login</button><br>
   When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.
   <hr>
  <div id="log">Log:<br></div>
