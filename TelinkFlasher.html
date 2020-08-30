@@ -37,6 +37,7 @@ var state = 0;
 var miConnected = false;
 var is_activated;
 var mode_register;
+var expected_device_infos;
 
 var one_value;
 
@@ -129,6 +130,22 @@ function miAuthorization() {
                 enc_10.addEventListener('characteristicvaluechanged', event => {
                     var value = bytesToHex(event.target.value.buffer);
                     addClog("Enc_10: " + value);
+					
+						if(mode_register == 1){
+							if (value == "12000000") {
+								addLog("Register Failed!");
+							}
+							else if (value == "11000000") {
+								addLog("Register successfull");
+							}
+						}else{//Mode Login
+							if (value == "23000000") {
+								addLog("Login Failed!");
+							}
+							else if (value == "21000000") {
+								addLog("Login successfull");
+							}
+						}
                 });
             }).then(characteristic => {
                 return enc_19.startNotifications().then(() => {
@@ -236,6 +253,12 @@ function miAuthorization() {
 							else if (value == "000001050100") {
 								addLog("Received Timeout from device");
 							}
+							else if (value == "12000000") {
+								addLog("Register Failed!");
+							}
+							else if (value == "11000000") {
+								addLog("Register successfull");
+							}
 						}else{//Mode Login
 							if ((state == 0) && (value == "00000101")) {
 								state = 1;
@@ -261,6 +284,7 @@ function miAuthorization() {
 							else if ((state == 5) && value.substring(0, 4) == "0200") {
 								state = 6;
 								document.getElementById("mi_device_info_recv").value += value.substring(4);
+								if(expected_device_infos != document.getElementById("mi_device_info_recv").value)addLog("Received device infos are not correct");
 								mainCharSend("00000100", enc_19).then(function(character) {
 									mainCharSend("0000000a0200", enc_19);
 								})
@@ -272,10 +296,6 @@ function miAuthorization() {
 								}).catch(function(err) {
 									updateFail(err);
 								});
-							}
-							else if (value == "000001050100") {
-								state = 8;
-								addLog("Received Timeout from device");
 							}
 						}
                     });
@@ -344,6 +364,11 @@ function sendLogin() {
 		addLog("Not connected");
 		return;
 	}
+	if(document.getElementById("mi_token").value.length != 24){
+		addLog("No Token supplied");
+		return;
+	}
+	document.getElementById("mi_random_key").value = bytesToHex(window.crypto.getRandomValues(new Uint8Array(16)));
 	state = 0;
 	mode_register=0;
     mainCharSend("24000000", enc_10).then(function(character) {
@@ -572,8 +597,6 @@ function deriveThe(){
 	document.getElementById("mi_bind_A").value = derived_key.substring(56,88);
 	document.getElementById("new_device_id_hex").value = new bytesToHex(unescape(encodeURIComponent(document.getElementById("new_device_id").value)));
 	var aaes = sjcl.codec.hex.fromBits(sjcl.mode.ccm.encrypt(new sjcl.cipher.aes(sjcl.codec.hex.toBits(document.getElementById("mi_bind_A").value)), sjcl.codec.hex.toBits("00626c742e332e313239766c34617030356f3031"), sjcl.codec.hex.toBits("101112131415161718191A1B"),sjcl.codec.hex.toBits("6465764944"),32));
-	addLog("AESCCM: " + aaes);
-	addLog("AESEXM: 07b84dd12d42f390b6aed6c2c69f3c5b445c64739e7b0bb2");
 	document.getElementById("answer_id").value = aaes;
 	//From here it continiuos to make the writing of new did to the device
 	if(miConnected){
@@ -587,10 +610,10 @@ function do_login_generate(){
 	var ciphertext = sjcl.misc.hkdf(sjcl.codec.hex.toBits(document.getElementById("mi_token").value), 8*64, sjcl.codec.hex.toBits(bytesToHex(salt)), "mible-login-info", sjcl.hash["sha256"]);
 	var derived_key = sjcl.codec.hex.fromBits(ciphertext);
 	
-	var recv_info_hash = sjcl.codec.hex.fromBits(new sjcl.misc.hmac(sjcl.codec.hex.toBits(derived_key.substring(0,32))).mac(sjcl.codec.hex.toBits(bytesToHex(salt1))));
+	expected_device_infos = sjcl.codec.hex.fromBits(new sjcl.misc.hmac(sjcl.codec.hex.toBits(derived_key.substring(0,32))).mac(sjcl.codec.hex.toBits(bytesToHex(salt1))));
 	var confirm_data_hash = sjcl.codec.hex.fromBits(new sjcl.misc.hmac(sjcl.codec.hex.toBits(derived_key.substring(32,64))).mac(sjcl.codec.hex.toBits(bytesToHex(salt))));
 	
-	addLog("Expected dev info: " + recv_info_hash);
+	addLog("Expected dev info: " + expected_device_infos);
 	document.getElementById("mi_device_info_send").value = confirm_data_hash;
 	if(miConnected){
 		setTimeout(function() {
@@ -620,7 +643,7 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <input size="130" type="text" id="public_key" value=""><br>
   <button type="button" onclick="doGenerate();">Generate own keypair</button><button type="button" onclick="makeSharedKey();">Make Shared key</button><br><br>
   Remote public Key:<br>
-  <input size="130" type="text" id="remote_key" value="0452cde9ed2002cc2982bdfff35e4f122630b90076e1046a823c52a574c5cb1de786b7888b69bedc074ac9381824a8f9fff6e6b067b9af8564883b92c61977230a"><br>
+  <input size="130" type="text" id="remote_key" value=""><br>
   Device known id:<br>
   <input size="50" type="text" id="known_id" value=""><br>
   Device known id in ASCII:<br>
@@ -630,7 +653,7 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   Derived Key:<br>
   <input size="130" type="text" id="derived_key" value=""><br>
   Mi Token:<br>
-  <input size="40" type="text" id="mi_token" value="D7748457B3006119A449EC44"><br>
+  <input size="40" type="text" id="mi_token" value=""><br>
   Mi Bind Key:<br>
   <input size="40" type="text" id="mi_bind_key" value=""><br>
   Mi Bind A:<br>
@@ -640,14 +663,14 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   New DeviceID HEX:<br>
   <input size="40" type="text" id="new_device_id_hex" value=""><br>
   Answer with id:<br>
-  <input size="50" type="text" id="answer_id" value="dc8be6a26e6c935d672b01190f53003c07d59119908d8741"><br>
+  <input size="50" type="text" id="answer_id" value=""><br>
   <br>
   <button type="button" onclick="sendRegister();">Do Activation</button><br>
   From here its login with a known key:<br>
   Random Key:<br>
-  <input size="40" type="text" id="mi_random_key" value="7CADB175F4E0D32AEC1A9B0132EA1991"><br>
+  <input size="40" type="text" id="mi_random_key" value=""><br>
   Random Key received:<br>
-  <input size="40" type="text" id="mi_random_key_recv" value="2AA1E9DADEA825C5D5BBC87B9BE434A3"><br>
+  <input size="40" type="text" id="mi_random_key_recv" value=""><br>
   Recv device info:<br>
   <input size="70" type="text" id="mi_device_info_recv" value=""><br>
   Send device info:<br>
