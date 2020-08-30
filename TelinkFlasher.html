@@ -1,6 +1,7 @@
 <!-- Copyright: Aaron Christophel / Atc1441 https://atcnetz.de -->
 <html class="telFlasherClass"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Telink Flasher</title>
+<script type="text/javascript" src="./core.js"></script>
 </head>
 <body>
 <script>
@@ -232,6 +233,9 @@ function miAuthorization() {
 								state = 0;
 								mainCharSend("13000000", enc_10);
 							}
+							else if (value == "000001050100") {
+								addLog("Received Timeout from device");
+							}
 						}else{//Mode Login
 							if ((state == 0) && (value == "00000101")) {
 								state = 1;
@@ -244,7 +248,7 @@ function miAuthorization() {
 							else if ((state == 2) && value.substring(0, 4) == "0100") {
 								state = 3;
 								document.getElementById("mi_random_key_recv").value = value.substring(4);
-								mainCharSend("00000100", enc_19);
+								do_login_generate();
 							}
 							else if ((state == 3) && (value == "0000000c0200")) {
 								state = 4;
@@ -271,7 +275,7 @@ function miAuthorization() {
 							}
 							else if (value == "000001050100") {
 								state = 8;
-								//mainCharSend("00000101", enc_19);
+								addLog("Received Timeout from device");
 							}
 						}
                     });
@@ -546,38 +550,21 @@ function makeSharedKey(){
 }
 
 function deriveThe(){
-	window.crypto.subtle.importKey(
-	'raw', 
-	hexToBytes(shared_key), 
-	{name: 'HKDF'}, 
-	false, 
-	['deriveBits', 'deriveKey']
-	).then(function(key) {
-	window.crypto.subtle.deriveBits(
-		{ "name": 'HKDF',
-		"salt": hexToBytes(""),
-		"hash": 'SHA-256',
-		"length": 64,
-        "info": hexToBytes("mible-setup-info"),
-		},
-		key,
-		512
-	).then(function (derived_key_temp) {
-		derived_key = bytesToHex(derived_key_temp);
-		document.getElementById("derived_key").value = derived_key;
-		document.getElementById("mi_token").value = derived_key.substring(0,24);
-		document.getElementById("mi_bind_key").value = derived_key.substring(24,56);
-		document.getElementById("mi_bind_A").value = derived_key.substring(56,88);
-		//TODO: Find AESCCM algo to get the Answer encrypted so it can be send to the device.
-		// That does not work right now, the bind key should already be correct even if it can not be tested.
-		// In the code the Key length is set to 32 our key i only 16 bytes that is also still strange
-		
-		//From here it continiuos to make the writing of new did to the device
-		if(miConnected){
-			mainCharSend("000000000200", enc_19);
-		}		
-	});
-	});
+	var derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(shared_key), 8*64, null, "mible-setup-info", sjcl.hash["sha256"]));
+	document.getElementById("derived_key").value = derived_key;
+	document.getElementById("mi_token").value = derived_key.substring(0,24);
+	document.getElementById("mi_bind_key").value = derived_key.substring(24,56);
+	document.getElementById("mi_bind_A").value = derived_key.substring(56,88);
+	document.getElementById("new_device_id_hex").value = new bytesToHex(unescape(encodeURIComponent(document.getElementById("new_device_id").value)));
+	//TODO: Find out why the mac is wrong when set to 4bytes
+	var aaes = sjcl.codec.hex.fromBits(sjcl.mode.ccm.encrypt(new sjcl.cipher.aes(sjcl.codec.hex.toBits("4b84ea834b540b213278aa58e044b0c6")), sjcl.codec.hex.toBits("00626c742e332e313239766c34617030356f3031"), sjcl.codec.hex.toBits("101112131415161718191A1B"),"devID",32));
+	addLog("AESCCM: " + aaes);
+	addLog("AESEXM: 07b84dd12d42f390b6aed6c2c69f3c5b445c64739e7b0bb2");
+	document.getElementById("answer_id").value = aaes;
+	//From here it continiuos to make the writing of new did to the device
+	if(miConnected){
+		mainCharSend("000000000200", enc_19);
+	}
 }
 	
 function doGenerate() {
@@ -593,6 +580,24 @@ function doGenerate() {
     .catch(err => {
         addLog(err);
     });
+}
+
+function do_login_generate(){
+	var salt = hexToBytes(document.getElementById("mi_random_key").value + document.getElementById("mi_random_key_recv").value);
+	var salt1 = hexToBytes(document.getElementById("mi_random_key_recv").value + document.getElementById("mi_random_key").value);
+	var ciphertext = sjcl.misc.hkdf(sjcl.codec.hex.toBits(document.getElementById("mi_token").value), 8*64, sjcl.codec.hex.toBits(bytesToHex(salt)), "mible-login-info", sjcl.hash["sha256"]);
+	var derived_key = sjcl.codec.hex.fromBits(ciphertext);
+	
+	var recv_info_hash = sjcl.codec.hex.fromBits(new sjcl.misc.hmac(sjcl.codec.hex.toBits(derived_key.substring(0,32))).mac(sjcl.codec.hex.toBits(bytesToHex(salt1))));
+	var confirm_data_hash = sjcl.codec.hex.fromBits(new sjcl.misc.hmac(sjcl.codec.hex.toBits(derived_key.substring(32,64))).mac(sjcl.codec.hex.toBits(bytesToHex(salt))));
+	
+	addLog("Expected dev info: " + recv_info_hash);
+	document.getElementById("mi_device_info_send").value = confirm_data_hash;
+	if(miConnected){
+		setTimeout(function() {
+			mainCharSend("00000100", enc_19);
+		}, 15);
+	}			
 }
 
 </script>
@@ -626,26 +631,29 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   Derived Key:<br>
   <input size="130" type="text" id="derived_key" value=""><br>
   Mi Token:<br>
-  <input size="40" type="text" id="mi_token" value=""><br>
+  <input size="40" type="text" id="mi_token" value="D7748457B3006119A449EC44"><br>
   Mi Bind Key:<br>
   <input size="40" type="text" id="mi_bind_key" value=""><br>
   Mi Bind A:<br>
   <input size="40" type="text" id="mi_bind_A" value=""><br>
   New DeviceID:<br>
   <input size="40" type="text" id="new_device_id" value="blt.4.140asdfghjk00"><br>
+  New DeviceID HEX:<br>
+  <input size="40" type="text" id="new_device_id_hex" value=""><br>
   Answer with id:<br>
   <input size="50" type="text" id="answer_id" value="dc8be6a26e6c935d672b01190f53003c07d59119908d8741"><br>
   <br>
   <button type="button" onclick="sendRegister();">Do Activation</button><br>
   From here its login with a known key:<br>
   Random Key:<br>
-  <input size="40" type="text" id="mi_random_key" value=""><br>
+  <input size="40" type="text" id="mi_random_key" value="7CADB175F4E0D32AEC1A9B0132EA1991"><br>
   Random Key received:<br>
-  <input size="40" type="text" id="mi_random_key_recv" value=""><br>
+  <input size="40" type="text" id="mi_random_key_recv" value="2AA1E9DADEA825C5D5BBC87B9BE434A3"><br>
   Recv device info:<br>
-  <input size="40" type="text" id="mi_device_info_recv" value=""><br>
+  <input size="70" type="text" id="mi_device_info_recv" value=""><br>
   Send device info:<br>
-  <input size="40" type="text" id="mi_device_info_send" value=""><br>
+  <input size="70" type="text" id="mi_device_info_send" value=""><br>
+  <button type="button" onclick="do_login_generate();">Do Login calc</button><br>
   <button type="button" onclick="sendLogin();">Do Login</button><br>
   When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.
   <hr>
