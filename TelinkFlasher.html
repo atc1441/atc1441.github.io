@@ -556,7 +556,6 @@ function makeSharedKey(){
         return window.crypto.subtle.deriveBits({name: 'ECDH',namedCurve: 'P-256',public: device_key_imported},keypair.privateKey,256)})
     .then(sharedSecret => {
         shared_key = bytesToHex(sharedSecret);
-		//shared_key = "2658a3c434ab0c3d35f861f3250fbe70bde0832b83aa1c46129c193c8c8cd2f7";
 		document.getElementById("shared_key").value = shared_key;
         deriveThe();
     })
@@ -566,7 +565,6 @@ function makeSharedKey(){
 }
 
 function deriveThe(){
-	//TODO: Find out if the derived key and or shared key is right
 	var derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(shared_key), 8*64, null, "mible-setup-info", sjcl.hash["sha256"]));
 	document.getElementById("derived_key").value = derived_key;
 	document.getElementById("mi_token").value = derived_key.substring(0,24);
