@@ -38,6 +38,7 @@ var miConnected = false;
 var is_activated;
 var mode_register;
 var expected_device_infos;
+var new_did = "00626c742e332e313239766c34617030356f3031";
 
 var one_value;
 
@@ -171,6 +172,7 @@ function miAuthorization() {
 							}
 							else if ((is_activated == true) && (state == 0) && value.substring(0, 4) == "0200") {
 								device_known_id += value.substring(4);
+                                                                new_did = device_known_id;
 								document.getElementById("known_id").value = hex2ascii(device_known_id.substring(10));							
 								
 								mainCharSend("00000100", enc_19).then(function(character) {
@@ -593,7 +595,7 @@ function deriveThe(){
 	document.getElementById("mi_token").value = derived_key.substring(0,24);
 	document.getElementById("mi_bind_key").value = derived_key.substring(24,56);
 	document.getElementById("mi_bind_A").value = derived_key.substring(56,88);
-	var aaes = sjcl.codec.hex.fromBits(sjcl.mode.ccm.encrypt(new sjcl.cipher.aes(sjcl.codec.hex.toBits(document.getElementById("mi_bind_A").value)), sjcl.codec.hex.toBits("00626c742e332e313239766c34617030356f3031"), sjcl.codec.hex.toBits("101112131415161718191A1B"),sjcl.codec.hex.toBits("6465764944"),32));
+	var aaes = sjcl.codec.hex.fromBits(sjcl.mode.ccm.encrypt(new sjcl.cipher.aes(sjcl.codec.hex.toBits(document.getElementById("mi_bind_A").value)), sjcl.codec.hex.toBits(new_did), sjcl.codec.hex.toBits("101112131415161718191A1B"),sjcl.codec.hex.toBits("6465764944"),32));
 	document.getElementById("answer_id").value = aaes;
 	//From here it continiuos to make the writing of new did to the device
 	if(miConnected){
