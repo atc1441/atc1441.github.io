@@ -533,39 +533,6 @@ var mainCharSend = function(data, characteristic) {
         });
     });
 }
-
-function makeSharedKey(){
-	device_public_key = document.getElementById("remote_key").value;
-	window.crypto.subtle.importKey('raw',hexToBytes(device_public_key),{name: 'ECDH',namedCurve: 'P-256'},true,[])
-    .then(device_key_imported => {
-        return window.crypto.subtle.deriveBits({name: 'ECDH',namedCurve: 'P-256',public: device_key_imported},keypair.privateKey,256)})
-    .then(sharedSecret => {
-        shared_key = bytesToHex(sharedSecret);
-		document.getElementById("shared_key").value = shared_key;
-        deriveThe();
-    })
-    .catch(err => {
-        addLog(err)
-    })
-}
-
-function deriveThe(){
-	var derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(shared_key), 8*64, null, "mible-setup-info", sjcl.hash["sha256"]));
-	document.getElementById("derived_key").value = derived_key;
-	document.getElementById("mi_token").value = derived_key.substring(0,24);
-	document.getElementById("mi_bind_key").value = derived_key.substring(24,56);
-	document.getElementById("mi_bind_A").value = derived_key.substring(56,88);
-	document.getElementById("new_device_id_hex").value = new bytesToHex(unescape(encodeURIComponent(document.getElementById("new_device_id").value)));
-	//TODO: Find out why the mac is wrong when set to 4bytes
-	var aaes = sjcl.codec.hex.fromBits(sjcl.mode.ccm.encrypt(new sjcl.cipher.aes(sjcl.codec.hex.toBits("4b84ea834b540b213278aa58e044b0c6")), sjcl.codec.hex.toBits("00626c742e332e313239766c34617030356f3031"), sjcl.codec.hex.toBits("101112131415161718191A1B"),"devID",32));
-	addLog("AESCCM: " + aaes);
-	addLog("AESEXM: 07b84dd12d42f390b6aed6c2c69f3c5b445c64739e7b0bb2");
-	document.getElementById("answer_id").value = aaes;
-	//From here it continiuos to make the writing of new did to the device
-	if(miConnected){
-		mainCharSend("000000000200", enc_19);
-	}
-}
 	
 function doGenerate() {
 	window.crypto.subtle.generateKey({name: 'ECDH',namedCurve: 'P-256'},false,['deriveKey', 'deriveBits'])
@@ -580,6 +547,40 @@ function doGenerate() {
     .catch(err => {
         addLog(err);
     });
+}
+
+function makeSharedKey(){
+	device_public_key = document.getElementById("remote_key").value;
+	window.crypto.subtle.importKey('raw',hexToBytes(device_public_key),{name: 'ECDH',namedCurve: 'P-256'},true,[])
+    .then(device_key_imported => {
+        return window.crypto.subtle.deriveBits({name: 'ECDH',namedCurve: 'P-256',public: device_key_imported},keypair.privateKey,256)})
+    .then(sharedSecret => {
+        shared_key = bytesToHex(sharedSecret);
+		//shared_key = "2658a3c434ab0c3d35f861f3250fbe70bde0832b83aa1c46129c193c8c8cd2f7";
+		document.getElementById("shared_key").value = shared_key;
+        deriveThe();
+    })
+    .catch(err => {
+        addLog(err)
+    })
+}
+
+function deriveThe(){
+	//TODO: Find out if the derived key and or shared key is right
+	var derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(shared_key), 8*64, null, "mible-setup-info", sjcl.hash["sha256"]));
+	document.getElementById("derived_key").value = derived_key;
+	document.getElementById("mi_token").value = derived_key.substring(0,24);
+	document.getElementById("mi_bind_key").value = derived_key.substring(24,56);
+	document.getElementById("mi_bind_A").value = derived_key.substring(56,88);
+	document.getElementById("new_device_id_hex").value = new bytesToHex(unescape(encodeURIComponent(document.getElementById("new_device_id").value)));
+	var aaes = sjcl.codec.hex.fromBits(sjcl.mode.ccm.encrypt(new sjcl.cipher.aes(sjcl.codec.hex.toBits(document.getElementById("mi_bind_A").value)), sjcl.codec.hex.toBits("00626c742e332e313239766c34617030356f3031"), sjcl.codec.hex.toBits("101112131415161718191A1B"),sjcl.codec.hex.toBits("6465764944"),32));
+	addLog("AESCCM: " + aaes);
+	addLog("AESEXM: 07b84dd12d42f390b6aed6c2c69f3c5b445c64739e7b0bb2");
+	document.getElementById("answer_id").value = aaes;
+	//From here it continiuos to make the writing of new did to the device
+	if(miConnected){
+		mainCharSend("000000000200", enc_19);
+	}
 }
 
 function do_login_generate(){
@@ -653,7 +654,6 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <input size="70" type="text" id="mi_device_info_recv" value=""><br>
   Send device info:<br>
   <input size="70" type="text" id="mi_device_info_send" value=""><br>
-  <button type="button" onclick="do_login_generate();">Do Login calc</button><br>
   <button type="button" onclick="sendLogin();">Do Login</button><br>
   When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.
   <hr>
