@@ -137,6 +137,7 @@ function miAuthorization() {
 							}
 							else if (value == "11000000") {
 								addLog("Activation successfull");
+								sendLogin();
 							}
 						}else{//Mode Login
 							if (value == "23000000") {
@@ -157,8 +158,6 @@ function miAuthorization() {
 						if(mode_register == 1){
 							if (value == "000000000100"){
 								is_activated = false;
-								document.getElementById("known_id").value = "";
-								document.getElementById("known_id_ascii").value = "";		
 								mainCharSend("00000101", enc_19);
 							}
 	
@@ -172,8 +171,7 @@ function miAuthorization() {
 							}
 							else if ((is_activated == true) && (state == 0) && value.substring(0, 4) == "0200") {
 								device_known_id += value.substring(4);
-								document.getElementById("known_id").value = device_known_id;
-								document.getElementById("known_id_ascii").value = hex2ascii(device_known_id.substring(10));							
+								document.getElementById("known_id").value = hex2ascii(device_known_id.substring(10));							
 								
 								mainCharSend("00000100", enc_19).then(function(character) {
 									mainCharSend("15000000", enc_10).then(function(character) {
@@ -595,7 +593,6 @@ function deriveThe(){
 	document.getElementById("mi_token").value = derived_key.substring(0,24);
 	document.getElementById("mi_bind_key").value = derived_key.substring(24,56);
 	document.getElementById("mi_bind_A").value = derived_key.substring(56,88);
-	document.getElementById("new_device_id_hex").value = new bytesToHex(unescape(encodeURIComponent(document.getElementById("new_device_id").value)));
 	var aaes = sjcl.codec.hex.fromBits(sjcl.mode.ccm.encrypt(new sjcl.cipher.aes(sjcl.codec.hex.toBits(document.getElementById("mi_bind_A").value)), sjcl.codec.hex.toBits("00626c742e332e313239766c34617030356f3031"), sjcl.codec.hex.toBits("101112131415161718191A1B"),sjcl.codec.hex.toBits("6465764944"),32));
 	document.getElementById("answer_id").value = aaes;
 	//From here it continiuos to make the writing of new did to the device
@@ -627,27 +624,19 @@ function do_login_generate(){
 Copyright: Aaron Christophel / Atc1441  https://atcnetz.de<br><br>
   <button type="button" onclick="connect();">Connect</button>
   <button type="button" onclick="reConnect();">Reconnect</button>
+  <button type="button" onclick="sendRegister();">Do Activation</button>
   <button type="button" onclick="startDFU();">Start Flashing</button>
   <button type="button" onclick="clearLog();">Clear Log</button><br><br>
 Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   Select Firmware: <input type="file"/><br>
  <div id="percent">Status: waiting for you to connect a device</div><hr>
  <div id="tempHumiData">Temp/Humi: waiting for data</div><hr>
- Send data to 0x0010 or 0x0019 Characteristic for debug:<br>
-  <input type="text" id="cmdTXT" value="">
-  <button type="button" onclick="send10(document.getElementById(&quot;cmdTXT&quot;).value);">Send to 0x0010</button>
-  <button type="button" onclick="send19(document.getElementById(&quot;cmdTXT&quot;).value);">Send to 0x0019</button>
-  <br><hr>
-  From here it is the Activation of a new random key:<br>
   Own public Key:<br>
   <input size="130" type="text" id="public_key" value=""><br>
-  <button type="button" onclick="doGenerate();">Generate own keypair</button><button type="button" onclick="makeSharedKey();">Make Shared key</button><br><br>
   Remote public Key:<br>
   <input size="130" type="text" id="remote_key" value=""><br>
   Device known id:<br>
   <input size="50" type="text" id="known_id" value=""><br>
-  Device known id in ASCII:<br>
-  <input size="40" type="text" id="known_id_ascii" value=""><br><br>
   Shared Key:<br>
   <input size="70" type="text" id="shared_key" value=""><br>
   Derived Key:<br>
@@ -658,15 +647,9 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <input size="40" type="text" id="mi_bind_key" value=""><br>
   Mi Bind A:<br>
   <input size="40" type="text" id="mi_bind_A" value=""><br>
-  New DeviceID:<br>
-  <input size="40" type="text" id="new_device_id" value="blt.4.140asdfghjk00"><br>
-  New DeviceID HEX:<br>
-  <input size="40" type="text" id="new_device_id_hex" value=""><br>
   Answer with id:<br>
   <input size="50" type="text" id="answer_id" value=""><br>
   <br>
-  <button type="button" onclick="sendRegister();">Do Activation</button><br>
-  From here its login with a known key:<br>
   Random Key:<br>
   <input size="40" type="text" id="mi_random_key" value=""><br>
   Random Key received:<br>
@@ -675,7 +658,6 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <input size="70" type="text" id="mi_device_info_recv" value=""><br>
   Send device info:<br>
   <input size="70" type="text" id="mi_device_info_send" value=""><br>
-  <button type="button" onclick="sendLogin();">Do Login</button><br>
   When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.
   <hr>
  <div id="log">Log:<br></div>
