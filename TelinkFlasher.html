@@ -67,7 +67,7 @@ function connect() {
     }).then(device => {
         bluetoothDevice = device;
         bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
-		addLog("Connecting to device: " + bluetoothDevice.name);
+		addLog("Connecting to: " + bluetoothDevice.name);
         doConnect();
     }).catch(handleError);
 }
@@ -75,19 +75,15 @@ function connect() {
 function miAction() {
     gattServer.getPrimaryService('ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6')
         .then(service => {
-            addLog("Found Main service");
+            addClog("Found Main service");
             ServiceMain = service;
-            return ServiceMain.getCharacteristic('ebe0ccb7-7a0a-4b0c-8a1a-6ff2997da3a6');
+            return ServiceMain.getCharacteristic('ebe0ccd8-7a0a-4b0c-8a1a-6ff2997da3a6');
         }).then(characteristic => {
-            addLog("Found Time Char");
-            time_char = characteristic;
-            return ServiceMain.getCharacteristic('ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6');
-        }).then(characteristic => {
-            addLog("Found Write characteristic Speed");
+            addClog("Found Write characteristic Speed");
             writeCharacteristicSpeed = characteristic;
             return ServiceMain.getCharacteristic('ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6');
         }).then(characteristic => {
-            addLog('Found Temp characteristic');
+            addClog('Found Temp characteristic');
             nitifiyCharTemp = characteristic;
             return nitifiyCharTemp.startNotifications().then(() => {
                 nitifiyCharTemp.addEventListener('characteristicvaluechanged', event => {
@@ -106,15 +102,15 @@ function miAction() {
 function miAuthorization() {
     gattServer.getPrimaryService(0xfe95)
         .then(service => {
-            addLog("Found Main service");
+            addClog("Found Main service");
             enc_main = service;
             return enc_main.getCharacteristic(0x0010);
         }).then(characteristic => {
-            addLog("Found enc_10 char");
+            addClog("Found enc_10 char");
             enc_10 = characteristic;
             return enc_main.getCharacteristic(0x0019);
         }).then(characteristic => {
-            addLog('Found enc_19 char');
+            addClog('Found enc_19 char');
             enc_19 = characteristic;
 			miConnected = true;
             return enc_10.startNotifications().then(() => {
@@ -295,15 +291,15 @@ function miAuthorization() {
 
 function doConnect() {
     bluetoothDevice.gatt.connect().then(server => {
-        addLog("Found GATT server");
+        addClog("Found GATT server");
         gattServer = server;
         return gattServer.getPrimaryService('00010203-0405-0607-0809-0a0b0c0d1912');
     }).then(service => {
-        addLog("Found service");
+        addClog("Found service");
         Theservice = service;
         return Theservice.getCharacteristic('00010203-0405-0607-0809-0a0b0c0d2b12');
     }).then(characteristic => {
-        addLog("Found write characteristic");
+        addClog("Found write characteristic");
         writeCharacteristic = characteristic;
         if (miEnabled) {
             miAction();
@@ -493,16 +489,18 @@ function sendOTAblock(blockNr) {
     var blockString = blockNrString + firmwareArray.substring(blockNr * 32, blockNr * 32 + 32);
     var blockCRC = getHexCRC(blockString);
     otaCharSend(blockString + blockCRC).then(function(character) {
-        if ((blockNr + 1) % 8 == 0) {
-            writeCharacteristic.readValue().then(function(result) {
-                addClog('reading OTA');
-                sendOTAblock(blockNr + 1);
-            }).catch(function(err) {
-                updateFail(err);
-            });
-        } else {
-            sendOTAblock(blockNr + 1);
-        }
+        setTimeout(function() {
+			if ((blockNr + 1) % 8 == 0) {
+				writeCharacteristic.readValue().then(function(result) {
+					addClog('reading OTA');
+					sendOTAblock(blockNr + 1);
+				}).catch(function(err) {
+					updateFail(err);
+				});
+			} else {
+				sendOTAblock(blockNr + 1);
+			}
+        }, 0);
     }).catch(function(err) {
         updateFail(err);
     });
