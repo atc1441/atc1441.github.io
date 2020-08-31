@@ -5,14 +5,6 @@
 </head>
 <body>
 <script>
-var firmwareArray = "";
-var startTime = 0;
-var blockCount = 0;
-var miEnabled = 1;
-
-var connectTrys = 0;
-var allRecnnoctTrys = 5;
-
 var bluetoothDevice;
 var gattServer;
 var Theservice;
@@ -27,20 +19,17 @@ var enc_main;
 var enc_10;
 var enc_19;
 
-var keypair;
-var own_public_key;
-var device_public_key;
-var device_known_id;
+//Firmware values
+var firmwareArray = "", startTime = 0, blockCount = 0;
+//Connection values
+var state = 0, connectTrys = 0;
+//Mi values
+var miEnabled = 1, miConnected = false, mode_activation;
+//Login values
+var mi_random_key, mi_random_key_recv, mi_device_info_recv, mi_device_info_send, device_known_id, expected_device_infos;
+//Activation values
+var keypair, is_activated, own_public_key, device_public_key, shared_key, derived_key, mi_write_did;
 var device_new_id = "00626c742e332e31323976"+bytesToHex(new TextEncoder("utf-8").encode(makeid(6)))+"415443";
-var shared_key;
-var derived_key;
-var state = 0;
-var miConnected = false;
-var is_activated;
-var mode_register;
-var expected_device_infos;
-
-var one_value;
 
 function resetVariables() {
     busy = false;
@@ -53,9 +42,9 @@ function resetVariables() {
 function handleError(error) {
     addLog(error);
     resetVariables();
-    if (connectTrys < allRecnnoctTrys) {
+    if (connectTrys < 5) {
         connectTrys++;
-        addLog("Reconnect " + connectTrys + " from " + allRecnnoctTrys);
+        addLog("Reconnect " + connectTrys + " from " + 5);
         doConnect();
     } else {
         addLog("Something went wrong, to many reconnect's");
@@ -104,7 +93,7 @@ function miAction() {
                     var value = event.target.value;
                     var temp = (value.getUint8(1) << 8 | value.getUint8(0)) / 100;
                     var hum = value.getUint8(2);
-                    var tempTempString = "Temp/Humi: " + temp + "°C " + hum + "%";
+                    var tempTempString = "Temp/Humi: " + temp + "°C /" + hum + "%";
                     document.getElementById("tempHumiData").innerHTML = tempTempString;
                     addClog(tempTempString);
                 });
@@ -132,7 +121,7 @@ function miAuthorization() {
                     var value = bytesToHex(event.target.value.buffer);
                     addClog("Enc_10: " + value);
 					
-						if(mode_register == 1){
+						if(mode_activation == 1){
 							if (value == "12000000") {
 								addLog("Activation Failed!");
 							}
@@ -153,10 +142,9 @@ function miAuthorization() {
                 return enc_19.startNotifications().then(() => {
                     enc_19.addEventListener('characteristicvaluechanged', event => {
                         var value = bytesToHex(event.target.value.buffer);
-                        one_value = value;
                         addClog("Enc_19: " + value);
 						
-						if(mode_register == 1){
+						if(mode_activation == 1){
 							if (value == "000000000100"){
 								is_activated = false;
 								mainCharSend("00000101", enc_19);
@@ -238,8 +226,8 @@ function miAuthorization() {
 	
 							else if ((state == 2) && (value == "00000101")) {
 								state = 3;
-								mainCharSend("0100" + document.getElementById("answer_id").value.substring(36*0,(36*0)+36), enc_19).then(function(character) {
-										mainCharSend("0200" + document.getElementById("answer_id").value.substring(36*1,(36*1)+36), enc_19);
+								mainCharSend("0100" + mi_write_did.substring(36*0,(36*0)+36), enc_19).then(function(character) {
+										mainCharSend("0200" + mi_write_did.substring(36*1,(36*1)+36), enc_19);
 								}).catch(function(err) {
 									updateFail(err);
 								});
@@ -261,7 +249,7 @@ function miAuthorization() {
 						}else{//Mode Login
 							if ((state == 0) && (value == "00000101")) {
 								state = 1;
-								mainCharSend("0100" + document.getElementById("mi_random_key").value, enc_19);
+								mainCharSend("0100" + mi_random_key, enc_19);
 							}
 							else if ((state == 1) && (value == "0000000d0100")) {
 								state = 2;
@@ -269,7 +257,7 @@ function miAuthorization() {
 							}
 							else if ((state == 2) && value.substring(0, 4) == "0100") {
 								state = 3;
-								document.getElementById("mi_random_key_recv").value = value.substring(4);
+								mi_random_key_recv = value.substring(4);
 								do_login_generate();
 							}
 							else if ((state == 3) && (value == "0000000c0200")) {
@@ -278,20 +266,23 @@ function miAuthorization() {
 							}
 							else if ((state == 4) && value.substring(0, 4) == "0100") {
 								state = 5;
-								document.getElementById("mi_device_info_recv").value = value.substring(4);
+								mi_device_info_recv = value.substring(4);
 							}
 							else if ((state == 5) && value.substring(0, 4) == "0200") {
 								state = 6;
-								document.getElementById("mi_device_info_recv").value += value.substring(4);
-								if(expected_device_infos != document.getElementById("mi_device_info_recv").value)addLog("Received device infos are not correct");
+								mi_device_info_recv += value.substring(4);
+								if(expected_device_infos == mi_device_info_recv)
+									addLog("Received device infos are not correct");
+								else
+									addLog("Received device infos are correct");
 								mainCharSend("00000100", enc_19).then(function(character) {
 									mainCharSend("0000000a0200", enc_19);
 								})
 							}
 							else if ((state == 6) && (value == "00000101")) {
 								state = 7;
-								mainCharSend("0100" + document.getElementById("mi_device_info_send").value.substring(36*0,(36*0)+36), enc_19).then(function(character) {
-										mainCharSend("0200" + document.getElementById("mi_device_info_send").value.substring(36*1,(36*1)+36), enc_19);
+								mainCharSend("0100" + mi_device_info_send.substring(36*0,(36*0)+36), enc_19).then(function(character) {
+										mainCharSend("0200" + mi_device_info_send.substring(36*1,(36*1)+36), enc_19);
 								}).catch(function(err) {
 									updateFail(err);
 								});
@@ -352,24 +343,17 @@ function sendRegister() {
 		addLog("Not connected");
 		return;
 	}
+	addLog("Activating now, please wait");
 	state = 0;
-	mode_register=1;
+	mode_activation=1;
 	doGenerate();
     mainCharSend("a2000000", enc_10);
 }
 
 function sendLogin() {
-	if(miConnected==false){
-		addLog("Not connected");
-		return;
-	}
-	if(document.getElementById("mi_token").value.length != 24){
-		addLog("No Token supplied");
-		return;
-	}
-	document.getElementById("mi_random_key").value = bytesToHex(window.crypto.getRandomValues(new Uint8Array(16)));
+	mi_random_key = bytesToHex(window.crypto.getRandomValues(new Uint8Array(16)));
 	state = 0;
-	mode_register=0;
+	mode_activation=0;
     mainCharSend("24000000", enc_10).then(function(character) {
 		mainCharSend("0000000b0100", enc_19);
 	}).catch(function(err) {
@@ -588,37 +572,31 @@ function makeSharedKey(){
         return window.crypto.subtle.deriveBits({name: 'ECDH',namedCurve: 'P-256',public: device_key_imported},keypair.privateKey,256)})
     .then(sharedSecret => {
         shared_key = bytesToHex(sharedSecret);
-        deriveThe();
+        deriveTheKey();
     })
     .catch(err => {
         addLog(err)
     })
 }
 
-function deriveThe(){
+function deriveTheKey(){
 	var derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(shared_key), 8*64, null, "mible-setup-info", sjcl.hash["sha256"]));
 	document.getElementById("mi_token").value = derived_key.substring(0,24);
 	document.getElementById("mi_bind_key").value = derived_key.substring(24,56);
-	document.getElementById("mi_bind_A").value = derived_key.substring(56,88);
-	var aaes = sjcl.codec.hex.fromBits(sjcl.mode.ccm.encrypt(new sjcl.cipher.aes(sjcl.codec.hex.toBits(document.getElementById("mi_bind_A").value)), sjcl.codec.hex.toBits(device_new_id), sjcl.codec.hex.toBits("101112131415161718191A1B"),sjcl.codec.hex.toBits("6465764944"),32));
-	document.getElementById("answer_id").value = aaes;
-	//From here it continiuos to make the writing of new did to the device
+	var mi_bind_A = derived_key.substring(56,88);
+	mi_write_did = sjcl.codec.hex.fromBits(sjcl.mode.ccm.encrypt(new sjcl.cipher.aes(sjcl.codec.hex.toBits(mi_bind_A)), sjcl.codec.hex.toBits(device_new_id), sjcl.codec.hex.toBits("101112131415161718191A1B"),sjcl.codec.hex.toBits("6465764944"),32));
 	if(miConnected){
 		mainCharSend("000000000200", enc_19);
 	}
 }
 
 function do_login_generate(){
-	var salt = hexToBytes(document.getElementById("mi_random_key").value + document.getElementById("mi_random_key_recv").value);
-	var salt1 = hexToBytes(document.getElementById("mi_random_key_recv").value + document.getElementById("mi_random_key").value);
-	var ciphertext = sjcl.misc.hkdf(sjcl.codec.hex.toBits(document.getElementById("mi_token").value), 8*64, sjcl.codec.hex.toBits(bytesToHex(salt)), "mible-login-info", sjcl.hash["sha256"]);
-	var derived_key = sjcl.codec.hex.fromBits(ciphertext);
-	
+	var salt = hexToBytes(mi_random_key + mi_random_key_recv);
+	var salt1 = hexToBytes(mi_random_key_recv + mi_random_key);
+	var derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(document.getElementById("mi_token").value), 8*64, sjcl.codec.hex.toBits(bytesToHex(salt)), "mible-login-info", sjcl.hash["sha256"]));	
 	expected_device_infos = sjcl.codec.hex.fromBits(new sjcl.misc.hmac(sjcl.codec.hex.toBits(derived_key.substring(0,32))).mac(sjcl.codec.hex.toBits(bytesToHex(salt1))));
-	var confirm_data_hash = sjcl.codec.hex.fromBits(new sjcl.misc.hmac(sjcl.codec.hex.toBits(derived_key.substring(32,64))).mac(sjcl.codec.hex.toBits(bytesToHex(salt))));
+	mi_device_info_send = sjcl.codec.hex.fromBits(new sjcl.misc.hmac(sjcl.codec.hex.toBits(derived_key.substring(32,64))).mac(sjcl.codec.hex.toBits(bytesToHex(salt))));
 	
-	addLog("Expected dev info: " + expected_device_infos);
-	document.getElementById("mi_device_info_send").value = confirm_data_hash;
 	if(miConnected){
 		setTimeout(function() {
 			mainCharSend("00000100", enc_19);
@@ -644,19 +622,7 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <input size="40" type="text" id="mi_token" value=""><br>
   Mi Bind Key:<br>
   <input size="40" type="text" id="mi_bind_key" value=""><br>
-  Mi Bind A:<br>
-  <input size="40" type="text" id="mi_bind_A" value=""><br>
-  Answer with id:<br>
-  <input size="50" type="text" id="answer_id" value=""><br>
   <br>
-  Random Key:<br>
-  <input size="40" type="text" id="mi_random_key" value=""><br>
-  Random Key received:<br>
-  <input size="40" type="text" id="mi_random_key_recv" value=""><br>
-  Recv device info:<br>
-  <input size="70" type="text" id="mi_device_info_recv" value=""><br>
-  Send device info:<br>
-  <input size="70" type="text" id="mi_device_info_send" value=""><br>
   When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.
   <hr>
  <div id="log">Log:<br></div>
