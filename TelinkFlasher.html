@@ -5,20 +5,9 @@
 </head>
 <body>
 <script>
-var bluetoothDevice;
-var gattServer;
-var Theservice;
-var writeCharacteristic;
-
-var ServiceMain;
-var writeCharacteristicSpeed;
-var nitifiyCharTemp;
-var time_char;
-
-var enc_main;
-var enc_10;
-var enc_19;
-
+// BLE values
+var bluetoothDevice, gattServer, Theservice, writeCharacteristic;
+var ServiceMain, writeCharacteristicSpeed, nitifiyCharTemp, time_char, enc_main, enc_10, enc_19;
 //Firmware values
 var firmwareArray = "", startTime = 0, blockCount = 0;
 //Connection values
@@ -441,7 +430,7 @@ window.onload = function() {
             firmwareArray = bytesToHex(this.result);
             addLog("File was selected, size: " + firmwareArray.length / 2 + " bytes");
 
-            if (firmwareArray.length % 32 !== 0) { //pad last block to 16bytes
+            if (firmwareArray.length % 32 !== 0) { // pad last block to 16bytes
                 var padHex = "ffffffffffffffffffffffffffffffff";
                 firmwareArray += padHex.substr(0, 32 - firmwareArray.length % 32);
             }
