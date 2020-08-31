@@ -523,8 +523,8 @@ function getHexCRC(data) {
 function sendLastOTA() {
     var data = "02ff" + getHexBLockCount(blockCount - 1) + getHexBLockCount(~(blockCount - 1) & 0xffff);
     otaCharSend(data).then(function(character) {
-        addLog("Update done after" + (new Date().getTime() - startTime) + " secdonds);
-        setStatus("Update done after" + (new Date().getTime() - startTime) + " secdonds);
+        addLog("Update done after" + (new Date().getTime() - startTime) + " secdonds");
+        setStatus("Update done after" + (new Date().getTime() - startTime) + " secdonds");
     }).catch(function(err) {
         updateFail(err);
     });
