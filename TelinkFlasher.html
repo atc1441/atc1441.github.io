@@ -493,18 +493,16 @@ function sendOTAblock(blockNr) {
     var blockString = blockNrString + firmwareArray.substring(blockNr * 32, blockNr * 32 + 32);
     var blockCRC = getHexCRC(blockString);
     otaCharSend(blockString + blockCRC).then(function(character) {
-        setTimeout(function() {
-            if ((blockNr + 1) % 8 == 0) {
-                writeCharacteristic.readValue().then(function(result) {
-                    addClog('reading OTA');
-                    sendOTAblock(blockNr + 1);
-                }).catch(function(err) {
-                    updateFail(err);
-                });
-            } else {
+        if ((blockNr + 1) % 8 == 0) {
+            writeCharacteristic.readValue().then(function(result) {
+                addClog('reading OTA');
                 sendOTAblock(blockNr + 1);
-            }
-        }, 0);
+            }).catch(function(err) {
+                updateFail(err);
+            });
+        } else {
+            sendOTAblock(blockNr + 1);
+        }
     }).catch(function(err) {
         updateFail(err);
     });
@@ -523,8 +521,8 @@ function getHexCRC(data) {
 function sendLastOTA() {
     var data = "02ff" + getHexBLockCount(blockCount - 1) + getHexBLockCount(~(blockCount - 1) & 0xffff);
     otaCharSend(data).then(function(character) {
-        addLog("Update done after" + (new Date().getTime() - startTime) + " secdonds");
-        setStatus("Update done after" + (new Date().getTime() - startTime) + " secdonds");
+        addLog("Update done after " + (new Date().getTime() - startTime)/1000 + " seconds");
+        setStatus("Update done after " + (new Date().getTime() - startTime)/1000 + " seconds");
     }).catch(function(err) {
         updateFail(err);
     });
