@@ -13,7 +13,7 @@ var firmwareArray = "", startTime = 0, blockCount = 0;
 //Connection values
 var state = 0, connectTrys = 0;
 //Mi values
-var miEnabled = 1, miConnected = false, mode_activation;
+var miEnabled = false, miConnected = false, mode_activation;
 //Login values
 var mi_random_key, mi_random_key_recv, mi_device_info_recv, mi_device_info_send, device_known_id, expected_device_infos;
 //Activation values
@@ -290,12 +290,22 @@ function doConnect() {
     }).then(characteristic => {
         addClog("Found write characteristic");
         writeCharacteristic = characteristic;
-        if (miEnabled) {
-            miAction();
-        }else{
-			addLog("Connected");
-			setStatus("Connected")
-		}
+		detectMi();
+    }).catch(handleError);
+}
+function detectMi(){
+	gattServer.getPrimaryServices().then(services => {
+	miEnabled=false;
+	for (var i = 0; i < services.length; i++) {
+		console.log("Services: "+ services[i].uuid);
+		if(services[i].uuid == "0000fe95-0000-1000-8000-00805f9b34fb")miEnabled=true;
+	}
+    if (miEnabled) {
+        miAction();
+    }else{
+		addLog("Connected");
+		setStatus("Connected")
+	}	
     }).catch(handleError);
 }
 
