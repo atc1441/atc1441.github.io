@@ -31,7 +31,7 @@ var keypair;
 var own_public_key;
 var device_public_key;
 var device_known_id;
-var device_new_id = "00626c742e332e313239766c34617030356f3031";
+var device_new_id = "00626c742e332e31323976"+bytesToHex(new TextEncoder("utf-8").encode(makeid(6)))+"415443";
 var shared_key;
 var derived_key;
 var state = 0;
@@ -229,7 +229,6 @@ function miAuthorization() {
 	
 							else if ((state == 2) && value.substring(0, 4) == "0400") {
 								device_public_key += value.substring(4);
-								document.getElementById("remote_key").value = device_public_key;
 								mainCharSend("00000100", enc_19).then(function(character) {
 									makeSharedKey();
 								}).catch(function(err) {
@@ -420,6 +419,16 @@ function bytesToHex(data){
 	return new Uint8Array(data).reduce(function(memo, i) {return memo + ("0" + i.toString(16)).slice(-2);}, "");
 }
 
+function makeid(length) {
+   var result           = '';
+   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+   var charactersLength = characters.length;
+   for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+   }
+   return result;
+}
+
 function crc16_modbus(buffer) {
     var crc = 0xFFFF;
     var odd;
@@ -567,7 +576,6 @@ function doGenerate() {
     })
     .then(ownPublicKeyExported => {
         own_public_key = bytesToHex(ownPublicKeyExported);
-		document.getElementById("public_key").value = own_public_key;
     })
     .catch(err => {
         addLog(err);
@@ -575,13 +583,11 @@ function doGenerate() {
 }
 
 function makeSharedKey(){
-	device_public_key = document.getElementById("remote_key").value;
 	window.crypto.subtle.importKey('raw',hexToBytes(device_public_key),{name: 'ECDH',namedCurve: 'P-256'},true,[])
     .then(device_key_imported => {
         return window.crypto.subtle.deriveBits({name: 'ECDH',namedCurve: 'P-256',public: device_key_imported},keypair.privateKey,256)})
     .then(sharedSecret => {
         shared_key = bytesToHex(sharedSecret);
-		document.getElementById("shared_key").value = shared_key;
         deriveThe();
     })
     .catch(err => {
@@ -591,7 +597,6 @@ function makeSharedKey(){
 
 function deriveThe(){
 	var derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(shared_key), 8*64, null, "mible-setup-info", sjcl.hash["sha256"]));
-	document.getElementById("derived_key").value = derived_key;
 	document.getElementById("mi_token").value = derived_key.substring(0,24);
 	document.getElementById("mi_bind_key").value = derived_key.substring(24,56);
 	document.getElementById("mi_bind_A").value = derived_key.substring(56,88);
@@ -633,16 +638,8 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   Select Firmware: <input type="file"/><br>
  <div id="percent">Status: waiting for you to connect a device</div><hr>
  <div id="tempHumiData">Temp/Humi: waiting for data</div><hr>
-  Own public Key:<br>
-  <input size="130" type="text" id="public_key" value=""><br>
-  Remote public Key:<br>
-  <input size="130" type="text" id="remote_key" value=""><br>
   Device known id:<br>
   <input size="50" type="text" id="known_id" value=""><br>
-  Shared Key:<br>
-  <input size="70" type="text" id="shared_key" value=""><br>
-  Derived Key:<br>
-  <input size="130" type="text" id="derived_key" value=""><br>
   Mi Token:<br>
   <input size="40" type="text" id="mi_token" value=""><br>
   Mi Bind Key:<br>
