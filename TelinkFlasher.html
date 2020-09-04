@@ -278,7 +278,7 @@ function detectMi() {
         miEnabled = false;
         for (var i = 0; i < services.length; i++) {
             console.log("Services: " + services[i].uuid);
-            if (services[i].uuid == "0000fe95-0000-1000-8000-00805f9b34fb") miEnabled = true;
+            if (services[i].uuid == "ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6") miEnabled = true;
         }
         if (miEnabled) {
             addLog("Detected Mi Thermometer");
@@ -592,8 +592,7 @@ function do_login_generate() {
 }
 </script>
 <big><big>Telink Flasher for Mi Thermostat</big></big><br>
-Copyright: Aaron Christophel / Atc1441  <a href="https://atcnetz.de">https://ATCnetz.de</a><br>
-<a href="https://youtu.be/NXKzFG61lNs">Video Manual</a> <a href="https://github.com/atc1441/ATC_MiThermometer">Custom firmware repo</a><br><br>
+Copyright: Aaron Christophel / Atc1441  https://atcnetz.de<br><br>
   <button type="button" onclick="connect();">Connect</button>
   <button type="button" onclick="reConnect();">Reconnect</button>
   <button type="button" onclick="sendRegister();">Do Activation</button>
