@@ -15,6 +15,9 @@ var firmwareArray = "",
 //Connection values
 var state = 0,
     connectTrys = 0;
+//Custom firmware
+var customEnabled;
+var settingsCharacteristics;
 //Mi values
 var miEnabled = false,
     miConnected = false,
@@ -57,7 +60,7 @@ function connect() {
     addLog("Searching for devices");
     connectTrys = 0;
     navigator.bluetooth.requestDevice({
-        optionalServices: ['00010203-0405-0607-0809-0a0b0c0d1912', 'ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6', 0xfe95],
+        optionalServices: ['00010203-0405-0607-0809-0a0b0c0d1912', 'ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6', 0xfe95, 0x1f10],
         acceptAllDevices: true
     }).then(device => {
         bluetoothDevice = device;
@@ -91,6 +94,18 @@ function miAction() {
                 });
                 miAuthorization()
             });
+        }).catch(handleError);
+}
+
+function customAction() {
+    gattServer.getPrimaryService('00001f10-0000-1000-8000-00805f9b34fb')
+        .then(service => {
+            addClog("Found custom Main service");
+            ServiceMain = service;
+            return ServiceMain.getCharacteristic('00001f1f-0000-1000-8000-00805f9b34fb');
+        }).then(characteristic => {
+            addClog("Found custom write characteristic");
+            settingsCharacteristics = characteristic;
         }).catch(handleError);
 }
 
@@ -276,13 +291,18 @@ function doConnect() {
 function detectMi() {
     gattServer.getPrimaryServices().then(services => {
         miEnabled = false;
+		customEnabled = false;
         for (var i = 0; i < services.length; i++) {
             console.log("Services: " + services[i].uuid);
             if (services[i].uuid == "ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6") miEnabled = true;
+            if (services[i].uuid == "00001f10-0000-1000-8000-00805f9b34fb") customEnabled = true;
         }
         if (miEnabled) {
             addLog("Detected Mi Thermometer");
             miAction();
+        } else if (customEnabled) {
+            addLog("Detected custom Firmware");
+            customAction();
         } else {
             addLog("Connected");
             setStatus("Connected")
@@ -610,6 +630,31 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <input size="40" type="text" id="mi_bind_key" value=""><br>
   <br>
   When doing an activation here the device is needed to be activated in the Mi app again when wanted to use there.
+  <hr>
+ Send settings to custom firmware:<br>
+  <input type="text" id="cmdTXT" value="">
+  <button type="button" onclick="mainCharSend(document.getElementById(&quot;cmdTXT&quot;).value,settingsCharacteristics);">Send</button>
+  <br><br>
+  Smiley:
+  <button type="button" onclick="mainCharSend(&quot;A0&quot;,settingsCharacteristics);">Off</button>
+  <button type="button" onclick="mainCharSend(&quot;A1&quot;,settingsCharacteristics);">Happy</button>
+  <button type="button" onclick="mainCharSend(&quot;A2&quot;,settingsCharacteristics);">Sad</button>
+  <button type="button" onclick="mainCharSend(&quot;AB&quot;,settingsCharacteristics);">Blinking</button>
+  Sensor display:
+  <button type="button" onclick="mainCharSend(&quot;CC&quot;,settingsCharacteristics);">In °C</button>
+  <button type="button" onclick="mainCharSend(&quot;FF&quot;,settingsCharacteristics);">In °F</button>
+  <br><br>
+  Advertising interval:
+  <button type="button" onclick="mainCharSend(&quot;FE01&quot;,settingsCharacteristics);">10 Seconds</button>
+  <button type="button" onclick="mainCharSend(&quot;FE06&quot;,settingsCharacteristics);">1 Minute</button>
+  <button type="button" onclick="mainCharSend(&quot;FE1E&quot;,settingsCharacteristics);">5 Minutes</button>
+  <button type="button" onclick="mainCharSend(&quot;FE3C&quot;,settingsCharacteristics);">10 Minutes</button>
+  <br><br>
+  Sensor offset:
+  <button type="button" onclick="mainCharSend(&quot;FA00&quot;,settingsCharacteristics);">Temp 0°C offset</button>
+  <button type="button" onclick="mainCharSend(&quot;FB00&quot;,settingsCharacteristics);">Humi 0% offset</button><br>
+  To set a precise offset use the text input field with FA+offset for Temp and FB+offset for Humiditiy convert an int8 to hex.
+  <br>
   <hr>
  <div id="log">Log:<br></div>
  <div id="result"></div>
