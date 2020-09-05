@@ -651,6 +651,10 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <button type="button" onclick="mainCharSend(&quot;CC&quot;,settingsCharacteristics);">In °C</button>
   <button type="button" onclick="mainCharSend(&quot;FF&quot;,settingsCharacteristics);">In °F</button>
   <br><br>
+  Show battery in LCD:
+  <button type="button" onclick="mainCharSend(&quot;B1&quot;,settingsCharacteristics);">Enabled</button>
+  <button type="button" onclick="mainCharSend(&quot;B0&quot;,settingsCharacteristics);">Disabled</button>
+  <br><br>
   Advertising interval:
   <button type="button" onclick="mainCharSend(&quot;FE01&quot;,settingsCharacteristics);">10 Seconds</button>
   <button type="button" onclick="mainCharSend(&quot;FE06&quot;,settingsCharacteristics);">1 Minute</button>
