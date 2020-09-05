@@ -625,7 +625,7 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
  <div id="percent">Status: waiting for you to connect a device</div><hr>
  <div id="tempHumiData">Temp/Humi: waiting for data</div><hr>
   Device known id:<br>
-  <input size="50" type="text" id="known_id" value=""><br>
+  <input size="40" type="text" id="known_id" value=""><br>
   Mi Token:<br>
   <input size="40" type="text" id="mi_token" value=""><br>
   Mi Bind Key:<br>
@@ -642,6 +642,10 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <button type="button" onclick="mainCharSend(&quot;A1&quot;,settingsCharacteristics);">Happy</button>
   <button type="button" onclick="mainCharSend(&quot;A2&quot;,settingsCharacteristics);">Sad</button>
   <button type="button" onclick="mainCharSend(&quot;AB&quot;,settingsCharacteristics);">Blinking</button>
+  <br><br>
+  Advertising Type:
+  <button type="button" onclick="mainCharSend(&quot;AE&quot;,settingsCharacteristics);">Custom</button>
+  <button type="button" onclick="mainCharSend(&quot;AF&quot;,settingsCharacteristics);">Mi Like</button>
   <br><br>
   Sensor display:
   <button type="button" onclick="mainCharSend(&quot;CC&quot;,settingsCharacteristics);">In °C</button>
