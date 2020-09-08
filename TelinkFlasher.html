@@ -300,9 +300,11 @@ function detectMi() {
         }
         if (miEnabled) {
             addLog("Detected Mi Thermometer");
+            setStatus("Detected Mi Thermometer");
             miAction();
         } else if (customEnabled) {
             addLog("Detected custom Firmware");
+            setStatus("Detected custom Firmware");
             customAction();
         } else {
             addLog("Connected");
@@ -545,6 +547,14 @@ var otaCharSend = function(data) {
     });
 }
 
+function sendCustomSetting(data){
+	mainCharSend(data,settingsCharacteristics).then(function() {
+		addLog("Settings " + data + " was send successful");
+    }).catch(function(err) {
+		addLog("Error on sending setting " + data);
+    });
+}
+
 var mainCharSend = function(data, characteristic) {
     return new Promise(function(resolve, reject) {
         addClog("Send: " + data);
@@ -635,36 +645,42 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <hr>
  Send settings to custom firmware:<br>
   <input type="text" id="cmdTXT" value="">
-  <button type="button" onclick="mainCharSend(document.getElementById(&quot;cmdTXT&quot;).value,settingsCharacteristics);">Send</button>
+  <button type="button" onclick="sendCustomSetting(document.getElementById(&quot;cmdTXT&quot;).value,settingsCharacteristics);">Send</button>
   <br><br>
   Smiley:
-  <button type="button" onclick="mainCharSend(&quot;A0&quot;,settingsCharacteristics);">Off</button>
-  <button type="button" onclick="mainCharSend(&quot;A1&quot;,settingsCharacteristics);">Happy</button>
-  <button type="button" onclick="mainCharSend(&quot;A2&quot;,settingsCharacteristics);">Sad</button>
-  <button type="button" onclick="mainCharSend(&quot;AB&quot;,settingsCharacteristics);">Blinking</button>
+  <button type="button" onclick="sendCustomSetting(&quot;A0&quot;);">Off</button>
+  <button type="button" onclick="sendCustomSetting(&quot;A1&quot;);">Happy</button>
+  <button type="button" onclick="sendCustomSetting(&quot;A2&quot;);">Sad</button>
+  <button type="button" onclick="sendCustomSetting(&quot;AB&quot;);">Blinking</button>
   <br><br>
   Advertising Type:
-  <button type="button" onclick="mainCharSend(&quot;AE&quot;,settingsCharacteristics);">Custom</button>
-  <button type="button" onclick="mainCharSend(&quot;AF&quot;,settingsCharacteristics);">Mi Like</button>
+  <button type="button" onclick="sendCustomSetting(&quot;AE&quot;);">Custom</button>
+  <button type="button" onclick="sendCustomSetting(&quot;AF&quot;);">Mi Like</button>
   <br><br>
   Sensor display:
-  <button type="button" onclick="mainCharSend(&quot;CC&quot;,settingsCharacteristics);">In °C</button>
-  <button type="button" onclick="mainCharSend(&quot;FF&quot;,settingsCharacteristics);">In °F</button>
+  <button type="button" onclick="sendCustomSetting(&quot;CC&quot;);">In °C</button>
+  <button type="button" onclick="sendCustomSetting(&quot;FF&quot;);">In °F</button>
   <br><br>
   Show battery in LCD:
-  <button type="button" onclick="mainCharSend(&quot;B1&quot;,settingsCharacteristics);">Enabled</button>
-  <button type="button" onclick="mainCharSend(&quot;B0&quot;,settingsCharacteristics);">Disabled</button>
+  <button type="button" onclick="sendCustomSetting(&quot;B1&quot;);">Enabled</button>
+  <button type="button" onclick="sendCustomSetting(&quot;B0&quot;);">Disabled</button>
   <br><br>
   Advertising interval:
-  <button type="button" onclick="mainCharSend(&quot;FE01&quot;,settingsCharacteristics);">10 Seconds</button>
-  <button type="button" onclick="mainCharSend(&quot;FE06&quot;,settingsCharacteristics);">1 Minute</button>
-  <button type="button" onclick="mainCharSend(&quot;FE1E&quot;,settingsCharacteristics);">5 Minutes</button>
-  <button type="button" onclick="mainCharSend(&quot;FE3C&quot;,settingsCharacteristics);">10 Minutes</button>
+  <button type="button" onclick="sendCustomSetting(&quot;FE01&quot;);">10 Seconds</button>
+  <button type="button" onclick="sendCustomSetting(&quot;FE06&quot;);">1 Minute</button>
+  <button type="button" onclick="sendCustomSetting(&quot;FE1E&quot;);">5 Minutes</button>
+  <button type="button" onclick="sendCustomSetting(&quot;FE3C&quot;);">10 Minutes</button>
   <br><br>
   Sensor offset:
-  <button type="button" onclick="mainCharSend(&quot;FA00&quot;,settingsCharacteristics);">Temp 0°C offset</button>
-  <button type="button" onclick="mainCharSend(&quot;FB00&quot;,settingsCharacteristics);">Humi 0% offset</button><br>
+  <button type="button" onclick="sendCustomSetting(&quot;FA00&quot;);">Temp 0°C offset</button>
+  <button type="button" onclick="sendCustomSetting(&quot;FB00&quot;);">Humi 0% offset</button><br>
   To set a precise offset use the text input field with FA+offset for Temp and FB+offset for Humiditiy convert an int8 to hex.
+  <br><br>
+  Sensor instant Advertising:
+  <button type="button" onclick="sendCustomSetting(&quot;FC05&quot;);">Temp 0,5°C instant alarm</button>
+  <button type="button" onclick="sendCustomSetting(&quot;FD05&quot;);">Humi 5% instant alarm</button><br>
+  To set other values use the text input with FC+temp alarm or FD+humi alarm with uint8_t values.
+  This can be used to get instant advertising if the sensor data changes to fast. Temp divided by 10
   <br>
   <hr>
  <div id="log">Log:<br></div>
