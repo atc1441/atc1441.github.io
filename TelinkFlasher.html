@@ -127,15 +127,15 @@
         enc_10.addEventListener('characteristicvaluechanged', event => {
           var value = bytesToHex(event.target.value.buffer);
           addClog('Enc_10: ' + value);
-          if (value == '12000000') {
+          if (value === '12000000') {
             addLog('Activation Failed!');
-          } else if (value == '11000000') {
+          } else if (value === '11000000') {
             addLog('Activation successfull');
             sendLogin();
           }
-          if (value == '23000000') {
+          if (value === '23000000') {
             addLog('Login Failed!');
-          } else if (value == '21000000') {
+          } else if (value === '21000000') {
             is_logged_in = true;
             addLog('Login successfull');
           }
@@ -146,16 +146,16 @@
             var value = bytesToHex(event.target.value.buffer);
             addClog('Enc_19: ' + value);
 
-            if (mode_activation == 1) {
-              if (value == '000000000100') {
+            if (mode_activation === 1) {
+              if (value === '000000000100') {
                 is_activated = false;
                 mainCharSend('00000101', enc_19);
-              } else if (value == '000000000200') {
+              } else if (value === '000000000200') {
                 is_activated = true;
                 mainCharSend('00000101', enc_19);
-              } else if ((is_activated == true) && (state == 0) && value.substring(0, 4) == '0100') {
+              } else if ((is_activated === true) && (state === 0) && value.substring(0, 4) === '0100') {
                 device_known_id = value.substring(4);
-              } else if ((is_activated == true) && (state == 0) && value.substring(0, 4) == '0200') {
+              } else if ((is_activated === true) && (state === 0) && value.substring(0, 4) === '0200') {
                 device_known_id += value.substring(4);
                 device_new_id = device_known_id.substring(8);
                 document.getElementById('known_id').value = hex2ascii(device_known_id.substring(10));
@@ -170,7 +170,7 @@
                 }).catch(function(err) {
                   updateFail(err);
                 });
-              } else if (value == '010001000000') mainCharSend('00000100', enc_19).then(function(character) {
+              } else if (value === '010001000000') mainCharSend('00000100', enc_19).then(function(character) {
                 mainCharSend('15000000', enc_10).then(function(character) {
                   mainCharSend('000000030400', enc_19);
                   state = 1;
@@ -181,7 +181,7 @@
                 updateFail(err);
               });
 
-              else if ((state == 1) && (value == '00000101')) {
+              else if ((state === 1) && (value === '00000101')) {
                 state = 2;
                 mainCharSend('0100' + own_public_key.substring((36 * 0) + 2, (36 * 0) + 36 + 2), enc_19).then(function(character) {
                   mainCharSend('0200' + own_public_key.substring((36 * 1) + 2, (36 * 1) + 36 + 2), enc_19).then(function(character) {
@@ -196,66 +196,66 @@
                 }).catch(function(err) {
                   updateFail(err);
                 });
-              } else if (value == '000000030400') mainCharSend('00000101', enc_19);
+              } else if (value === '000000030400') mainCharSend('00000101', enc_19);
 
-              else if ((state == 2) && value.substring(0, 4) == '0100') {
+              else if ((state === 2) && value.substring(0, 4) === '0100') {
                 device_public_key = '04' + value.substring(4);
-              } else if ((state == 2) && value.substring(0, 4) == '0200') {
+              } else if ((state === 2) && value.substring(0, 4) === '0200') {
                 device_public_key += value.substring(4);
-              } else if ((state == 2) && value.substring(0, 4) == '0300') {
+              } else if ((state === 2) && value.substring(0, 4) === '0300') {
                 device_public_key += value.substring(4);
-              } else if ((state == 2) && value.substring(0, 4) == '0400') {
+              } else if ((state === 2) && value.substring(0, 4) === '0400') {
                 device_public_key += value.substring(4);
                 mainCharSend('00000100', enc_19).then(function(character) {
                   makeSharedKey();
                 }).catch(function(err) {
                   updateFail(err);
                 });
-              } else if ((state == 2) && (value == '00000101')) {
+              } else if ((state === 2) && (value === '00000101')) {
                 state = 3;
                 mainCharSend('0100' + mi_write_did.substring(36 * 0, (36 * 0) + 36), enc_19).then(function(character) {
                   mainCharSend('0200' + mi_write_did.substring(36 * 1, (36 * 1) + 36), enc_19);
                 }).catch(function(err) {
                   updateFail(err);
                 });
-              } else if ((state == 3) && (value == '00000100')) {
+              } else if ((state === 3) && (value === '00000100')) {
                 state = 0;
                 mainCharSend('13000000', enc_10);
-              } else if (value == '000001050100') {
+              } else if (value === '000001050100') {
                 addLog('Received Timeout from device');
-              } else if (value == '12000000') {
+              } else if (value === '12000000') {
                 addLog('Register Failed!');
-              } else if (value == '11000000') {
+              } else if (value === '11000000') {
                 addLog('Register successfull');
               }
             } else { //Mode Login
-              if ((state == 0) && (value == '00000101')) {
+              if ((state === 0) && (value === '00000101')) {
                 state = 1;
                 mainCharSend('0100' + mi_random_key, enc_19);
-              } else if ((state == 1) && (value == '0000000d0100')) {
+              } else if ((state === 1) && (value === '0000000d0100')) {
                 state = 2;
                 mainCharSend('00000101', enc_19);
-              } else if ((state == 2) && value.substring(0, 4) == '0100') {
+              } else if ((state === 2) && value.substring(0, 4) === '0100') {
                 state = 3;
                 mi_random_key_recv = value.substring(4);
                 do_login_generate();
-              } else if ((state == 3) && (value == '0000000c0200')) {
+              } else if ((state === 3) && (value === '0000000c0200')) {
                 state = 4;
                 mainCharSend('00000101', enc_19);
-              } else if ((state == 4) && value.substring(0, 4) == '0100') {
+              } else if ((state === 4) && value.substring(0, 4) === '0100') {
                 state = 5;
                 mi_device_info_recv = value.substring(4);
-              } else if ((state == 5) && value.substring(0, 4) == '0200') {
+              } else if ((state === 5) && value.substring(0, 4) === '0200') {
                 state = 6;
                 mi_device_info_recv += value.substring(4);
-                if (expected_device_infos == mi_device_info_recv)
+                if (expected_device_infos === mi_device_info_recv)
                   addLog('Received device infos are correct');
                 else
                   addLog('Received device infos are not correct');
                 mainCharSend('00000100', enc_19).then(function(character) {
                   mainCharSend('0000000a0200', enc_19);
                 });
-              } else if ((state == 6) && (value == '00000101')) {
+              } else if ((state === 6) && (value === '00000101')) {
                 state = 7;
                 mainCharSend('0100' + mi_device_info_send.substring(36 * 0, (36 * 0) + 36), enc_19).then(function(character) {
                   mainCharSend('0200' + mi_device_info_send.substring(36 * 1, (36 * 1) + 36), enc_19);
@@ -294,8 +294,8 @@
       customEnabled = false;
       for (var i = 0; i < services.length; i++) {
         console.log('Services: ' + services[i].uuid);
-        if (services[i].uuid == 'ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6') miEnabled = true;
-        if (services[i].uuid == '00001f10-0000-1000-8000-00805f9b34fb') customEnabled = true;
+        if (services[i].uuid === 'ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6') miEnabled = true;
+        if (services[i].uuid === '00001f10-0000-1000-8000-00805f9b34fb') customEnabled = true;
       }
       if (miEnabled) {
         addLog('Detected Mi Thermometer');
@@ -322,7 +322,7 @@
 
   function startDFU() {
     addLog('Start DFU');
-    if ((miConnected == true) && (is_logged_in == false)) {
+    if ((miConnected === true) && (is_logged_in === false)) {
       addLog('Please do the Activation first');
       return;
     }
@@ -342,7 +342,7 @@
   }
 
   function sendRegister() {
-    if (miConnected == false) {
+    if (miConnected === false) {
       addLog('Not connected');
       return;
     }
@@ -432,7 +432,7 @@
       }
     }
     return crc;
-  };
+  }
 
   function hex2ascii(hexx) {
     var hex = hexx.toString();
@@ -499,7 +499,7 @@
     var blockCRC = getHexCRC(blockString);
     otaCharSend(blockString + blockCRC).then(function(character) {
       setTimeout(function() {
-        if ((blockNr + 1) % 8 == 0) {
+        if ((blockNr + 1) % 8 === 0) {
           writeCharacteristic.readValue().then(function(result) {
             addClog('reading OTA');
             sendOTAblock(blockNr + 1);
