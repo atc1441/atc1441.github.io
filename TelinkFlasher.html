@@ -641,41 +641,41 @@ When doing an activation here the device is needed to be activated in the Mi app
 <hr>
 Send settings to custom firmware:<br>
 <input type="text" id="cmdTXT" value="">
-<button type="button" onclick="sendCustomSetting(document.getElementById(&quot;cmdTXT&quot;).value,settingsCharacteristics);">Send</button>
+<button type="button" onclick="sendCustomSetting(document.getElementById('cmdTXT').value,settingsCharacteristics);">Send</button>
 <br><br>
 Smiley:
-<button type="button" onclick="sendCustomSetting(&quot;A0&quot;);">Off</button>
-<button type="button" onclick="sendCustomSetting(&quot;A1&quot;);">Happy</button>
-<button type="button" onclick="sendCustomSetting(&quot;A2&quot;);">Sad</button>
-<button type="button" onclick="sendCustomSetting(&quot;AB&quot;);">Blinking</button>
+<button type="button" onclick="sendCustomSetting('A0');">Off</button>
+<button type="button" onclick="sendCustomSetting('A1');">Happy</button>
+<button type="button" onclick="sendCustomSetting('A2');">Sad</button>
+<button type="button" onclick="sendCustomSetting('AB');">Blinking</button>
 <br><br>
 Advertising Type:
-<button type="button" onclick="sendCustomSetting(&quot;AE&quot;);">Custom</button>
-<button type="button" onclick="sendCustomSetting(&quot;AF&quot;);">Mi Like</button>
+<button type="button" onclick="sendCustomSetting('AE');">Custom</button>
+<button type="button" onclick="sendCustomSetting('AF');">Mi Like</button>
 <br><br>
 Sensor display:
-<button type="button" onclick="sendCustomSetting(&quot;CC&quot;);">In °C</button>
-<button type="button" onclick="sendCustomSetting(&quot;FF&quot;);">In °F</button>
+<button type="button" onclick="sendCustomSetting('CC');">In °C</button>
+<button type="button" onclick="sendCustomSetting('FF');">In °F</button>
 <br><br>
 Show battery in LCD:
-<button type="button" onclick="sendCustomSetting(&quot;B1&quot;);">Enabled</button>
-<button type="button" onclick="sendCustomSetting(&quot;B0&quot;);">Disabled</button>
+<button type="button" onclick="sendCustomSetting('B1');">Enabled</button>
+<button type="button" onclick="sendCustomSetting('B0');">Disabled</button>
 <br><br>
 Advertising interval:
-<button type="button" onclick="sendCustomSetting(&quot;FE01&quot;);">10 Seconds</button>
-<button type="button" onclick="sendCustomSetting(&quot;FE06&quot;);">1 Minute</button>
-<button type="button" onclick="sendCustomSetting(&quot;FE1E&quot;);">5 Minutes</button>
-<button type="button" onclick="sendCustomSetting(&quot;FE3C&quot;);">10 Minutes</button>
+<button type="button" onclick="sendCustomSetting('FE01');">10 Seconds</button>
+<button type="button" onclick="sendCustomSetting('FE06');">1 Minute</button>
+<button type="button" onclick="sendCustomSetting('FE1E');">5 Minutes</button>
+<button type="button" onclick="sendCustomSetting('FE3C');">10 Minutes</button>
 <br><br>
 Sensor offset:
-<button type="button" onclick="sendCustomSetting(&quot;FA00&quot;);">Temp 0°C offset</button>
-<button type="button" onclick="sendCustomSetting(&quot;FB00&quot;);">Humi 0% offset</button>
+<button type="button" onclick="sendCustomSetting('FA00');">Temp 0°C offset</button>
+<button type="button" onclick="sendCustomSetting('FB00');">Humi 0% offset</button>
 <br>
 To set a precise offset use the text input field with FA+offset for Temp and FB+offset for Humiditiy convert an int8 to hex.
 <br><br>
 Sensor instant Advertising:
-<button type="button" onclick="sendCustomSetting(&quot;FC05&quot;);">Temp 0,5°C instant alarm</button>
-<button type="button" onclick="sendCustomSetting(&quot;FD05&quot;);">Humi 5% instant alarm</button>
+<button type="button" onclick="sendCustomSetting('FC05');">Temp 0,5°C instant alarm</button>
+<button type="button" onclick="sendCustomSetting('FD05');">Humi 5% instant alarm</button>
 <br>
 To set other values use the text input with FC+temp alarm or FD+humi alarm with uint8_t values.
 This can be used to get instant advertising if the sensor data changes to fast. Temp divided by 10
