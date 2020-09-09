@@ -29,7 +29,7 @@
   let mi_random_key, mi_random_key_recv, mi_device_info_recv, mi_device_info_send, device_known_id, expected_device_infos, is_logged_in = false;
   //Activation values
   let keypair, is_activated, own_public_key, device_public_key, shared_key, derived_key, mi_write_did;
-  let device_new_id = '00626c742e332e31323976' + makeRandomID(6) + '415443';
+  let device_new_id = `00626c742e332e31323976${makeRandomID(6)}415443`;
 
   function resetVariables() {
     busy = false;
@@ -45,7 +45,7 @@
     resetVariables();
     if (connectTrys < 5) {
       connectTrys++;
-      addLog('Reconnect ' + connectTrys + ' from ' + 5);
+      addLog(`Reconnect ${connectTrys} from 5`);
       doConnect();
     } else {
       addLog('Something went wrong, to many reconnect\'s');
@@ -68,7 +68,7 @@
     }).then(device => {
       bluetoothDevice = device;
       bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
-      addLog('Connecting to: ' + bluetoothDevice.name);
+      addLog(`Connecting to: ${bluetoothDevice.name}`);
       doConnect();
     }).catch(handleError);
   }
@@ -90,7 +90,7 @@
           let value = event.target.value;
           let temp = (value.getUint8(1) << 8 | value.getUint8(0)) / 100;
           let hum = value.getUint8(2);
-          let tempTempString = 'Temp/Humi: ' + temp + '°C / ' + hum + '%';
+          let tempTempString = `Temp/Humi: ${temp}°C / ${hum}%`;
           document.getElementById('tempHumiData').innerHTML = tempTempString;
           addClog(tempTempString);
         });
@@ -126,7 +126,7 @@
       return enc_10.startNotifications().then(() => {
         enc_10.addEventListener('characteristicvaluechanged', event => {
           let value = bytesToHex(event.target.value.buffer);
-          addClog('Enc_10: ' + value);
+          addClog(`Enc_10: ${value}`);
           if (value === '12000000') {
             addLog('Activation Failed!');
           } else if (value === '11000000') {
@@ -144,7 +144,7 @@
         return enc_19.startNotifications().then(() => {
           enc_19.addEventListener('characteristicvaluechanged', event => {
             let value = bytesToHex(event.target.value.buffer);
-            addClog('Enc_19: ' + value);
+            addClog(`Enc_19: ${value}`);
 
             if (mode_activation === 1) {
               if (value === '000000000100') {
@@ -183,10 +183,10 @@
 
               else if ((state === 1) && (value === '00000101')) {
                 state = 2;
-                mainCharSend('0100' + own_public_key.substring((36 * 0) + 2, (36 * 0) + 36 + 2), enc_19).then(function(character) {
-                  mainCharSend('0200' + own_public_key.substring((36 * 1) + 2, (36 * 1) + 36 + 2), enc_19).then(function(character) {
-                    mainCharSend('0300' + own_public_key.substring((36 * 2) + 2, (36 * 2) + 36 + 2), enc_19).then(function(character) {
-                      mainCharSend('0400' + own_public_key.substring((36 * 3) + 2, (36 * 3) + 36 + 2), enc_19);
+                mainCharSend(`0100${own_public_key.substring((36 * 0) + 2, (36 * 0) + 36 + 2)}`, enc_19).then(function(character) {
+                  mainCharSend(`0200${own_public_key.substring((36 * 1) + 2, (36 * 1) + 36 + 2)}`, enc_19).then(function(character) {
+                    mainCharSend(`0300${own_public_key.substring((36 * 2) + 2, (36 * 2) + 36 + 2)}`, enc_19).then(function(character) {
+                      mainCharSend(`0400${own_public_key.substring((36 * 3) + 2, (36 * 3) + 36 + 2)}`, enc_19);
                     }).catch(function(err) {
                       updateFail(err);
                     });
@@ -199,7 +199,7 @@
               } else if (value === '000000030400') mainCharSend('00000101', enc_19);
 
               else if ((state === 2) && value.substring(0, 4) === '0100') {
-                device_public_key = '04' + value.substring(4);
+                device_public_key = `04${value.substring(4)}`;
               } else if ((state === 2) && value.substring(0, 4) === '0200') {
                 device_public_key += value.substring(4);
               } else if ((state === 2) && value.substring(0, 4) === '0300') {
@@ -213,8 +213,8 @@
                 });
               } else if ((state === 2) && (value === '00000101')) {
                 state = 3;
-                mainCharSend('0100' + mi_write_did.substring(36 * 0, (36 * 0) + 36), enc_19).then(function(character) {
-                  mainCharSend('0200' + mi_write_did.substring(36 * 1, (36 * 1) + 36), enc_19);
+                mainCharSend(`0100${mi_write_did.substring(36 * 0, (36 * 0) + 36)}`, enc_19).then(function(character) {
+                  mainCharSend(`0200${mi_write_did.substring(36 * 1, (36 * 1) + 36)}`, enc_19);
                 }).catch(function(err) {
                   updateFail(err);
                 });
@@ -231,7 +231,7 @@
             } else { //Mode Login
               if ((state === 0) && (value === '00000101')) {
                 state = 1;
-                mainCharSend('0100' + mi_random_key, enc_19);
+                mainCharSend(`0100${mi_random_key}`, enc_19);
               } else if ((state === 1) && (value === '0000000d0100')) {
                 state = 2;
                 mainCharSend('00000101', enc_19);
@@ -257,8 +257,8 @@
                 });
               } else if ((state === 6) && (value === '00000101')) {
                 state = 7;
-                mainCharSend('0100' + mi_device_info_send.substring(36 * 0, (36 * 0) + 36), enc_19).then(function(character) {
-                  mainCharSend('0200' + mi_device_info_send.substring(36 * 1, (36 * 1) + 36), enc_19);
+                mainCharSend(`0100${mi_device_info_send.substring(36 * 0, (36 * 0) + 36)}`, enc_19).then(function(character) {
+                  mainCharSend(`0200${mi_device_info_send.substring(36 * 1, (36 * 1) + 36)}`, enc_19);
                 }).catch(function(err) {
                   updateFail(err);
                 });
@@ -293,7 +293,7 @@
       miEnabled = false;
       customEnabled = false;
       for (let i = 0; i < services.length; i++) {
-        console.log('Services: ' + services[i].uuid);
+        console.log(`Services: ${services[i].uuid}`);
         if (services[i].uuid === 'ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6') miEnabled = true;
         if (services[i].uuid === '00001f10-0000-1000-8000-00805f9b34fb') customEnabled = true;
       }
@@ -366,8 +366,8 @@
 
   function addLog(logTXT) {
     let time = new Date().toLocaleTimeString('de-DE');
-    let logString = time + ': ' + logTXT;
-    document.getElementById('log').innerHTML += logString + '<br>';
+    let logString = `${time}: ${logTXT}`;
+    document.getElementById('log').innerHTML += `${logString}<br>`;
   }
 
   function addClog(logTXT) {
@@ -379,19 +379,19 @@
   }
 
   function setStatus(status) {
-    addClog('Status: ' + status);
-    document.getElementById('percent').innerHTML = 'Status: ' + status;
+    addClog(`Status: ${status}`);
+    document.getElementById('percent').innerHTML = `Status: ${status}`;
   }
 
   function updateFail(err) {
-    addLog('Update error: ' + err);
-    setStatus('Update error: ' + err);
+    addLog(`Update error: ${err}`);
+    setStatus(`Update error: ${err}`);
   }
 
   function decimalToHex(d, padding) {
     let hex = Number(d).toString(16);
     while (hex.length < 4) {
-      hex = '0' + hex;
+      hex = `0${hex}`;
     }
     return hex;
   }
@@ -404,7 +404,7 @@
 
   function bytesToHex(data) {
     return new Uint8Array(data).reduce(function(memo, i) {
-      return memo + ('0' + i.toString(16)).slice(-2);
+      return memo + (`0${i.toString(16)}`).slice(-2);
     }, '');
   }
 
@@ -448,14 +448,14 @@
       let reader = new FileReader();
       reader.onload = function() {
         firmwareArray = bytesToHex(this.result);
-        addLog('File was selected, size: ' + firmwareArray.length / 2 + ' bytes');
+        addLog(`File was selected, size: ${firmwareArray.length / 2} bytes`);
 
         if (firmwareArray.length % 32 !== 0) { // pad last block to 16bytes
           let padHex = 'ffffffffffffffffffffffffffffffff';
           firmwareArray += padHex.substr(0, 32 - firmwareArray.length % 32);
         }
         blockCount = firmwareArray.length / 32;
-        addLog('Count: ' + blockCount);
+        addLog(`Count: ${blockCount}`);
       };
       if (this.files[0] != null)
         reader.readAsArrayBuffer(this.files[0]);
@@ -493,7 +493,7 @@
       sendLastOTA();
       return;
     }
-    setStatus('Sending block nr: ' + blockNr + ' from ' + blockCount + ', ' + Math.floor(blockNr / (blockCount * 1.0) * 100) + '% done, time since start ' + (new Date().getTime() - startTime) / 1000.0 + 's');
+    setStatus(`Sending block nr: ${blockNr} from ${blockCount}, ${Math.floor(blockNr / (blockCount * 1.0) * 100)}% done, time since start ${(new Date().getTime() - startTime) / 1000.0}s`);
     let blockNrString = getHexBLockCount(blockNr);
     let blockString = blockNrString + firmwareArray.substring(blockNr * 32, blockNr * 32 + 32);
     let blockCRC = getHexCRC(blockString);
@@ -526,10 +526,10 @@
   }
 
   function sendLastOTA() {
-    let data = '02ff' + getHexBLockCount(blockCount - 1) + getHexBLockCount(~(blockCount - 1) & 0xffff);
+    let data = `02ff${getHexBLockCount(blockCount - 1)}${getHexBLockCount(~(blockCount - 1) & 0xffff)}`;
     otaCharSend(data).then(function(character) {
-      addLog('Update done after ' + (new Date().getTime() - startTime) / 1000 + ' seconds');
-      setStatus('Update done after ' + (new Date().getTime() - startTime) / 1000 + ' seconds');
+      addLog(`Update done after ${(new Date().getTime() - startTime) / 1000} seconds`);
+      setStatus(`Update done after ${(new Date().getTime() - startTime) / 1000} seconds`);
     }).catch(function(err) {
       updateFail(err);
     });
@@ -537,7 +537,7 @@
 
   let otaCharSend = function(data) {
     return new Promise(function(resolve, reject) {
-      addClog('OTA: ' + data);
+      addClog(`OTA: ${data}`);
       writeCharacteristic.writeValue(hexToBytes(data)).then(function(character) {
         resolve('ok');
       }).catch(function(err) {
@@ -548,15 +548,15 @@
 
   function sendCustomSetting(data) {
     mainCharSend(data, settingsCharacteristics).then(function() {
-      addLog('Settings ' + data + ' was send successful');
+      addLog(`Settings ${data} was send successful`);
     }).catch(function(err) {
-      addLog('Error on sending setting ' + data);
+      addLog(`Error on sending setting ${data}`);
     });
   }
 
   let mainCharSend = function(data, characteristic) {
     return new Promise(function(resolve, reject) {
-      addClog('Send: ' + data);
+      addClog(`Send: ${data}`);
       characteristic.writeValue(hexToBytes(data)).then(function(character) {
         resolve('ok');
       }).catch(function(err) {
