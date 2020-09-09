@@ -1,5 +1,5 @@
 <!-- Copyright: Aaron Christophel / Atc1441 https://atcnetz.de -->
-<html class="telFlasherClass">
+<html class="telFlasherClass" lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,27 +9,27 @@
 <body>
 <script>
   //BLE values
-  var bluetoothDevice, gattServer, Theservice, writeCharacteristic;
-  var ServiceMain, writeCharacteristicSpeed, nitifiyCharTemp, time_char, enc_main, enc_10, enc_19;
+  let bluetoothDevice, gattServer, Theservice, writeCharacteristic;
+  let ServiceMain, writeCharacteristicSpeed, nitifiyCharTemp, time_char, enc_main, enc_10, enc_19;
   //Firmware values
-  var firmwareArray = '',
+  let firmwareArray = '',
       startTime = 0,
       blockCount = 0;
   //Connection values
-  var state = 0,
+  let state = 0,
       connectTrys = 0;
   //Custom firmware
-  var customEnabled;
-  var settingsCharacteristics;
+  let customEnabled;
+  let settingsCharacteristics;
   //Mi values
-  var miEnabled = false,
+  let miEnabled = false,
       miConnected = false,
       mode_activation;
   //Login values
-  var mi_random_key, mi_random_key_recv, mi_device_info_recv, mi_device_info_send, device_known_id, expected_device_infos, is_logged_in = false;
+  let mi_random_key, mi_random_key_recv, mi_device_info_recv, mi_device_info_send, device_known_id, expected_device_infos, is_logged_in = false;
   //Activation values
-  var keypair, is_activated, own_public_key, device_public_key, shared_key, derived_key, mi_write_did;
-  var device_new_id = '00626c742e332e31323976' + makeRandomID(6) + '415443';
+  let keypair, is_activated, own_public_key, device_public_key, shared_key, derived_key, mi_write_did;
+  let device_new_id = '00626c742e332e31323976' + makeRandomID(6) + '415443';
 
   function resetVariables() {
     busy = false;
@@ -87,10 +87,10 @@
       nitifiyCharTemp = characteristic;
       return nitifiyCharTemp.startNotifications().then(() => {
         nitifiyCharTemp.addEventListener('characteristicvaluechanged', event => {
-          var value = event.target.value;
-          var temp = (value.getUint8(1) << 8 | value.getUint8(0)) / 100;
-          var hum = value.getUint8(2);
-          var tempTempString = 'Temp/Humi: ' + temp + '°C / ' + hum + '%';
+          let value = event.target.value;
+          let temp = (value.getUint8(1) << 8 | value.getUint8(0)) / 100;
+          let hum = value.getUint8(2);
+          let tempTempString = 'Temp/Humi: ' + temp + '°C / ' + hum + '%';
           document.getElementById('tempHumiData').innerHTML = tempTempString;
           addClog(tempTempString);
         });
@@ -125,7 +125,7 @@
       miConnected = true;
       return enc_10.startNotifications().then(() => {
         enc_10.addEventListener('characteristicvaluechanged', event => {
-          var value = bytesToHex(event.target.value.buffer);
+          let value = bytesToHex(event.target.value.buffer);
           addClog('Enc_10: ' + value);
           if (value === '12000000') {
             addLog('Activation Failed!');
@@ -143,7 +143,7 @@
       }).then(characteristic => {
         return enc_19.startNotifications().then(() => {
           enc_19.addEventListener('characteristicvaluechanged', event => {
-            var value = bytesToHex(event.target.value.buffer);
+            let value = bytesToHex(event.target.value.buffer);
             addClog('Enc_19: ' + value);
 
             if (mode_activation === 1) {
@@ -292,7 +292,7 @@
     gattServer.getPrimaryServices().then(services => {
       miEnabled = false;
       customEnabled = false;
-      for (var i = 0; i < services.length; i++) {
+      for (let i = 0; i < services.length; i++) {
         console.log('Services: ' + services[i].uuid);
         if (services[i].uuid === 'ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6') miEnabled = true;
         if (services[i].uuid === '00001f10-0000-1000-8000-00805f9b34fb') customEnabled = true;
@@ -365,8 +365,8 @@
   }
 
   function addLog(logTXT) {
-    var time = new Date().toLocaleTimeString('de-DE');
-    var logString = time + ': ' + logTXT;
+    let time = new Date().toLocaleTimeString('de-DE');
+    let logString = time + ': ' + logTXT;
     document.getElementById('log').innerHTML += logString + '<br>';
   }
 
@@ -389,7 +389,7 @@
   }
 
   function decimalToHex(d, padding) {
-    var hex = Number(d).toString(16);
+    let hex = Number(d).toString(16);
     while (hex.length < 4) {
       hex = '0' + hex;
     }
@@ -397,7 +397,7 @@
   }
 
   function hexToBytes(hex) {
-    for (var bytes = [], c = 0; c < hex.length; c += 2)
+    for (let bytes = [], c = 0; c < hex.length; c += 2)
       bytes.push(parseInt(hex.substr(c, 2), 16));
     return new Uint8Array(bytes);
   }
@@ -409,21 +409,21 @@
   }
 
   function makeRandomID(length) {
-    var result = '';
-    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    var charactersLength = characters.length;
-    for (var i = 0; i < length; i++) {
+    let result = '';
+    let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return bytesToHex(new TextEncoder('utf-8').encode(result));
   }
 
   function crc16_modbus(buffer) {
-    var crc = 0xFFFF;
-    var odd;
-    for (var i = 0; i < buffer.length; i++) {
+    let crc = 0xFFFF;
+    let odd;
+    for (let i = 0; i < buffer.length; i++) {
       crc = crc ^ buffer[i];
-      for (var j = 0; j < 8; j++) {
+      for (let j = 0; j < 8; j++) {
         odd = crc & 0x0001;
         crc = crc >> 1;
         if (odd) {
@@ -435,9 +435,9 @@
   }
 
   function hex2ascii(hexx) {
-    var hex = hexx.toString();
-    var str = '';
-    for (var i = 0;
+    let hex = hexx.toString();
+    let str = '';
+    for (let i = 0;
         (i < hex.length && hex.substr(i, 2) !== '00'); i += 2)
       str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
     return str;
@@ -445,13 +445,13 @@
 
   window.onload = function() {
     document.querySelector('input').addEventListener('change', function() {
-      var reader = new FileReader();
+      let reader = new FileReader();
       reader.onload = function() {
         firmwareArray = bytesToHex(this.result);
         addLog('File was selected, size: ' + firmwareArray.length / 2 + ' bytes');
 
         if (firmwareArray.length % 32 !== 0) { // pad last block to 16bytes
-          var padHex = 'ffffffffffffffffffffffffffffffff';
+          let padHex = 'ffffffffffffffffffffffffffffffff';
           firmwareArray += padHex.substr(0, 32 - firmwareArray.length % 32);
         }
         blockCount = firmwareArray.length / 32;
@@ -494,9 +494,9 @@
       return;
     }
     setStatus('Sending block nr: ' + blockNr + ' from ' + blockCount + ', ' + Math.floor(blockNr / (blockCount * 1.0) * 100) + '% done, time since start ' + (new Date().getTime() - startTime) / 1000.0 + 's');
-    var blockNrString = getHexBLockCount(blockNr);
-    var blockString = blockNrString + firmwareArray.substring(blockNr * 32, blockNr * 32 + 32);
-    var blockCRC = getHexCRC(blockString);
+    let blockNrString = getHexBLockCount(blockNr);
+    let blockString = blockNrString + firmwareArray.substring(blockNr * 32, blockNr * 32 + 32);
+    let blockCRC = getHexCRC(blockString);
     otaCharSend(blockString + blockCRC).then(function(character) {
       setTimeout(function() {
         if ((blockNr + 1) % 8 === 0) {
@@ -516,17 +516,17 @@
   }
 
   function getHexBLockCount(count) {
-    var tempHEX = decimalToHex(count);
+    let tempHEX = decimalToHex(count);
     return tempHEX.substring(2, 4) + tempHEX.substring(0, 2);
   }
 
   function getHexCRC(data) {
-    var tempCRC = decimalToHex(crc16_modbus(hexToBytes(data)));
+    let tempCRC = decimalToHex(crc16_modbus(hexToBytes(data)));
     return tempCRC.substring(2, 4) + tempCRC.substring(0, 2);
   }
 
   function sendLastOTA() {
-    var data = '02ff' + getHexBLockCount(blockCount - 1) + getHexBLockCount(~(blockCount - 1) & 0xffff);
+    let data = '02ff' + getHexBLockCount(blockCount - 1) + getHexBLockCount(~(blockCount - 1) & 0xffff);
     otaCharSend(data).then(function(character) {
       addLog('Update done after ' + (new Date().getTime() - startTime) / 1000 + ' seconds');
       setStatus('Update done after ' + (new Date().getTime() - startTime) / 1000 + ' seconds');
@@ -535,7 +535,7 @@
     });
   }
 
-  var otaCharSend = function(data) {
+  let otaCharSend = function(data) {
     return new Promise(function(resolve, reject) {
       addClog('OTA: ' + data);
       writeCharacteristic.writeValue(hexToBytes(data)).then(function(character) {
@@ -554,7 +554,7 @@
     });
   }
 
-  var mainCharSend = function(data, characteristic) {
+  let mainCharSend = function(data, characteristic) {
     return new Promise(function(resolve, reject) {
       addClog('Send: ' + data);
       characteristic.writeValue(hexToBytes(data)).then(function(character) {
@@ -598,18 +598,18 @@
   }
 
   function deriveTheKey() {
-    var derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(shared_key), 8 * 64, null, 'mible-setup-info', sjcl.hash['sha256']));
+    let derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(shared_key), 8 * 64, null, 'mible-setup-info', sjcl.hash['sha256']));
     document.getElementById('mi_token').value = derived_key.substring(0, 24);
     document.getElementById('mi_bind_key').value = derived_key.substring(24, 56);
-    var mi_bind_A = derived_key.substring(56, 88);
+    let mi_bind_A = derived_key.substring(56, 88);
     mi_write_did = sjcl.codec.hex.fromBits(sjcl.mode.ccm.encrypt(new sjcl.cipher.aes(sjcl.codec.hex.toBits(mi_bind_A)), sjcl.codec.hex.toBits(device_new_id), sjcl.codec.hex.toBits('101112131415161718191A1B'), sjcl.codec.hex.toBits('6465764944'), 32));
     mainCharSend('000000000200', enc_19);
   }
 
   function do_login_generate() {
-    var salt = hexToBytes(mi_random_key + mi_random_key_recv);
-    var salt1 = hexToBytes(mi_random_key_recv + mi_random_key);
-    var derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(document.getElementById('mi_token').value), 8 * 64, sjcl.codec.hex.toBits(bytesToHex(salt)), 'mible-login-info', sjcl.hash['sha256']));
+    const salt = hexToBytes(mi_random_key + mi_random_key_recv);
+    const salt1 = hexToBytes(mi_random_key_recv + mi_random_key);
+    const derived_key = sjcl.codec.hex.fromBits(sjcl.misc.hkdf(sjcl.codec.hex.toBits(document.getElementById('mi_token').value), 8 * 64, sjcl.codec.hex.toBits(bytesToHex(salt)), 'mible-login-info', sjcl.hash['sha256']));
     expected_device_infos = sjcl.codec.hex.fromBits(new sjcl.misc.hmac(sjcl.codec.hex.toBits(derived_key.substring(0, 32))).mac(sjcl.codec.hex.toBits(bytesToHex(salt1))));
     mi_device_info_send = sjcl.codec.hex.fromBits(new sjcl.misc.hmac(sjcl.codec.hex.toBits(derived_key.substring(32, 64))).mac(sjcl.codec.hex.toBits(bytesToHex(salt))));
     mainCharSend('00000100', enc_19);
