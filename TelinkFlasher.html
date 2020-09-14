@@ -56,17 +56,32 @@ function onDisconnected() {
 }
 
 function connect() {
+    var deviceOptions = {
+        optionalServices: ['00010203-0405-0607-0809-0a0b0c0d1912', 'ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6', 0xfe95, 0x1f10],
+        acceptAllDevices: true,
+    };
+    const hideUnknown = document.getElementById('hideUnknown').checked;
+    const namePrefix = document.getElementById('namePrefix').value;
+    if (hideUnknown) {
+        deviceOptions.acceptAllDevices = false;
+        deviceOptions.filters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"
+            .split("")
+            .map((x) => ({ namePrefix: x }));
+    } 
+    if (namePrefix) {
+        deviceOptions.acceptAllDevices = false;
+        deviceOptions.filters = namePrefix.split(",")
+            .map((x) => ({ namePrefix: x }));
+    }
+    
+
+    console.log(deviceOptions)
+
     if (bluetoothDevice != null) bluetoothDevice.gatt.disconnect();
     resetVariables();
     addLog("Searching for devices");
     connectTrys = 0;
-    navigator.bluetooth.requestDevice({
-        optionalServices: ['00010203-0405-0607-0809-0a0b0c0d1912', 'ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6', 0xfe95, 0x1f10],
-        acceptAllDevices: false,
-            filters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"
-              .split("")
-              .map((x) => ({ namePrefix: x })),
-    }).then(device => {
+    navigator.bluetooth.requestDevice(deviceOptions).then(device => {
         bluetoothDevice = device;
         bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
         addLog("Connecting to: " + bluetoothDevice.name);
@@ -448,7 +463,7 @@ function hex2ascii(hexx) {
 }
 
 window.onload = function() {
-    document.querySelector("input").addEventListener("change", function() {
+    document.querySelector("#file").addEventListener("change", function() {
         var reader = new FileReader();
         reader.onload = function() {
             firmwareArray = bytesToHex(this.result);
@@ -629,12 +644,16 @@ function do_login_generate() {
 Copyright: Aaron Christophel / Atc1441  <a href="https://atcnetz.de">https://ATCnetz.de</a><br>
 <a href="https://youtu.be/NXKzFG61lNs">Video Manual</a> <a href="https://github.com/atc1441/ATC_MiThermometer">Custom firmware repo</a><br><br>
   <button type="button" onclick="connect();">Connect</button>
+  <label for="hideUnknown">Hide unsupported</label>
+  <input type="checkbox" id="hideUnknown">
+  <label for="namePrefix">BLE device name prefix filter(s)</label>
+  <input type="text" id="namePrefix" value="" placeholder="LYWSD03,ATC">
   <button type="button" onclick="reConnect();">Reconnect</button>
   <button type="button" onclick="sendRegister();">Do Activation</button>
   <button type="button" onclick="startDFU();">Start Flashing</button>
   <button type="button" onclick="clearLog();">Clear Log</button><br><br>
 Please select a .bin file you want to flash to a Telink BLE device.<br><br>
-  Select Firmware: <input type="file"/><br>
+  Select Firmware: <input type="file" id="file"/><br>
  <div id="percent">Status: waiting for you to connect a device</div><hr>
  <div id="tempHumiData">Temp/Humi: waiting for data</div><hr>
   Device known id:<br>
