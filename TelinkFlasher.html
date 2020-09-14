@@ -643,12 +643,12 @@ function do_login_generate() {
 <big><big>Telink Flasher for Mi Thermostat</big></big><br>
 Copyright: Aaron Christophel / Atc1441  <a href="https://atcnetz.de">https://ATCnetz.de</a><br>
 <a href="https://youtu.be/NXKzFG61lNs">Video Manual</a> <a href="https://github.com/atc1441/ATC_MiThermometer">Custom firmware repo</a><br><br>
-  <button type="button" onclick="connect();">Connect</button><br>
+  <button type="button" onclick="connect();">Connect</button>
+  <button type="button" onclick="reConnect();">Reconnect</button><br>
   <label for="hideUnknown">Hide unsupported</label>
   <input type="checkbox" id="hideUnknown"><br>
   <label for="namePrefix">BLE device name prefix filter(s)</label>
   <input type="text" id="namePrefix" value="" placeholder="LYWSD03,ATC"><br>
-  <button type="button" onclick="reConnect();">Reconnect</button>
   <button type="button" onclick="sendRegister();">Do Activation</button>
   <button type="button" onclick="startDFU();">Start Flashing</button>
   <button type="button" onclick="clearLog();">Clear Log</button><br><br>
