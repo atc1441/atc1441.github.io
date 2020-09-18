@@ -83,14 +83,14 @@ function connect() {
     connectTrys = 0;
     navigator.bluetooth.requestDevice(deviceOptions).then(device => {
         bluetoothDevice = device;
-        catchAdvertisment(device);
+        catchAdvertisement(device);
         bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
         addLog("Connecting to: " + bluetoothDevice.name);
         doConnect();
     }).catch(handleError);
 }
 
-function catchAdvertisment(device) {
+function catchAdvertisement(device) {
   const abortController = new AbortController();
   device.addEventListener('advertisementreceived', (event) => {
     console.log('Received advertisement from "' + device.name + '"...');
