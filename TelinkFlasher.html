@@ -497,7 +497,15 @@ window.onload = function() {
         var reader = new FileReader();
         reader.onload = function() {
             firmwareArray = bytesToHex(this.result);
+			if(firmwareArray.substring(16,24)!="4b4e4c54"){
+				alert("Select file is no telink firmware .bin");
+				addLog("Select file is no telink firmware .bin");
+				blockCount = 0;
+				firmwareArray = "";
+				return;
+			}
             addLog("File was selected, size: " + firmwareArray.length / 2 + " bytes");
+			
 
             if (firmwareArray.length % 32 !== 0) { // pad last block to 16bytes
                 var padHex = "ffffffffffffffffffffffffffffffff";
