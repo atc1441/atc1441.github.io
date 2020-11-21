@@ -130,7 +130,9 @@ function miAction() {
             return nitifiyCharTemp.startNotifications().then(() => {
                 nitifiyCharTemp.addEventListener('characteristicvaluechanged', event => {
                     var value = event.target.value;
-                    var temp = (value.getUint8(1) << 8 | value.getUint8(0)) / 100;
+                    var sign = value.getUint8(1) & (1 << 7);
+                    var temp = ((value.getUint8(1) & 0x7F) << 8 | value.getUint8(0)) / 100;
+                    if(sign) temp = -temp;
                     var hum = value.getUint8(2);
                     var tempTempString = "Temp/Humi: " + temp + "°C / " + hum + "%";
                     document.getElementById("tempHumiData").innerHTML = tempTempString;
