@@ -132,7 +132,7 @@ function miAction() {
                     var value = event.target.value;
                     var sign = value.getUint8(1) & (1 << 7);
                     var temp = ((value.getUint8(1) & 0x7F) << 8 | value.getUint8(0)) / 100;
-                    if(sign) temp = -temp;
+                    if(sign) temp = 327.67-temp;
                     var hum = value.getUint8(2);
                     var tempTempString = "Temp/Humi: " + temp + "°C / " + hum + "%";
                     document.getElementById("tempHumiData").innerHTML = tempTempString;
