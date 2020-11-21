@@ -111,11 +111,6 @@ function catchAdvertisement(device) {
     })
     abortController.abort();
   }, { once: true });
-  console.log('Catching advertisement from "' + device.name + '"...');
-  device.watchAdvertisements({ signal: abortController.signal })
-  .catch(error => {
-    console.log('Error: ' + error);
-  });
 }
 
 
