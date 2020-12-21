@@ -36,6 +36,9 @@ function resetVariables() {
     writeCharacteristic = null;
     miConnected = false;
     is_logged_in = false;
+    document.getElementById("known_id").value = '';
+    document.getElementById("mi_token").value = '';
+    document.getElementById("mi_bind_key").value = '';
 }
 
 function handleError(error) {
