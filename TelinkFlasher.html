@@ -679,6 +679,94 @@ function do_login_generate() {
     mainCharSend("00000100", enc_19);
 }
 </script>
+<script>
+
+function decimalToHex00(d) {
+    var hex = Number(d).toString(16);
+    while (hex.length < 2) {
+        hex = "0" + hex;
+    }
+    return hex;
+}
+function mapper_toggle() {
+  var mapper_content_div = document.getElementById("mapper_content");
+  var mapper_button = document.getElementById("mapper_toggle_button");
+  if (mapper_content_div.style.display === "none") {
+    mapper_content_div.style.display = "block";
+	mapper_button.innerText  = "Hide LCD Segment Mapper";
+  } else {
+    mapper_content_div.style.display = "none";
+	mapper_button.innerText  = "Show LCD Segment Mapper";
+  }
+}
+
+function mapper_send() {
+	var byte0 = 0;
+	var byte1 = 0;
+	var byte2 = 0;
+	var byte3 = 0;
+	var byte4 = 0;
+	var byte5 = 0;
+		
+	if(document.getElementById("check00").checked)byte0 += 1;
+	if(document.getElementById("check01").checked)byte0 += 2;
+	if(document.getElementById("check02").checked)byte0 += 4;
+	if(document.getElementById("check03").checked)byte0 += 8;
+	if(document.getElementById("check04").checked)byte0 += 16;
+	if(document.getElementById("check05").checked)byte0 += 32;
+	if(document.getElementById("check06").checked)byte0 += 64;
+	if(document.getElementById("check07").checked)byte0 += 128;
+		
+	if(document.getElementById("check10").checked)byte1 += 1;
+	if(document.getElementById("check11").checked)byte1 += 2;
+	if(document.getElementById("check12").checked)byte1 += 4;
+	if(document.getElementById("check13").checked)byte1 += 8;
+	if(document.getElementById("check14").checked)byte1 += 16;
+	if(document.getElementById("check15").checked)byte1 += 32;
+	if(document.getElementById("check16").checked)byte1 += 64;
+	if(document.getElementById("check17").checked)byte1 += 128;
+		
+	if(document.getElementById("check20").checked)byte2 += 1;
+	if(document.getElementById("check21").checked)byte2 += 2;
+	if(document.getElementById("check22").checked)byte2 += 4;
+	if(document.getElementById("check23").checked)byte2 += 8;
+	if(document.getElementById("check24").checked)byte2 += 16;
+	if(document.getElementById("check25").checked)byte2 += 32;
+	if(document.getElementById("check26").checked)byte2 += 64;
+	if(document.getElementById("check27").checked)byte2 += 128;
+		
+	if(document.getElementById("check30").checked)byte3 += 1;
+	if(document.getElementById("check31").checked)byte3 += 2;
+	if(document.getElementById("check32").checked)byte3 += 4;
+	if(document.getElementById("check33").checked)byte3 += 8;
+	if(document.getElementById("check34").checked)byte3 += 16;
+	if(document.getElementById("check35").checked)byte3 += 32;
+	if(document.getElementById("check36").checked)byte3 += 64;
+	if(document.getElementById("check37").checked)byte3 += 128;
+		
+	if(document.getElementById("check40").checked)byte4 += 1;
+	if(document.getElementById("check41").checked)byte4 += 2;
+	if(document.getElementById("check42").checked)byte4 += 4;
+	if(document.getElementById("check43").checked)byte4 += 8;
+	if(document.getElementById("check44").checked)byte4 += 16;
+	if(document.getElementById("check45").checked)byte4 += 32;
+	if(document.getElementById("check46").checked)byte4 += 64;
+	if(document.getElementById("check47").checked)byte4 += 128;
+		
+	if(document.getElementById("check50").checked)byte5 += 1;
+	if(document.getElementById("check51").checked)byte5 += 2;
+	if(document.getElementById("check52").checked)byte5 += 4;
+	if(document.getElementById("check53").checked)byte5 += 8;
+	if(document.getElementById("check54").checked)byte5 += 16;
+	if(document.getElementById("check55").checked)byte5 += 32;
+	if(document.getElementById("check56").checked)byte5 += 64;
+	if(document.getElementById("check57").checked)byte5 += 128;
+	
+	var segment_bytes_to_send = "dd" + decimalToHex00(byte0)+ decimalToHex00(byte1)+ decimalToHex00(byte2)+ decimalToHex00(byte3)+ decimalToHex00(byte4)+ decimalToHex00(byte5);
+	addLog("Sending Segment bytes: " + segment_bytes_to_send);
+	sendCustomSetting(segment_bytes_to_send);
+}
+</script>
 <big><big>Telink Flasher for Mi Thermostat</big></big><br>
 Copyright: Aaron Christophel / Atc1441  <a href="https://atcnetz.de">https://ATCnetz.de</a><br>
 <a href="https://youtu.be/NXKzFG61lNs">Video Manual</a> <a href="https://github.com/atc1441/ATC_MiThermometer">Custom firmware repo</a><br><br>
@@ -746,6 +834,79 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   This can be used to get instant advertising if the sensor data changes to fast. Temp divided by 10
   <br>
   <hr>
+ <div id="mapper"><button id="mapper_toggle_button" type="button" onclick="mapper_toggle();">Show LCD Segment Mapper</button><br>
+ 
+ <div style="display: none" id="mapper_content">
+ 
+ <div>
+ Byte0:
+  <input type="checkbox" id="check00">0</input>
+  <input type="checkbox" id="check01">1</input>
+  <input type="checkbox" id="check02">2</input>
+  <input type="checkbox" id="check03">3</input>
+  <input type="checkbox" id="check04">4</input>
+  <input type="checkbox" id="check05">5</input>
+  <input type="checkbox" id="check06">6</input>
+  <input type="checkbox" id="check07">7</input>
+ </div>
+ <div>
+ Byte1:
+  <input type="checkbox" id="check10">0</input>
+  <input type="checkbox" id="check11">1</input>
+  <input type="checkbox" id="check12">2</input>
+  <input type="checkbox" id="check13">3</input>
+  <input type="checkbox" id="check14">4</input>
+  <input type="checkbox" id="check15">5</input>
+  <input type="checkbox" id="check16">6</input>
+  <input type="checkbox" id="check17">7</input>
+ </div>
+ <div>
+ Byte2:
+  <input type="checkbox" id="check20">0</input>
+  <input type="checkbox" id="check21">1</input>
+  <input type="checkbox" id="check22">2</input>
+  <input type="checkbox" id="check23">3</input>
+  <input type="checkbox" id="check24">4</input>
+  <input type="checkbox" id="check25">5</input>
+  <input type="checkbox" id="check26">6</input>
+  <input type="checkbox" id="check27">7</input>
+ </div>
+ <div>
+ Byte3:
+  <input type="checkbox" id="check30">0</input>
+  <input type="checkbox" id="check31">1</input>
+  <input type="checkbox" id="check32">2</input>
+  <input type="checkbox" id="check33">3</input>
+  <input type="checkbox" id="check34">4</input>
+  <input type="checkbox" id="check35">5</input>
+  <input type="checkbox" id="check36">6</input>
+  <input type="checkbox" id="check37">7</input>
+ </div>
+ <div>
+ Byte4:
+  <input type="checkbox" id="check40">0</input>
+  <input type="checkbox" id="check41">1</input>
+  <input type="checkbox" id="check42">2</input>
+  <input type="checkbox" id="check43">3</input>
+  <input type="checkbox" id="check44">4</input>
+  <input type="checkbox" id="check45">5</input>
+  <input type="checkbox" id="check46">6</input>
+  <input type="checkbox" id="check47">7</input>
+ </div>
+ <div>
+ Byte5:
+  <input type="checkbox" id="check50">0</input>
+  <input type="checkbox" id="check51">1</input>
+  <input type="checkbox" id="check52">2</input>
+  <input type="checkbox" id="check53">3</input>
+  <input type="checkbox" id="check54">4</input>
+  <input type="checkbox" id="check55">5</input>
+  <input type="checkbox" id="check56">6</input>
+  <input type="checkbox" id="check57">7</input>
+ </div>
+ <button type="button" onclick="mapper_send()">Send bytes</button><br>
+ </div>
+ </div>
  <div id="log">Log:<br></div>
  <div id="result"></div>
 </body></html>
