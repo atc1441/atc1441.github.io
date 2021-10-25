@@ -797,6 +797,10 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <input type="text" id="cmdTXT" value="">
   <button type="button" onclick="sendCustomSetting(document.getElementById(&quot;cmdTXT&quot;).value,settingsCharacteristics);">Send</button>
   <br><br>
+  Settings:
+  <button type="button" onclick="sendCustomSetting(&quot;DF&quot;);">save current settings in flash</button>
+  <button type="button" onclick="sendCustomSetting(&quot;DE&quot;);">Reset settings to default</button>
+  <br><br>
   Smiley:
   <button type="button" onclick="sendCustomSetting(&quot;A0&quot;);">Off</button>
   <button type="button" onclick="sendCustomSetting(&quot;A1&quot;);">Happy</button>
@@ -832,6 +836,8 @@ Please select a .bin file you want to flash to a Telink BLE device.<br><br>
   <button type="button" onclick="sendCustomSetting(&quot;FD05&quot;);">Humi 5% instant alarm</button><br>
   To set other values use the text input with FC+temp alarm or FD+humi alarm with uint8_t values.
   This can be used to get instant advertising if the sensor data changes to fast. Temp divided by 10
+  <br>
+  To set a precise offset use the text input field with FA+offset for Temp and FB+offset for Humiditiy convert an int8 to hex.
   <br>
   <hr>
  <div id="mapper"><button id="mapper_toggle_button" type="button" onclick="mapper_toggle();">Show LCD Segment Mapper</button><br>
