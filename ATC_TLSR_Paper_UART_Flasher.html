@@ -166,13 +166,13 @@ async function FlashWrite() {
 	let sblk = 256; // max spi-flash fifo = 256
 	while(len > 0) {
 	    if((addr & 0x0fff) == 0) {
-	    	let s = 'Flash Sector Erase at 0x'+hex(addr, 6);
+	    	let s = Math.floor(addr / (firmwareArray.byteLength * 1.0) * 100) + '% Flash Sector Erase at 0x'+hex(addr, 6);
 	    	console.log(s);
 	    	swrite.innerHTML = s;
 	    	await SectorErase(addr);
 	    }
-		if(len < sblk) sblk = len;
-    	let s = 'Flash Write '+sblk+' bytes at 0x'+hex(addr, 6);
+		if(len < sblk) sblk = len;		
+    	let s = Math.floor(addr / (firmwareArray.byteLength * 1.0) * 100) + '% Flash Write '+sblk+' bytes at 0x'+hex(addr, 6);
     	console.log(s);
     	swrite.innerHTML = s;
 		await WriteFlashBlk(addr, new Uint8Array(firmwareArray.slice(addr, addr + sblk)));
