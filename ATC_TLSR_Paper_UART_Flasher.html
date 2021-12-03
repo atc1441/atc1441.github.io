@@ -37,6 +37,7 @@ const berase = $('butErase');
 const breset = $('butReset');
 const ubaud = $('ubaud');
 const uatime = $('uatime');
+const ufile = $('file');
 function log(data) {
 	console.log(data);
 	$("slog").innerHTML += new Date().toLocaleTimeString() + ": " + data + "<br>";
@@ -263,6 +264,9 @@ breset.onclick = async function() {
 	breset.disabled = false;
 	if(connect.opened && firmwareArray != null)
 		fwriter.disabled = false;
+};
+ufile.onclick = function(){ 
+  ufile.value = ""; 
 };
 window.onload = function() {
     document.querySelector("#file").addEventListener("change", function() {
