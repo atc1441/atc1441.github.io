@@ -1,8 +1,8 @@
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <title>ATC_TLSR_Paper BLE control</title>
-  </head>
-  <body>
-    <script>
+<title>ATC_TLSR_Paper BLE control</title>
+</head>
+<body>
+<script>
 	
         let gattServer;
         let Theservice;
@@ -69,8 +69,8 @@
 		
 		function sendIMGpart(){
 		if(imgArray.length > 0){
-			let currentpart = "03"+ imgArray.substring(0, 32);
-			imgArray = imgArray.substring(32);
+			let currentpart = "03"+ imgArray.substring(0, 38);
+			imgArray = imgArray.substring(38);
 			setStatus('Current part: '+ uploadPart++);
 			console.log('Curr Part: '+ currentpart);
 			sendCommand(hexToBytes(currentpart)).then(() => {			
@@ -180,6 +180,7 @@ Welcome to ATCnetz.de ATC_TLSR_Paper BLE control,<br>Click connect and select th
     <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">SendCMD</button><br><br>
 	250x122 Image 90° Rotated!<br><br>
   <button type="button" onclick="sendimg(document.getElementById(&quot;cmdIMAGE&quot;).value);">Send byte array image to E-Paper</button><br>
+ <div id="status">Upload status</div><br>
 	Use <a href="https://javl.github.io/image2cpp/" target="_blank">https://javl.github.io/image2cpp/</a> to create a "plain bytes" byte array and place it here:<br>
   <textarea id="cmdIMAGE" rows="50" cols="50">
   
@@ -436,6 +437,5 @@ Welcome to ATCnetz.de ATC_TLSR_Paper BLE control,<br>Click connect and select th
 </textarea><br>
   NOT WORKING RIGHT NOW!!! Select Image 1bpp .bmp!: <input type="file" accept=".bmp" id="file" onclick="resetFileSelector();"/><br>
  <div id="log">Connecting...<br></div>
- <div id="status">Upload status<br></div>
   
 </body></html>
