@@ -305,6 +305,13 @@ function resetFileSelector(){
   The ATC_TLSR_Paper Firmware can be found here: <a href="https://github.com/atc1441/ATC_TLSR_Paper"
     target="_blank">https://github.com/atc1441/ATC_TLSR_Paper</a><br><br>
   <button id="connectbutton" type="button" onclick="connect();">Connect</button><br><br>
+  <div id="status">Upload status</div><br>
+Please select a .bin file you want to flash to the Telink BLE device.<br>
+Connect to the Display and click on "Send Firmware" after the display is connected.<br>
+after all bytes are uploaded the display will do a CRC check and flash and reboot into the new firmware if all is ok.<br><br>
+  Select Firmware: <input type="file" accept=".bin" id="file" onclick="resetFileSelector();"/><br><br>
+  <button type="button" onclick="sendFile(0x20000,document.getElementById(&quot;cmdIMAGE&quot;).value);">Send Firmware</button><br>
+  <textarea id="cmdIMAGE" rows="12" cols="100"></textarea><br><br>
   <input type="text" id="positionText" value="20000">
   <button type="button"
     onclick="readFlash(Number('0x'+document.getElementById(&quot;positionText&quot;).value));">readFlash</button><br>
@@ -316,12 +323,7 @@ function resetFileSelector(){
   <input type="text" id="cmdTXT" value="0055">
   <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">SendCMD</button><br><br>
   <button id="w_fw_button" type="button" onclick="writeFW(0x20000,'1212123234321234');">Write FW</button><br>
-  <div id="status">Upload status</div><br>
-Please select a .bin file you want to flash to the Telink BLE device.<br><br>
-  Select Firmware: <input type="file" accept=".bin" id="file" onclick="resetFileSelector();"/><br><br>
-  <button type="button" onclick="sendFile(0x20000,document.getElementById(&quot;cmdIMAGE&quot;).value);">Send Firmware</button>
   <button type="button" onclick="doFinalFlash();">final flash</button><br>
-  <textarea id="cmdIMAGE" rows="12" cols="100"></textarea><br>
   <div id="log"><br></div>
 
 </body>
