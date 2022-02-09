@@ -11,6 +11,7 @@
     let imgArray;
     let imgArrayLen = 0;
     let uploadPart = 0;
+	let startTime = 0;
 
     function delay(delayInms) {
       return new Promise(resolve => {
@@ -80,7 +81,7 @@
     // Sending a 0x100 long dataset to a bank at given address
     async function sendPart(address, data) {
       hex_address = decimalToHex(address, 8);
-      var part_len = 36;
+      var part_len = 480;//36;
       while (data.length) {
         var cur_part_len = part_len;
         if (data.length < part_len)
@@ -90,7 +91,7 @@
         console.log("Sub Part: " + "03" + data_part);
         await sendCommand(hexToBytes("03" + data_part));
         fwBytesTransmited += cur_part_len;
-        setStatus('Current part: ' + fwBytesTransmited/2 + " All: " + fwSizeComplete/2);
+        setStatus('Current part: ' + fwBytesTransmited/2 + " All: " + fwSizeComplete/2 + " Time: " + (new Date().getTime() - startTime) / 1000.0 + "s");
       }
       await sendCommand(hexToBytes("02" + hex_address));
       console.log("Writing bank: " + hex_address);
@@ -132,6 +133,7 @@
     }
 
     async function sendFile(address, data) {
+      startTime = new Date().getTime();
       var part_len = 0x200;
       var addressOffset = 0;
 	  var inCRC = calculateCRC(data);

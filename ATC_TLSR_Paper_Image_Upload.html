@@ -11,6 +11,7 @@
 		let imgArray;
 		let imgArrayLen = 0;
 		let uploadPart = 0;
+		let startTime = 0;
 			
         function resetVariables() {
           busy = false;
@@ -55,6 +56,7 @@
         }
 		
         function sendimg(cmdIMG) {
+			startTime = new Date().getTime();
 			imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
 			imgArrayLen = imgArray.length;
 			uploadPart = 0;
@@ -69,9 +71,9 @@
 		
 		function sendIMGpart(){
 		if(imgArray.length > 0){
-			let currentpart = "03"+ imgArray.substring(0, 38);
-			imgArray = imgArray.substring(38);
-			setStatus('Current part: '+ uploadPart++);
+			let currentpart = "03"+ imgArray.substring(0, 480);
+			imgArray = imgArray.substring(480);
+			setStatus('Current part: '+ uploadPart++ + " Time: " + (new Date().getTime() - startTime) / 1000.0 + "s");
 			console.log('Curr Part: '+ currentpart);
 			sendCommand(hexToBytes(currentpart)).then(() => {			
 			sendIMGpart();
@@ -79,7 +81,8 @@
 		}else{	
 			console.log('Last Part: '+ imgArray);
             sendCommand(hexToBytes("01")).then(() => {
-            console.log('Update was send');
+            console.log("Update was send Time: " + (new Date().getTime() - startTime) / 1000.0 + "s");
+            setStatus("Update was send in: " + (new Date().getTime() - startTime) / 1000.0 + "s");
 			})
 		}
 		}
