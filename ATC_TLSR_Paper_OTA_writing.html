@@ -303,9 +303,12 @@
       }).catch();
     }
 
-    function setTime() {
-      let unixNow = Math.round(Date.now() / 1000)+60*60;
-      addLog("Setting time : dd" + intToHex4(unixNow));
+    function setTime(hourOffset) {
+      let unixNow = Math.round(Date.now() / 1000)+(60*60*hourOffset);
+	  
+	  var s = new Date(unixNow*1000).toLocaleTimeString("de-DE")
+
+      addLog("Setting time : " + s + " : dd" + intToHex4(unixNow));
       rxTxSendCommand(hexToBytes("dd" + intToHex4(unixNow)));
     }
 
@@ -392,7 +395,9 @@
   <button type="button" onclick="sendFile(0x20000,document.getElementById(&quot;cmdIMAGE&quot;).value);">Send
     Firmware</button><br>
   <textarea id="cmdIMAGE" rows="12" cols="100"></textarea><br><br>
-  <button type="button" onclick="setTime();">Set Time</button><br>
+  <label for="hour">Hour offset:</label>
+<input type="number" id="hourOffset" min="-12" max="12" value="0"/><br>
+  <button type="button" onclick="setTime(document.getElementById(&quot;hourOffset&quot;).value);">Set Time</button><br><br>
   <input type="text" id="positionText" value="20000">
   <button type="button"
     onclick="readFlash(Number('0x'+document.getElementById(&quot;positionText&quot;).value));">readFlash</button><br>
