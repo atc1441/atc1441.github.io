@@ -311,6 +311,12 @@
       addLog("Setting time : " + s + " : dd" + intToHex4(unixNow));
       rxTxSendCommand(hexToBytes("dd" + intToHex4(unixNow)));
     }
+	
+	function sendForceEpd(nr)
+	{
+      addLog("Forcing EPD : e0" + byteToHex(nr+1));
+      rxTxSendCommand(hexToBytes("e0" + byteToHex(nr+1)));
+	}
 
     function setStatus(statusText) {
       document.getElementById("status").innerHTML = statusText;
@@ -337,6 +343,12 @@
       return new Uint8Array(data).reduce(function (memo, i) {
         return memo + ("0" + i.toString(16)).slice(-2);
       }, "");
+    }
+
+    function byteToHex(intIn) {
+      var stringOut = "";
+      stringOut = ("0" + intIn.toString(16)).substr(-2)
+      return stringOut;
     }
 
     function intToHex(intIn) {
@@ -396,8 +408,16 @@
     Firmware</button><br>
   <textarea id="cmdIMAGE" rows="12" cols="100"></textarea><br><br>
   <label for="hour">Hour offset:</label>
-<input type="number" id="hourOffset" min="-12" max="12" value="0"/><br>
+<input type="number" id="hourOffset" min="-12" max="12" value="2"/><br>
   <button type="button" onclick="setTime(document.getElementById(&quot;hourOffset&quot;).value);">Set Time</button><br><br>
+  <label for="hour">Force EPD Model:</label>
+<select id="forceEPDselection">
+  <option>BW213</option>
+  <option>BWR213</option>
+  <option>BWR154</option>
+  <option>213ICE</option>
+</select>
+  <button type="button" onclick="sendForceEpd(document.getElementById(&quot;forceEPDselection&quot;).selectedIndex);">Force EPD</button><br><br>
   <input type="text" id="positionText" value="20000">
   <button type="button"
     onclick="readFlash(Number('0x'+document.getElementById(&quot;positionText&quot;).value));">readFlash</button><br>
