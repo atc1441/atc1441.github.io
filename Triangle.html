@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<body>
+<canvas id="myCanvas" width="600" height="600" style="border:1px solid #c3c3c3;"></canvas><br>
+<script>
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext("2d");
+let myarray = [];
+
+var triangleTopX = 500;
+var triangleTopY = 900;
+
+var triangleLeftX = 100;
+var triangleLeftY = 100;
+
+var triangleRightX = 900;
+var triangleRightY = 100; 
+
+
+var triangleNewX = 500;
+var triangleNewY = 500; 
+
+var triangleOldX = triangleTopX;
+var triangleOldY = triangleTopY; 
+
+function drawPixel(x,y)
+{
+	ctx.beginPath();
+	ctx.lineTo(((canvas.width/1000)*x), ((canvas.height/1000)*(1000-y)));
+	ctx.lineTo(((canvas.width/1000)*x-1), ((canvas.height/1000)*(1000-y))-1);
+	ctx.strokeStyle = 'blue';
+	ctx.stroke();
+}
+
+function getRandomInt(max)
+{
+	return Math.floor(Math.random() * max);
+}
+
+function getPoints(index)
+{
+	X = 0;
+	Y = 0;
+	if(index == 1)
+	{
+	X = triangleTopX;
+	Y = triangleTopY;
+	}
+	else if(index == 2)
+	{
+	X = triangleLeftX;
+	Y = triangleLeftY;
+	}
+	else
+	{
+	X = triangleRightX;
+	Y = triangleRightY;
+	}
+	
+	return {X,Y};
+}
+
+function timedInterval()
+{  
+	used = getPoints(getRandomInt(3));
+	triangleNewX = (used.X+triangleOldX)/2;
+	triangleNewY = (used.Y+triangleOldY)/2;
+	drawPixel(triangleNewX,triangleNewY);
+	triangleOldX = triangleNewX;
+	triangleOldY = triangleNewY;
+}
+
+drawPixel(triangleTopX,triangleTopY);
+drawPixel(triangleLeftX,triangleLeftY);
+drawPixel(triangleRightX,triangleRightY);
+myVar = setInterval(timedInterval, 1);
+</script>
+
+</body>
+</html>
