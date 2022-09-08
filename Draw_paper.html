@@ -12,11 +12,12 @@
   A changed pixel will show after 1,5 Seconds + Yt Delay<br>
   The time will be shown again after 1 minute no changes
   <br>
-
-    <canvas id="canvas" style="width:80mm; height:80mm; image-rendering: -moz-crisp-edges; image-rendering: pixelated; margin-bottom: 10px; border:1px solid black;" width="16" height="16"></canvas>
+<input type="button" value="All White" onclick="allWhite();" /><input type="button" value="All Black" onclick="allBlack();" /><br>
+    <canvas id="canvas" style="width:100mm; height:100mm; image-rendering: -moz-crisp-edges; image-rendering: pixelated; margin-bottom: 10px; border:1px solid black;" width="16" height="16"></canvas>
 
     <script>
       const draw_topic = 'paper/fill';
+      const sync_topic = 'paper/sync';
       const connect_topic = 'paper/connect';
       client = new Paho.MQTT.Client('wss://broker.emqx.io:8084/mqtt', Math.random().toString(36).substring(20));
 
@@ -30,6 +31,7 @@
       function onConnect() {
         console.log("onConnect");
         client.subscribe(draw_topic);
+        client.subscribe(sync_topic);
 
         message = new Paho.MQTT.Message("1");
         message.destinationName = connect_topic;
@@ -121,6 +123,25 @@
 
       }, true);
 	  
+	  function allWhite(){
+        let payload = new Uint8Array(16*16);
+		for(var i=0;i<payload.length;i++){
+			payload[i] = 1;
+		}
+        message = new Paho.MQTT.Message(payload);
+        message.destinationName = draw_topic;
+        client.send(message);
+	  }
+	  
+	  function allBlack(){
+        let payload = new Uint8Array(16*16);
+		for(var i=0;i<payload.length;i++){
+			payload[i] = 0;
+		}
+        message = new Paho.MQTT.Message(payload);
+        message.destinationName = draw_topic;
+        client.send(message);
+	  }
 	  
 	  
     </script>
