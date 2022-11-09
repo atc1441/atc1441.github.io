@@ -1,0 +1,176 @@
+<title>Conti BLE Reader</title>
+</head>
+<body>
+  <script>
+
+    let bleDevice;
+    let gattServer;
+    let Theservice;
+    let ServiceMain;
+    let readCharacteristic;
+    let reconnectTrys = 0;
+
+    function delay(delayInms) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve(2);
+        }, delayInms);
+      });
+    }
+
+    function resetVariables() {
+      gattServer = null;
+      Theservice = null;
+      readCharacteristic = null;
+      document.getElementById("log").value = '';
+      reconnectTrys = 0;
+    }
+
+    function handleError(error) {
+      console.log(error);
+      resetVariables();
+      if (bleDevice == null)
+        return;
+      if (reconnectTrys <= 5) {
+        reconnectTrys++;
+        connect();
+      }
+      else {
+        addLog("Was not able to connect, aborting");
+        reconnectTrys = 0;
+      }
+    }
+
+    function disconnect() {
+      resetVariables();
+      console.log('Disconnected.');
+      addLog('Disconnected.');
+      document.getElementById("connectbutton").innerHTML = 'Connect';
+    }
+
+    function handleNotify(data) {
+      addLog("Got bytes: " + bytesToHex(data.buffer));
+    }
+
+    function preConnect() {
+      if (gattServer != null && gattServer.connected) {
+        if (bleDevice != null && bleDevice.gatt.connected)
+          bleDevice.gatt.disconnect();
+      }
+      else {
+        connectTrys = 0;
+		
+	  var deviceOptions = {
+        optionalServices: ['00000a00-006c-6174-6e65-6e69746e6f43'],
+        acceptAllDevices: false,	
+		filters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz".split("").map((x) => ({ namePrefix: x })),		
+      };
+        navigator.bluetooth.requestDevice(deviceOptions).then(device => {
+          device.addEventListener('gattserverdisconnected', disconnect);
+          bleDevice = device;
+          connect();
+        }).catch(handleError);
+      }
+    }
+
+    function reConnect() {
+      connectTrys = 0;
+      if (bleDevice != null && bleDevice.gatt.connected)
+        bleDevice.gatt.disconnect();
+      resetVariables();
+      addLog("Reconnect");
+      setTimeout(function () { connect(); }, 300);
+    }
+	
+	async function read_val(){
+		if(readCharacteristic == null)
+			return;
+        if (bleDevice == null || !bleDevice.gatt.connected)
+			return;
+		var the_data = await readCharacteristic.readValue();		
+		console.log(bytesToHex(the_data.buffer));
+		
+		var ampere = uintToint16(the_data.getUint8(0) | (the_data.getUint8(1)<<8));
+		var voltage = the_data.getUint8(2) | (the_data.getUint8(3)<<8);
+		var percent = the_data.getUint8(4);
+			
+		addLog("" + percent + "% " + voltage + "mV " + ampere + "mA");
+		setTimeout(function () { read_val(); }, 1000);
+	}	
+
+    function connect() {
+      if (readCharacteristic == null) {
+        addLog("Connecting to: " + bleDevice.name);
+        bleDevice.gatt.connect().then(server => {
+          console.log('> Found GATT server');
+          gattServer = server;
+          return gattServer.getPrimaryService('00000a00-006c-6174-6e65-6e69746e6f43');
+        })
+          .then(service => {
+            console.log('> Found service');
+            Theservice = service;
+            return Theservice.getCharacteristic('00000a01-006c-6174-6e65-6e69746e6f43');
+          })
+          .then(characteristic => {
+            console.log('> Found write characteristic');
+            addLog('> Found write characteristic');
+            document.getElementById("connectbutton").innerHTML = 'Disconnect';
+            readCharacteristic = characteristic;
+            return readCharacteristic.readValue();
+          })
+			.then(value => {
+			read_val();
+ 		})
+          .catch(handleError);
+      }
+    }
+
+    function addLog(logTXT) {
+      var today = new Date();
+      var time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
+      document.getElementById("log").innerHTML += time + logTXT + '<br>';
+      console.log(time + logTXT);
+      while ((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 10) {
+        var logs_br_position = document.getElementById("log").innerHTML.search("<br>");
+        document.getElementById("log").innerHTML = document.getElementById("log").innerHTML.substring(logs_br_position + 4);
+      }
+    }
+
+    function hexToBytes(hex) {
+      for (var bytes = [], c = 0; c < hex.length; c += 2)
+        bytes.push(parseInt(hex.substr(c, 2), 16));
+      return new Uint8Array(bytes);
+    }
+
+    function bytesToHex(data) {
+      return new Uint8Array(data).reduce(function (memo, i) {
+        return memo + ("0" + i.toString(16)).slice(-2);
+      }, "");
+    }
+
+    function byteToHex(intIn) {
+      var stringOut = "";
+      stringOut = ("0" + intIn.toString(16)).substr(-2)
+      return stringOut;
+    }
+	
+	function uintToint16(dataIn)
+	{
+		var buffer = new ArrayBuffer(20);
+		var dataview1 = new DataView(buffer, 0, 10);
+		dataview1.setUint16(0, dataIn);// used to get the Int16 from Uint16
+		return dataview1.getInt16(0);
+	}
+  </script>
+  Conti BLE Batttery Reader<br><br>
+  Connect to a CEBS BLE Device<br>
+  Press the power button 3 seconds on the battery to enable it<br><br>
+  <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
+  <button id="connectbutton" type="button" onclick="reConnect();">Reconnect</button>
+  <button id="connectbutton" type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
+  <br><br>
+  <div id="log"><br></div>
+
+</body>
+
+</html>
