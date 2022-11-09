@@ -27,7 +27,7 @@
     }
 
     function handleError(error) {
-      console.log(error);
+	  addLog(error);
       resetVariables();
       if (bleDevice == null)
         return;
@@ -165,6 +165,8 @@
   Conti BLE Batttery Reader<br><br>
   Connect to a CEBS BLE Device<br>
   Press the power button 3 seconds on the battery to enable it<br><br>
+  This tool works best under Windows and with Chrome,<br>
+  check WebBluetooth compatibility <a href="https://github.com/WebBluetoothCG/web-bluetooth/blob/main/implementation-status.md" target="_blank">here</a><br><br>
   <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
   <button id="connectbutton" type="button" onclick="reConnect();">Reconnect</button>
   <button id="connectbutton" type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
