@@ -160,6 +160,9 @@ async function FlashWrite() {
 		return;
 	let t = new Date().getTime();
 	await Activate(uatime.value);
+	await FlashWriteEnable();
+	await FlashUnlock();
+	await delay(1500);
 	log('Write ' + firmwareArray.byteLength + ' bytes in to Flash...');
 	let len = firmwareArray.byteLength;
 	let addr = 0;
