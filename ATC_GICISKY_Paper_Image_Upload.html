@@ -1,281 +1,685 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
-<title>ATC GICISKY BLE control</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATC1441 BLE E-Paper Uploader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        h1 {
+            color: #007bff;
+            margin-bottom: 1px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-right: 5px;
+            color: #555;
+        }
+
+        input[type="text"],
+        select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 8px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        canvas {
+            border: 1px solid black;
+        }
+
+        textarea {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #ble-upload {
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 10px;
+        }
+
+        #ble-upload button {
+            background-color: #fff;
+            color: #007bff;
+        }
+
+        #ble-upload button:hover {
+            background-color: #ddd;
+        }
+
+        #log {
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f3f3f3;
+            color: black;
+        }
+    </style>
 </head>
+
 <body>
-<script>
-let bleDevice;
-let gattServer;
-let Theservice;
-let writeCharacteristic;
-let writeCharacteristicImg;
-let reconnectTrys = 0;
+    <div class="container">
+        <h1>ATC1441 BLE E-Paper Uploader</h1>
+        Select display or enter Raw Type from advertising data to create the image<br>
+        upload it then via the BLE part<br>
+        <a href="https://github.com/atc1441/ATC_GICISKY_ESL"
+            target="_blank">https://github.com/atc1441/ATC_GICISKY_ESL</a><br><br>
+        <label for="optionsSelect">Type:</label>
+        <select id="optionsSelect" onchange="updateParameters()">
+            <option value="Not Added">212x104 BW</option>
+            <option value="Not Added">212x104 BWR</option>
+            <option value="0030">296x128 BW</option>
+            <option value="0032">296x128 BWR</option>
+            <option value="0049">400x300 BW</option>
+            <option value="004B">400x300 BWR</option>
+            <option value="Not Added">640x384 BW</option>
+            <option value="Not Added">640x384 BWR</option>
+            <option value="Not Added">960x640 BW</option>
+            <option value="Not Added">960x640 BWR</option>
+            <option value="40A0">250x132 TFT</option>
+            <option value="Not Added">196x96 BW</option>
+            <option value="Not Added">196x96 BWR</option>
+            <option value="Not Added">640x480 BW</option>
+            <option value="Not Added">640x480 BWR</option>
+            <option value="4109">250x122 BW</option>
+            <option value="410B">250x122 BWR</option>
+            <option value="Not Added">800x480 BW</option>
+            <option value="Not Added">800x480 BWR</option>
+            <option value="Not Added">280x480 BW</option>
+            <option value="Not Added">280x480 BWR</option>
+        </select><br>
+        <label for="rawTypeInput">Raw Type:</label>
+        <input type="text" id="rawTypeInput" placeholder="Type" value="40A0">
+        <button onclick="decodeRaw()">Decode</button><br>
+        Type is first and last byte of advertising data, example: A01E810140 = 40A0<br><br>
+        <label for="widthInput">Width:</label>
+        <input type="text" id="widthInput" placeholder="Width" value="128">
+        <label for="heightInput">Height:</label>
+        <input type="text" id="heightInput" placeholder="Height" value="250">
+        <button onclick="createCanvas()">Create Canvas</button><br><br>
+        <input type="checkbox" id="compressionCheckbox">
+        <label for="compressionCheckbox">Compression</label>
+        <input type="checkbox" id="secondColorCheckbox">
+        <label for="secondColorCheckbox">Second Color</label>
+        <input type="checkbox" id="mirrorCheckbox">
+        <label for="mirrorCheckbox">Mirror Image</label><br><br>
+        <canvas id="myCanvas" width="100" height="50"></canvas><br><br>
+        <label for="textInput">Enter Text:</label>
+        <input type="text" id="textInput" placeholder="Text" value="Hello">
+        <button onclick="addText()">Add Text</button><br><br>
+        <button onclick="getPixelData()">Get Pixel Data</button><br><br>
+        <textarea id="pixelData" rows="4" cols="10"
+            readonly>983a000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075174010010080000000000a00ffffff000029ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75234010000080ffffffff000027fe0000001fffe1fe01ffe01e0000001fffffffffff75264010004480ffffffff000019fe0000001fffe1fe01ffe01e000203ffffff0900ffffffff75264010004480ffffffff0900fe0000001fffe1fe01ffe01e000203ffffff000019ffffffff752e4000400480fffe0000001fffe1fe01ffe01e000203ffffff00001efe1ffffe1fe001fe01ffe1fe000000801f752740c0000180fffe1fffffff00001ff100fe1fe001fe01ffe1f300ffffffffffffffffffffff75254010001180ffffffff000013fe1ffffe1fe001fe01ffe1f300ffffff000012ffffffff75254010001180ffffffff0300fe1ffffe1fe001fe01ffe1f300ffffff00001ffe1e001e1e75214000c002800001e1e01e01fe1e001e1fffffff00001ff2031e08011fffffff75224010000580ffffffff00001bfe1e001e1e0001e1e01e01f2031f0b00ffffffff75234010000d80ffffffff0b00fe1e001e1e0001e1e01e01f2031f0b000c00ffffffff752e4000001880fffffffe1e001e1e1e01e1ffe1fe1e1e001e1f010000001ffe1e001e1e1e01e1ffe100000080fe752440000510801e1e001e1fffffff00001ffee1031e1e01e1ffe1fe1e1e1603ffffffff75254010002080ffffffff000015fe1e001e1e1e01e1ffe1fe1e1e001e1f000013ffffffff75234010000780ffffffff0500fe1e001e1fe1fe001e1e01f303050000001afffe1e0075234000000b801e1fe1fe001e1e01fe1e001e1fffffff00001ff303e1e501001e1fff75214010000380ffffffff00001dfe1e001e1fe1fe001e1e01f3030900ffffffff75254010002280ffffffff0d00fe1ffffe1fe1e1e1fffffe1e0203ffffff000016ffffffff75274080280280fffffffffffe1f0100e1e1e101011e0203ffffff00001ffe1ffffe1fe1e1e1ff752540000c2080fffe1e1ffffe1fffffff00001ff100fe1fe1e1e1fffffe1e0503ffffffff75234010300480ffffffff000017fe0000001e1e1ef30301001fffffff0c00ffffffff75234010300480ffffffff0700fe0000001e1e1ef30301001fffffff00001cfffffffe752140c01001800000001e1e1ef30301001fffffff00001ffe000016021e000000751a40100800801fffffff000024e1e01e01e0000c02ffffffff75214010100080ffffffff000016e1e01e01e0001f000016ffffffffffffffffff751d4010300080ffffffff0600e1e01e01e0001f0600000021ffffe1e0752540000100801e01e0001fffffff000025e01e01fe1fe01fffe1ffffe01fffffffffffff75244010001180ffffffff00001be01e01fe1fe01fffe1ffff1101ffffff0a00ffffffff75244010001180ffffffff0b00e01e01fe1fe01fffe1ffff1101ffffff00001affffffff75284000100280ffffffe01e01fe1fe01fffe101031fffffff000021fe1e01fe01fe1e1e1e1ffe0175224040000880e0001fffffff000020fe1e01fe01fe1e1e1e1ffe010801ffffffff75274010008080ffffffff000014fe1e01fe01fe1e1e1e1ffe01e0001fffffff000012ffffffff75274010008080ffffffff0400fe1e01fe01fe1e1e1e1ffe01e0001fffffff00001ffe1e1e1e1f75234080080880e001e01fe00000f103ffffff000020fe1e1e1e1fe0011602ffffffff75254010002280ffffffff00001bfe1e1e1e1fe001e01fe00000f103ffffff0900ffffffff75254010002280ffffffff0b00fe1e1e1e1fe001e01fe00000f103ffffff000019ffffffff7526400000c080fffffffe01e001e000001e1e00001fffe1fe1fffffff00001fe5031e1e0000752440000120801fffe1fe1fffffff00001ffe01e001e000001e1e00001f1701ffffffff75274010000081ffffffff000015fe01e001e000001e1e00001fffe1fe1fffffff0e00ffffffff75254010004080ffffffff0600e1fffe1e1ffffe01fffe001fffe1ffffff00001fffffe1ff75214000800480fe1e1ffffe01fffe001fffe1ffffff000021e1fff800ffe1ffff75254010004080ffffffff00001ee1fffe1e1ffffe01fffe001fffe1ffffff0700ffffffff75244010001c80ffffffff0d00fe1fe001e01e1e1fe1e1fffe1ef1020d000800ffffffff752e4000004480fffffffffffe1fe001e01e1e1fe1e1fffe1ef102ffffff00001ffe1fe001e01e1e1f00000080e175234000041080e1fffe1e1e1e1fffffff00001ffe1fe001e01e1e1fe1e800ffffffff75224010000680ffffffff000018e1e1fe1ffe1e001e1fe00001e1010f00ffffffff75244010000e80ffffffff0800e1e1fe1ffe1e001e1fe00001e1010800000015ffffffff75214000100380e1e1fe1ffe1e001e1fe00001e101ffffff000020f8000001e1fe752540100040801fffffff000020e1e001e1ffe01e1e0000001e001fffffff0500ffffffff75264010004080ffffffff000012e1e001e1ffe01e1e0000001e001fffffff000015ffffffff75274010004080ffffffff0200e1e001e1ffe01e1e0000001e001fffffff000021e1e001e1ffe0752d40000800801e1e0000001e001fffffff000021fe01fe1e1e01ffe1ffffe1fe001e1fffffffff00000080ff75234010001080ffffffff00001afe01fe1e1e01ffe1ffffe1fe001e1f0d00ffffffff75244010003080ffffffff0a00fe01fe1e1e01ffe1ffffe1fe001e1f0a000f00ffffffff752f4000001080fffffe01fe1e1e01ffe1ffffe1fe001e1fffffff00001ffe1e001fe1e001e01e0100000080ffe000752440400020801ffe1fffffff00001ffe1e001fe1e001e01e01ffe0001ff700ffffffff75274010002080ffffffff000013fe1e001fe1e001e01e01ffe0001ffe1f000013ffffffffffff75274010006080ffffffff0300fe1e001fe1e001e01e01ffe0001ffe1f030000001dfe0000001f75244000401880ffffe01fffe1fffe1ffe1fffffff00001ffe000000010216011fffffff75274010000081ffffffff00001bfe0000001fffffe01fffe1fffe1ffe1fffffff0800ffffffff75274010000081ffffffff0b00fe0000001fffffe01fffe1fffe1ffe1fffffff000018ffffffff75294000800680fffffffe001e1fe01e01e01e1e0000e1011f010000001ffe001e1fe01e01e01e1e00752e4000012080001e00001fffffff00001ffe001e1fe01e01e01e1e0000e1011fffffffffffffffff00000080ff75244010000a80ffffffff000015fe001e1fe01e01e01e1e0000e1011f000013ffffffff75254010004080ffffffff0500fe01e01e01ffe01e000000000001ffffff000020fffe01e0752140004004801e01ffe01e000000000001ffffff000021fe01e0e80201ffffff75254010004080ffffffff00001dfe01e01e01ffe01e000000000001ffffff0800ffffffff75234010000880ffffffff000013fe0000001e1e1e1ffe001fffffff000017ffffffff75234010000880ffffffff0300fe0000001e1e1e1ffe001fffffff000024fe0000001e751e40008200801e1e1ffe001fffffff000024fe0000001ef802ffffffff75264010008080ffffffff000017fe0000001e001fe00001fe1e1e1e01ffffff0d00ffffffff75264010008080ffffffff0700fe0000001e001fe00001fe1e1e1e01ffffff00001dfffffffe752e40000002800000001e001fe00001fe1e1e1e01ffffff000020fe0000001e001fe00001fe1e1e000000801e01752f4010000080ffffffff00001ffe1ffffe1fe01fe01ffe001ffe01e01fffffffffffffffffffff00000080ffffff75274010000081ffffffff0f00fe1ffffe1fe01fe01ffe001ffe01e01fffffff000014ffffffff752e4000020081fffffffffffffffe1f0100e01fe01ffe001ffe01e01fffffff00001ffe1ffffe1fe0000000801f752f4000100080e01ffe001ffe01e01fffffff00001ffe1e001e1e01fe001e1fe000001e1e1fffff00000080ffffff75234010000a80ffffffff000019fe1e001e1e01fe001e1fe00011021f0d00ffffffff75254010001a80ffffffff0900fe1e001e1e01fe001e1fe00011021f0900000012ffffffff75274000200c80fffe1e001e1e01fe001e1fe00011021fffffff00001ff30300001e01e1ffffe0752240100008801fffffff000021fe1e001e1e00001e01e1ffffe01f0700ffffffff75274010000880ffffffff000013fe1e001e1e00001e01e1ffffe01f000013ffffffffffffffff75254010001880ffffffff0300fe1e001e1e00001e01e1ffffe01f030000001ffe1e001e1f75264000408080ffe01ffe1ffe01e000001fffffff00001ffe1e001e1fffe01ff5011fffffff75274010000081ffffffff00001bfe1e001e1fffe01ffe1ffe01e000001fffffff0800ffffffff75274010000081ffffffff0b00fe1e001e1fffe01ffe1ffe01e000001fffffff000018ffffffff75274020110380fffffffe1f0100e01ff20001fe01f100ffffff00001ef100fe1fe01ffe1ffffe7522400043028001fe01fe1fffffff00001ff100fe1fe01ff20001fee603ffffffff75254010101180ffffffff000015fe1ffffe1fe01ff20001fe01f100ffffff0d00ffffffff75254010202080ffffffff0500fe0000001ffe01fe0100e0001e1fffffff00001ffffe000075214020200280001ffe01fe0100e0001e1fffffff000020fe000018021e1fffff75254010202080ffffffff00001dfe0000001ffe01fe0100e0001e1fffffff0700ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75111810000080ffffffff0e00ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75174010010080ffffffff0a000000000000290000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075111810000080000000000e0000000000</textarea>
+        <div id="ble-upload">
+            <h2>BLE Upload</h2>
+            <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
+            <button type="button" onclick="reConnect();">Reconnect</button>
+            <button type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
+            <br><br>
+            <button type="button" onclick="sendimg(document.getElementById(&quot;pixelData&quot;).value);">Upload
+                Image</button>
+            <br><br>
+            <input type="text" id="cmdTXT" value="01">
+            <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">Send Debug
+                CMD</button>
+            <br>
+            <div id="status">Upload status</div>
+            <div id="log">Logs:</div>
+        </div>
+    </div>
+    <script>
+        function createCanvas() {
+            var width = parseInt(document.getElementById('widthInput').value);
+            var height = parseInt(document.getElementById('heightInput').value);
+            var canvas = document.getElementById('myCanvas');
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, width, height);
+        }
 
-let imgArray = "";
-let imgArrayLen = 0;
-let uploadPart = 0;
-	
-function resetVariables()
-{
-	gattServer = null;
-	Theservice = null;
-	writeCharacteristic = null;
-	writeCharacteristicImg = null;
-	document.getElementById("log").value = '';
-	imgArray = "";
-	imgArrayLen = 0;
-	uploadPart = 0;
-}
+        function addText() {
+            var canvas = document.getElementById('myCanvas');
+            var ctx = canvas.getContext('2d');
+            var text = document.getElementById('textInput').value;
+            var fontSize = 72;
+            var maxWidth = canvas.width - 20;
+            var x = canvas.width / 2;
+            var y = canvas.height / 2;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'black';
 
-function handleError(error)
-{
-	console.log(error);
-	resetVariables();
-	if(bleDevice == null)
-		return;
-	if(reconnectTrys <= 5)
-	{
-		reconnectTrys++;
-		connect();
-	}
-	else
-	{
-		addLog("Was not able to connect, aborting");
-		reconnectTrys = 0;
-	}
-}
+            do {
+                fontSize--;
+                ctx.font = fontSize + 'px Arial';
+            } while (ctx.measureText(text).width > maxWidth && fontSize > 0);
 
-async function sendCommandImg(cmd)
-{
-	if (writeCharacteristicImg)
-	{
-		await writeCharacteristicImg.writeValue(cmd);
-	}
-}
+            ctx.fillText(text, x, y);
+            var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
+            if (secondColorEnabled) {
+                ctx.fillStyle = 'red';
+                ctx.fillText(text, x, y + 40);
+            }
+        }
 
-async function sendCommand(cmd)
-{
-	if (writeCharacteristic)
-	{
-        await writeCharacteristic.writeValue(cmd);
-	}
-}
+        function buf2hex(buffer) {
+            return [...new Uint8Array(buffer)]
+                .map(x => x.toString(16).padStart(2, '0'))
+                .join('');
+        }
 
-async function sendcmd(cmdTXT)
-{
-	let cmd = hexToBytes(cmdTXT);
-	addLog('Send CMD: ' + cmdTXT);
-	await sendCommand(cmd);
-}
+        function getPixelData() {
+            var compressionEnabled = document.getElementById('compressionCheckbox').checked;
+            var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
+            var mirrorEnabled = document.getElementById('mirrorCheckbox').checked;
 
-function sendimg(cmdIMG)
-{
-	imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
-	imgArrayLen = imgArray.length;			
-	uploadPart = 0;
-	console.log('Sending image ' + imgArrayLen/2);
-	sendcmd("01");
-}
+            var canvas = document.getElementById('myCanvas');
+            var ctx = canvas.getContext('2d');
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-function img_state_handle(data)
-{		
-	switch(data.substring(0,2))
-	{
-		case "01":
-			if(data == "01f400")
-				sendcmd("02"+ intToHex(imgArrayLen/2)+"000000");
-			else
-				addLog("Please reconnect to send a new Image");		
-		break;
-		
-		case "02":
-			addLog("Sending now stage 3");
-			sendcmd("03");
-		break;
-		
-		case "05":
-			if(data.substring(2,4) == "08")
-			{
-				addLog("Image upload done, refreshing and reconecting now");
-				setTimeout(function() { reConnect(); }, 5000);
-			}
-			else if(data.substring(2,4) != "00")
-			{
-				addLog("Something wrong in the upload flow, aborting!!!");
-			}
-			else
-			{
-				sendIMGpart();
-			}
-		break;
-	}
-}
+            if (mirrorEnabled) {
+                var tempCanvas = document.createElement('canvas');
+                var tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
 
-function sendIMGpart()
-{
-	if(imgArray.length > 0)
-	{
-		let currentpart = intToHex(uploadPart)+ "0000"+ imgArray.substring(0, 480);
-		imgArray = imgArray.substring(480);
-		setStatus('Current part: '+ uploadPart++);
-		console.log('Curr Part: '+ currentpart);
-		sendCommandImg(hexToBytes(currentpart));
-	}
-	else
-	{
-		addLog("Img upload done");
-	}
-}
+                tempCtx.translate(canvas.width, 0);
+                tempCtx.scale(-1, 1);
+                tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+                imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+            }
 
-function disconnect()
-{
-    resetVariables();
-	addLog('Disconnected.');
-	document.getElementById("connectbutton").innerHTML ='Connect';
-}
+            var pixels = imageData.data;
+            var byteData = [];
+            var byteDataRed = [];
+            var currentByte = 0;
+            var currentByteRed = 0;
+            var bitPosition = 7;
 
-function handleNotify(data)
-{
-	addLog("Got bytes: " + bytesToHex(data.buffer));	  
-	setTimeout(function() { img_state_handle(bytesToHex(data.buffer)); }, 50);
-}
+            for (var i = 0; i < canvas.width; i++) {
+                for (var x = 0; x < canvas.height; x++) {
+                    var curr = ((i * canvas.height) + x) * 4;
+                    var r = pixels[curr];
+                    var g = pixels[curr + 1];
+                    var b = pixels[curr + 2];
+                    var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                    if (luminance > 128) {
+                        currentByte |= (1 << bitPosition);
+                    }
+                    if (r < 170) {
+                        currentByteRed |= (1 << bitPosition);
+                    }
+                    bitPosition--;
+                    if (bitPosition < 0) {
+                        byteData.push(currentByte);
+                        byteDataRed.push(currentByteRed);
+                        currentByte = 0;
+                        currentByteRed = 0;
+                        bitPosition = 7;
+                    }
+                }
+            }
 
-function preConnect()
-{
-	if (gattServer != null && gattServer.connected)
-	{
-		if (bleDevice != null && bleDevice.gatt.connected)
-			bleDevice.gatt.disconnect();
-	}
-	else
-	{
-		connectTrys = 0;
-		navigator.bluetooth.requestDevice({optionalServices: [0xFEF0],acceptAllDevices: true}).then(device =>
-		{			
-			device.addEventListener('gattserverdisconnected', disconnect);
-			bleDevice = device;
-			connect();
-		}).catch(handleError);
-	}
-}
+            if (bitPosition !== 7) {
+                byteData.push(currentByte);
+                byteDataRed.push(currentByteRed);
+            }
 
-function reConnect()
-{
-    connectTrys = 0;
-    if (bleDevice != null && bleDevice.gatt.connected)
-		bleDevice.gatt.disconnect();
-    resetVariables();
-    addLog("Reconnect");
-	setTimeout(function() { connect(); }, 300);    
-}
+            var byteDataCompressed = [];
+            var pixelDataTextarea = document.getElementById('pixelData');
 
-function connect()
-{
-    if (writeCharacteristic == null)
-	{
-		addLog("Connecting to: " + bleDevice.name);
-		bleDevice.gatt.connect().then(server =>
-		{
-			console.log('> Found GATT server');
-			gattServer = server;
-			return gattServer.getPrimaryService(0xFEF0);
-           }).then(service =>
-		{
-			console.log('> Found service');
-			Theservice = service;
-			return Theservice.getCharacteristic(0xFEF2);
-           }).then(characteristic =>
-		{
-			addLog('> Found write characteristicImg');
-			writeCharacteristicImg = characteristic;
-			return Theservice.getCharacteristic(0xFEF1);
-           }).then(characteristic =>
-		{
-			addLog('> Found write characteristic');
-			document.getElementById("connectbutton").innerHTML ='Disconnected';
-			writeCharacteristic = characteristic;
-			return writeCharacteristic.startNotifications().then(() =>
-			{
-				writeCharacteristic.addEventListener('characteristicvaluechanged', event =>
-				{
-					var value = event.target.value;
-					handleNotify(value);
-				});
-			});
-           }).catch(handleError);
-	}
-}
+            if (compressionEnabled) {
+                var currentPosi = 0;
+                var byte_per_line = canvas.height / 8;
+                byteDataCompressed.push(0x00);
+                byteDataCompressed.push(0x00);
+                byteDataCompressed.push(0x00);
+                byteDataCompressed.push(0x00);
+                for (var i = 0; i < canvas.width; i += 1) {
+                    byteDataCompressed.push(0x75);
+                    byteDataCompressed.push(byte_per_line + 7);
+                    byteDataCompressed.push(byte_per_line);
+                    byteDataCompressed.push(0x00);
+                    byteDataCompressed.push(0x00);
+                    byteDataCompressed.push(0x00);
+                    byteDataCompressed.push(0x00);
+                    for (var b = 0; b < byte_per_line; b++) {
+                        byteDataCompressed.push(byteData[currentPosi++]);
+                    }
+                }
+                if (secondColorEnabled) {
+                    for (var i = 0; i < canvas.width; i += 1) {
+                        byteDataCompressed.push(0x75);
+                        byteDataCompressed.push(byte_per_line + 7);
+                        byteDataCompressed.push(byte_per_line);
+                        byteDataCompressed.push(0x00);
+                        byteDataCompressed.push(0x00);
+                        byteDataCompressed.push(0x00);
+                        byteDataCompressed.push(0x00);
+                        for (var b = 0; b < byte_per_line; b++) {
+                            byteDataCompressed.push(byteData[currentPosi++]);
+                        }
+                    }
+                }
+                byteDataCompressed[0] = byteDataCompressed.length & 0xff;
+                byteDataCompressed[1] = (byteDataCompressed.length >> 8) & 0xff;
+                byteDataCompressed[2] = (byteDataCompressed.length >> 16) & 0xff;
+                byteDataCompressed[3] = (byteDataCompressed.length >> 24) & 0xff;
+            } else {
+                for (var b = 0; b < byteData.length; b++) {
+                    byteDataCompressed.push(byteData[b]);
+                }
+                if (secondColorEnabled) {
+                    for (var b = 0; b < byteDataRed.length; b++) {
+                        byteDataCompressed.push(byteDataRed[b]);
+                    }
+                }
+            }
+            pixelDataTextarea.value = buf2hex(byteDataCompressed);
 
-function setStatus(statusText)
-{
-	document.getElementById("status").innerHTML = statusText;
-}
-		
-function addLog(logTXT)
-{
-    var today = new Date();
-    var time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
-	document.getElementById("log").innerHTML += time + logTXT + '<br>';
-	console.log(time + logTXT);
-    while((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 10)
-	{
-		var logs_br_position = document.getElementById("log").innerHTML.search("<br>");
-		document.getElementById("log").innerHTML = document.getElementById("log").innerHTML.substring(logs_br_position+4);
-    }
-}
+        }
 
-function hexToBytes(hex)
-{
-    for (var bytes = [], c = 0; c < hex.length; c += 2)
-        bytes.push(parseInt(hex.substr(c, 2), 16));
-    return new Uint8Array(bytes);
-}
+        function doAll() {
+            createCanvas();
+            addText();
+            getPixelData();
+        }
 
-function bytesToHex(data)
-{
-    return new Uint8Array(data).reduce(
-	function(memo, i)
-	{
-        return memo + ("0" + i.toString(16)).slice(-2);
-	}, "");
-}
+        function updateParameters() {
+            var select = document.getElementById("optionsSelect");
+            var selectedValue = select.options[select.selectedIndex].value;
+            document.getElementById("rawTypeInput").value = selectedValue;
+            decodeTypes(Number("0x" + selectedValue));
+        }
 
-function intToHex(intIn)
-{
-	var stringOut = "";
-	stringOut = ("0000" + intIn.toString(16)).substr(-4)
-	return stringOut.substring(2,4) + stringOut.substring(0,2);
-}
+        function decodeRaw() {
+            var rawTypeIn = document.getElementById("rawTypeInput").value;
+            decodeTypes(Number("0x" + rawTypeIn));
+        }
 
-</script>
-	Welcome to ATCnetz.de ATC GICISKY ESL BLE control,
-	<br>
-	Click connect and select the GICISKY ESL You want to Refresh
-	<br><br>
-	
-	<a href="https://github.com/atc1441/ATC_GICISKY_ESL" target="_blank">https://github.com/atc1441/ATC_GICISKY_ESL</a><br><br>
-	<br><br>
-	
-	<button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
-	<button id="connectbutton" type="button" onclick="reConnect();">Reconnect</button>
-	<button id="connectbutton" type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
-	<br><br>
-	
-	<input type="text" id="cmdTXT" value="01">
-	<button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">Send Debug CMD</button>
-	<br><br>
-	
-	<button type="button" onclick="sendimg(document.getElementById(&quot;cmdIMAGE&quot;).value);">Send Image to E-Paper</button>
-	<br>
-	
-	<div id="status">
-	Upload status</div>
-	<br>
-	
-	<textarea id="cmdIMAGE" rows="10" cols="90">983a000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075174010010080000000000a00ffffff000029ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75234010000080ffffffff000027fe0000001fffe1fe01ffe01e0000001fffffffffff75264010004480ffffffff000019fe0000001fffe1fe01ffe01e000203ffffff0900ffffffff75264010004480ffffffff0900fe0000001fffe1fe01ffe01e000203ffffff000019ffffffff752e4000400480fffe0000001fffe1fe01ffe01e000203ffffff00001efe1ffffe1fe001fe01ffe1fe000000801f752740c0000180fffe1fffffff00001ff100fe1fe001fe01ffe1f300ffffffffffffffffffffff75254010001180ffffffff000013fe1ffffe1fe001fe01ffe1f300ffffff000012ffffffff75254010001180ffffffff0300fe1ffffe1fe001fe01ffe1f300ffffff00001ffe1e001e1e75214000c002800001e1e01e01fe1e001e1fffffff00001ff2031e08011fffffff75224010000580ffffffff00001bfe1e001e1e0001e1e01e01f2031f0b00ffffffff75234010000d80ffffffff0b00fe1e001e1e0001e1e01e01f2031f0b000c00ffffffff752e4000001880fffffffe1e001e1e1e01e1ffe1fe1e1e001e1f010000001ffe1e001e1e1e01e1ffe100000080fe752440000510801e1e001e1fffffff00001ffee1031e1e01e1ffe1fe1e1e1603ffffffff75254010002080ffffffff000015fe1e001e1e1e01e1ffe1fe1e1e001e1f000013ffffffff75234010000780ffffffff0500fe1e001e1fe1fe001e1e01f303050000001afffe1e0075234000000b801e1fe1fe001e1e01fe1e001e1fffffff00001ff303e1e501001e1fff75214010000380ffffffff00001dfe1e001e1fe1fe001e1e01f3030900ffffffff75254010002280ffffffff0d00fe1ffffe1fe1e1e1fffffe1e0203ffffff000016ffffffff75274080280280fffffffffffe1f0100e1e1e101011e0203ffffff00001ffe1ffffe1fe1e1e1ff752540000c2080fffe1e1ffffe1fffffff00001ff100fe1fe1e1e1fffffe1e0503ffffffff75234010300480ffffffff000017fe0000001e1e1ef30301001fffffff0c00ffffffff75234010300480ffffffff0700fe0000001e1e1ef30301001fffffff00001cfffffffe752140c01001800000001e1e1ef30301001fffffff00001ffe000016021e000000751a40100800801fffffff000024e1e01e01e0000c02ffffffff75214010100080ffffffff000016e1e01e01e0001f000016ffffffffffffffffff751d4010300080ffffffff0600e1e01e01e0001f0600000021ffffe1e0752540000100801e01e0001fffffff000025e01e01fe1fe01fffe1ffffe01fffffffffffff75244010001180ffffffff00001be01e01fe1fe01fffe1ffff1101ffffff0a00ffffffff75244010001180ffffffff0b00e01e01fe1fe01fffe1ffff1101ffffff00001affffffff75284000100280ffffffe01e01fe1fe01fffe101031fffffff000021fe1e01fe01fe1e1e1e1ffe0175224040000880e0001fffffff000020fe1e01fe01fe1e1e1e1ffe010801ffffffff75274010008080ffffffff000014fe1e01fe01fe1e1e1e1ffe01e0001fffffff000012ffffffff75274010008080ffffffff0400fe1e01fe01fe1e1e1e1ffe01e0001fffffff00001ffe1e1e1e1f75234080080880e001e01fe00000f103ffffff000020fe1e1e1e1fe0011602ffffffff75254010002280ffffffff00001bfe1e1e1e1fe001e01fe00000f103ffffff0900ffffffff75254010002280ffffffff0b00fe1e1e1e1fe001e01fe00000f103ffffff000019ffffffff7526400000c080fffffffe01e001e000001e1e00001fffe1fe1fffffff00001fe5031e1e0000752440000120801fffe1fe1fffffff00001ffe01e001e000001e1e00001f1701ffffffff75274010000081ffffffff000015fe01e001e000001e1e00001fffe1fe1fffffff0e00ffffffff75254010004080ffffffff0600e1fffe1e1ffffe01fffe001fffe1ffffff00001fffffe1ff75214000800480fe1e1ffffe01fffe001fffe1ffffff000021e1fff800ffe1ffff75254010004080ffffffff00001ee1fffe1e1ffffe01fffe001fffe1ffffff0700ffffffff75244010001c80ffffffff0d00fe1fe001e01e1e1fe1e1fffe1ef1020d000800ffffffff752e4000004480fffffffffffe1fe001e01e1e1fe1e1fffe1ef102ffffff00001ffe1fe001e01e1e1f00000080e175234000041080e1fffe1e1e1e1fffffff00001ffe1fe001e01e1e1fe1e800ffffffff75224010000680ffffffff000018e1e1fe1ffe1e001e1fe00001e1010f00ffffffff75244010000e80ffffffff0800e1e1fe1ffe1e001e1fe00001e1010800000015ffffffff75214000100380e1e1fe1ffe1e001e1fe00001e101ffffff000020f8000001e1fe752540100040801fffffff000020e1e001e1ffe01e1e0000001e001fffffff0500ffffffff75264010004080ffffffff000012e1e001e1ffe01e1e0000001e001fffffff000015ffffffff75274010004080ffffffff0200e1e001e1ffe01e1e0000001e001fffffff000021e1e001e1ffe0752d40000800801e1e0000001e001fffffff000021fe01fe1e1e01ffe1ffffe1fe001e1fffffffff00000080ff75234010001080ffffffff00001afe01fe1e1e01ffe1ffffe1fe001e1f0d00ffffffff75244010003080ffffffff0a00fe01fe1e1e01ffe1ffffe1fe001e1f0a000f00ffffffff752f4000001080fffffe01fe1e1e01ffe1ffffe1fe001e1fffffff00001ffe1e001fe1e001e01e0100000080ffe000752440400020801ffe1fffffff00001ffe1e001fe1e001e01e01ffe0001ff700ffffffff75274010002080ffffffff000013fe1e001fe1e001e01e01ffe0001ffe1f000013ffffffffffff75274010006080ffffffff0300fe1e001fe1e001e01e01ffe0001ffe1f030000001dfe0000001f75244000401880ffffe01fffe1fffe1ffe1fffffff00001ffe000000010216011fffffff75274010000081ffffffff00001bfe0000001fffffe01fffe1fffe1ffe1fffffff0800ffffffff75274010000081ffffffff0b00fe0000001fffffe01fffe1fffe1ffe1fffffff000018ffffffff75294000800680fffffffe001e1fe01e01e01e1e0000e1011f010000001ffe001e1fe01e01e01e1e00752e4000012080001e00001fffffff00001ffe001e1fe01e01e01e1e0000e1011fffffffffffffffff00000080ff75244010000a80ffffffff000015fe001e1fe01e01e01e1e0000e1011f000013ffffffff75254010004080ffffffff0500fe01e01e01ffe01e000000000001ffffff000020fffe01e0752140004004801e01ffe01e000000000001ffffff000021fe01e0e80201ffffff75254010004080ffffffff00001dfe01e01e01ffe01e000000000001ffffff0800ffffffff75234010000880ffffffff000013fe0000001e1e1e1ffe001fffffff000017ffffffff75234010000880ffffffff0300fe0000001e1e1e1ffe001fffffff000024fe0000001e751e40008200801e1e1ffe001fffffff000024fe0000001ef802ffffffff75264010008080ffffffff000017fe0000001e001fe00001fe1e1e1e01ffffff0d00ffffffff75264010008080ffffffff0700fe0000001e001fe00001fe1e1e1e01ffffff00001dfffffffe752e40000002800000001e001fe00001fe1e1e1e01ffffff000020fe0000001e001fe00001fe1e1e000000801e01752f4010000080ffffffff00001ffe1ffffe1fe01fe01ffe001ffe01e01fffffffffffffffffffff00000080ffffff75274010000081ffffffff0f00fe1ffffe1fe01fe01ffe001ffe01e01fffffff000014ffffffff752e4000020081fffffffffffffffe1f0100e01fe01ffe001ffe01e01fffffff00001ffe1ffffe1fe0000000801f752f4000100080e01ffe001ffe01e01fffffff00001ffe1e001e1e01fe001e1fe000001e1e1fffff00000080ffffff75234010000a80ffffffff000019fe1e001e1e01fe001e1fe00011021f0d00ffffffff75254010001a80ffffffff0900fe1e001e1e01fe001e1fe00011021f0900000012ffffffff75274000200c80fffe1e001e1e01fe001e1fe00011021fffffff00001ff30300001e01e1ffffe0752240100008801fffffff000021fe1e001e1e00001e01e1ffffe01f0700ffffffff75274010000880ffffffff000013fe1e001e1e00001e01e1ffffe01f000013ffffffffffffffff75254010001880ffffffff0300fe1e001e1e00001e01e1ffffe01f030000001ffe1e001e1f75264000408080ffe01ffe1ffe01e000001fffffff00001ffe1e001e1fffe01ff5011fffffff75274010000081ffffffff00001bfe1e001e1fffe01ffe1ffe01e000001fffffff0800ffffffff75274010000081ffffffff0b00fe1e001e1fffe01ffe1ffe01e000001fffffff000018ffffffff75274020110380fffffffe1f0100e01ff20001fe01f100ffffff00001ef100fe1fe01ffe1ffffe7522400043028001fe01fe1fffffff00001ff100fe1fe01ff20001fee603ffffffff75254010101180ffffffff000015fe1ffffe1fe01ff20001fe01f100ffffff0d00ffffffff75254010202080ffffffff0500fe0000001ffe01fe0100e0001e1fffffff00001ffffe000075214020200280001ffe01fe0100e0001e1fffffff000020fe000018021e1fffff75254010202080ffffffff00001dfe0000001ffe01fe0100e0001e1fffffff0700ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75111810000080ffffffff0e00ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75124010000080ffffffff000038ffffffff75174010010080ffffffff0a000000000000290000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075124010000080000000000000380000000075111810000080000000000e0000000000</textarea><br>
-	
-	<div id="log">
-	<br>
-	</div>
+        function decodeTypes(rawType) {
+            var screenResolution = (rawType >> 5) & 63;
+            var dispPtype = (rawType >> 3) & 3;
+            var availColors = ((rawType >> 1) & 3) + ((rawType >> 10) & 12);
+            var singleDoubleMirror = rawType & 1;
+            var canDoCompression = (rawType & 0x4000) ? 0 : 1;
+
+            console.log("Display Resolution: " + screenResolution);
+            console.log("Display Type: " + dispPtype);
+            console.log("Display Colors: " + availColors);
+            console.log("Display Mirror: " + singleDoubleMirror);
+            console.log("Display Compression: " + canDoCompression);
+
+
+            if (canDoCompression)
+                document.getElementById('compressionCheckbox').checked = true;
+            else
+                document.getElementById('compressionCheckbox').checked = false;
+
+
+            switch (screenResolution) {
+                case 0:
+                    document.getElementById('widthInput').value = "104";
+                    document.getElementById('heightInput').value = "212";
+                    break;
+                case 1:
+                    document.getElementById('widthInput').value = "128";
+                    document.getElementById('heightInput').value = "296";
+                    break;
+                case 2:
+                    document.getElementById('widthInput').value = "400";
+                    document.getElementById('heightInput').value = "300";
+                    break;
+                case 3:
+                    document.getElementById('widthInput').value = "384";
+                    document.getElementById('heightInput').value = "640";
+                    break;
+                case 4:
+                    document.getElementById('widthInput').value = "640";
+                    document.getElementById('heightInput').value = "960";
+                    break;
+                case 5:
+                    document.getElementById('widthInput').value = "132";
+                    document.getElementById('heightInput').value = "250";
+                    break;
+                case 6:
+                    document.getElementById('widthInput').value = "96";
+                    document.getElementById('heightInput').value = "196";
+                    break;
+                case 7:
+                    document.getElementById('widthInput').value = "480";
+                    document.getElementById('heightInput').value = "640";
+                    break;
+                case 8:
+                    document.getElementById('widthInput').value = "128";
+                    document.getElementById('heightInput').value = "250";
+                    break;
+                case 9:
+                    document.getElementById('widthInput').value = "480";
+                    document.getElementById('heightInput').value = "800";
+                    break;
+                case 10:
+                    document.getElementById('widthInput').value = "480";
+                    document.getElementById('heightInput').value = "280";
+                    break;
+            }
+
+            switch (dispPtype) {
+                case 0:// TFT
+                    document.getElementById('mirrorCheckbox').checked = false;
+                    break;
+                case 1:// EPA
+                    document.getElementById('mirrorCheckbox').checked = true;
+                    break;
+                case 2:// EPA1
+                    document.getElementById('mirrorCheckbox').checked = false;
+                    break;
+                case 3:// EPA2
+                    document.getElementById('mirrorCheckbox').checked = true;
+                    break;
+            }
+            switch (availColors) {
+                case 0:// BW
+                    document.getElementById('secondColorCheckbox').checked = false;
+                    break;
+                case 1:// BWR
+                    document.getElementById('secondColorCheckbox').checked = true;
+                    break;
+                case 2:// BWY
+                    document.getElementById('secondColorCheckbox').checked = true;
+                    break;
+                case 3:// BWRY
+                    document.getElementById('secondColorCheckbox').checked = true;
+                    break;
+                case 4:// BWRGBYO
+                    document.getElementById('secondColorCheckbox').checked = true;
+                    break;
+            }
+            switch (singleDoubleMirror) {
+                case 0:// Single image
+                    break;
+                case 1:// 2 Images
+                    break;
+            }
+
+            doAll();
+        }
+    </script>
+    <script>
+        let bleDevice;
+        let gattServer;
+        let Theservice;
+        let writeCharacteristic;
+        let writeCharacteristicImg;
+        let reconnectTrys = 0;
+
+        let imgArray = "";
+        let imgArrayLen = 0;
+        let uploadPart = 0;
+
+        function resetVariables() {
+            gattServer = null;
+            Theservice = null;
+            writeCharacteristic = null;
+            writeCharacteristicImg = null;
+            document.getElementById("log").value = '';
+            imgArray = "";
+            imgArrayLen = 0;
+            uploadPart = 0;
+        }
+
+        function handleError(error) {
+            console.log(error);
+            resetVariables();
+            if (bleDevice == null)
+                return;
+            if (reconnectTrys <= 5) {
+                reconnectTrys++;
+                connect();
+            }
+            else {
+                addLog("Was not able to connect, aborting");
+                reconnectTrys = 0;
+            }
+        }
+
+        function delayPromise(delay) {
+            return new Promise(resolve => {
+                setTimeout(resolve, delay);
+            });
+        }
+
+        async function sendCommandImg(cmd) {
+            if (writeCharacteristicImg) {
+                await writeCharacteristicImg.writeValue(cmd)
+                    .catch(() => {
+                        addLog("DOMException: GATT operation already in progress.")
+                        return Promise.resolve()
+                            .then(() => this.delayPromise(500))
+                            .then(() => { writeCharacteristicImg.writeValue(cmd); });
+                    });
+            }
+        }
+
+        async function sendCommand(cmd) {
+            if (writeCharacteristic) {
+                await writeCharacteristic.writeValue(cmd)
+                    .catch(() => {
+                        addLog("DOMException: GATT operation already in progress.")
+                        return Promise.resolve()
+                            .then(() => this.delayPromise(500))
+                            .then(() => { writeCharacteristic.writeValue(cmd); });
+                    });
+            }
+        }
+
+        async function sendcmd(cmdTXT) {
+            let cmd = hexToBytes(cmdTXT);
+            addLog('Send CMD: ' + cmdTXT);
+            await sendCommand(cmd);
+        }
+
+        function sendimg(cmdIMG) {
+            imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            imgArrayLen = imgArray.length;
+            uploadPart = 0;
+            console.log('Sending image ' + imgArrayLen / 2);
+            sendcmd("01");
+        }
+
+        function img_state_handle(data) {
+            switch (data.substring(0, 2)) {
+                case "01":
+                    if (data == "01f400")
+                        sendcmd("02" + intToHex(imgArrayLen / 2) + "000000");
+                    else
+                        addLog("Please reconnect to send a new Image");
+                    break;
+
+                case "02":
+                    addLog("Sending now stage 3");
+                    sendcmd("03");
+                    break;
+
+                case "05":
+                    if (data.substring(2, 4) == "08") {
+                        addLog("Image upload done, refreshing and reconecting now");
+                        if (gattServer != null && gattServer.connected) {
+                            if (bleDevice != null && bleDevice.gatt.connected)
+                                bleDevice.gatt.disconnect();
+                        }
+                        setTimeout(function () { reConnect(); }, 5000);
+                    }
+                    else if (data.substring(2, 4) != "00") {
+                        addLog("Something wrong in the upload flow, aborting!!!");
+                    }
+                    else {
+                        sendIMGpart(data.substring(4, 12));
+                    }
+                    break;
+            }
+        }
+
+        var oldPart = "";
+        function sendIMGpart(partAcked) {
+            if (imgArray.length > 0) {
+                let currentpart = oldPart;
+                console.log("PartACK: " + partAcked + " PartUpload: " + intToHex(uploadPart));
+                if (partAcked == intToHex(uploadPart)) {
+                    currentpart = intToHex(uploadPart) + imgArray.substring(0, 480);
+                    oldPart = currentpart;
+                    imgArray = imgArray.substring(480);
+                    setStatus('Current part: ' + uploadPart);
+                    uploadPart++;
+                } else {
+                    addLog("Resending last part because of error");
+                }
+                console.log('Curr Part: ' + currentpart);
+                sendCommandImg(hexToBytes(currentpart));
+            }
+            else {
+                addLog("Img upload done");
+            }
+        }
+
+        function disconnect() {
+            resetVariables();
+            addLog('Disconnected.');
+            document.getElementById("connectbutton").innerHTML = 'Connect';
+        }
+
+        function handleNotify(data) {
+            addLog("Got bytes: " + bytesToHex(data.buffer));
+            setTimeout(function () { img_state_handle(bytesToHex(data.buffer)); }, 50);
+        }
+
+        function preConnect() {
+            if (gattServer != null && gattServer.connected) {
+                if (bleDevice != null && bleDevice.gatt.connected)
+                    bleDevice.gatt.disconnect();
+            }
+            else {
+                connectTrys = 0;
+                navigator.bluetooth.requestDevice({ optionalServices: [0xFEF0], acceptAllDevices: true }).then(device => {
+                    device.addEventListener('gattserverdisconnected', disconnect);
+                    bleDevice = device;
+                    connect();
+                }).catch(handleError);
+            }
+        }
+
+        function reConnect() {
+            connectTrys = 0;
+            if (bleDevice != null && bleDevice.gatt.connected)
+                bleDevice.gatt.disconnect();
+            resetVariables();
+            addLog("Reconnect");
+            setTimeout(function () { connect(); }, 300);
+        }
+
+        function connect() {
+            if (writeCharacteristic == null) {
+                addLog("Connecting to: " + bleDevice.name);
+                bleDevice.gatt.connect().then(server => {
+                    console.log('> Found GATT server');
+                    gattServer = server;
+                    return gattServer.getPrimaryService(0xFEF0);
+                }).then(service => {
+                    console.log('> Found service');
+                    Theservice = service;
+                    return Theservice.getCharacteristic(0xFEF2);
+                }).then(characteristic => {
+                    addLog('> Found write characteristicImg');
+                    writeCharacteristicImg = characteristic;
+                    return Theservice.getCharacteristic(0xFEF1);
+                }).then(characteristic => {
+                    addLog('> Found write characteristic');
+                    document.getElementById("connectbutton").innerHTML = 'Disconnected';
+                    writeCharacteristic = characteristic;
+                    return writeCharacteristic.startNotifications().then(() => {
+                        writeCharacteristic.addEventListener('characteristicvaluechanged', event => {
+                            var value = event.target.value;
+                            handleNotify(value);
+                        });
+                    });
+                }).catch(handleError);
+            }
+        }
+
+        function setStatus(statusText) {
+            document.getElementById("status").innerHTML = statusText;
+        }
+
+        function addLog(logTXT) {
+            var today = new Date();
+            var time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
+            document.getElementById("log").innerHTML += time + logTXT + '<br>';
+            console.log(time + logTXT);
+            while ((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 10) {
+                var logs_br_position = document.getElementById("log").innerHTML.search("<br>");
+                document.getElementById("log").innerHTML = document.getElementById("log").innerHTML.substring(logs_br_position + 4);
+            }
+        }
+
+        function hexToBytes(hex) {
+            for (var bytes = [], c = 0; c < hex.length; c += 2)
+                bytes.push(parseInt(hex.substr(c, 2), 16));
+            return new Uint8Array(bytes);
+        }
+
+        function bytesToHex(data) {
+            return new Uint8Array(data).reduce(
+                function (memo, i) {
+                    return memo + ("0" + i.toString(16)).slice(-2);
+                }, "");
+        }
+
+        function intToHex(intIn) {
+            var stringOut = "";
+            stringOut = ("00000000" + intIn.toString(16)).substr(-8)
+            return stringOut.substring(6, 8) + stringOut.substring(4, 6) + stringOut.substring(2, 4) + stringOut.substring(0, 2);
+        }
+    </script>
 </body>
+
 </html>
