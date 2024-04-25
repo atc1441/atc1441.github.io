@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telink BLE E-Paper Flasher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #d32f2f;
+        }
+
+        button {
+            background-color: #d32f2f;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #b71c1c;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 5px;
+        }
+
+        label {
+            display: inline-block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+
+        #percent {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        #log {
+            text-align: left;
+            font-size: 14px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            max-height: 5%;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>BLE E-Paper Flasher</h1>
+        <p>
+            Copyright: Aaron Christophel / Atc1441 <a href="https://atcnetz.de">https://ATCnetz.de</a>
+        </p>
+        <button onclick="connect();">Connect</button>
+        <button onclick="reConnect();">Reconnect</button><br>
+        <label for="hideUnknown">Hide unknown</label>
+        <input type="checkbox" id="hideUnknown" checked><br>
+        <label for="namePrefix">BLE device name prefix filter(s)</label>
+        <input type="text" id="namePrefix" value="NEMR" placeholder="NEMR"><br>
+        <hr>
+        <p>Please select a .bin file you want to flash to a Telink BLE device.</p>
+        <p>Select Firmware: <input type="file" accept=".bin" id="file" onclick="resetFileSelector();"></p>
+        <hr>
+        <div id="percent">Status: waiting for you to connect a device</div>
+        <div id="log">Log:<br></div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        //BLE values
+        var bluetoothDevice, gattServer, Theservice, writeCharacteristic;
+        //Firmware values
+        var firmwareArray = "",
+            startTime = 0,
+            blockCount = 0;
+        //Connection values
+        var connectTrys = 0;
+
+        function resetFileSelector() {
+            document.getElementById("file").value = '';
+        };
+
+        function resetVariables() {
+            gattServer = null;
+            Theservice = null;
+            writeCharacteristic = null;
+            resetFileSelector();
+        }
+
+        function handleError(error) {
+            if (error.message.includes("No Services matching")) {
+                setStatus("The connected device is not supported!<br>Its either not using a Telink Chip or uses a different OTA method");
+                addLog("The connected device is not supported!<br>Its either not using a Telink Chip or uses a different OTA method");
+            } else {
+                addLog(error);
+                resetVariables();
+                if (connectTrys < 5) {
+                    connectTrys++;
+                    addLog("Reconnect " + connectTrys + " from " + 5);
+                    doConnect();
+                } else {
+                    addLog("Something went wrong, to many reconnect's");
+                    connectTrys = 0;
+                }
+            }
+        }
+
+        function onDisconnected() {
+            addLog('Disconnected.');
+        }
+
+        function connect() {
+            var deviceOptions = {
+                optionalServices: ['00010203-0405-0607-0809-0a0b0c0d1912'],
+                acceptAllDevices: true,
+            };
+            const hideUnknown = document.getElementById('hideUnknown').checked;
+            const namePrefix = document.getElementById('namePrefix').value;
+            if (hideUnknown) {
+                deviceOptions.acceptAllDevices = false;
+                deviceOptions.filters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"
+                    .split("")
+                    .map((x) => ({ namePrefix: x }));
+            }
+            if (namePrefix) {
+                deviceOptions.acceptAllDevices = false;
+                deviceOptions.filters = namePrefix.split(",")
+                    .map((x) => ({ namePrefix: x }));
+            }
+            console.log(deviceOptions)
+            if (bluetoothDevice != null) bluetoothDevice.gatt.disconnect();
+            resetVariables();
+            addLog("Searching for devices");
+            connectTrys = 0;
+            navigator.bluetooth.requestDevice(deviceOptions).then(device => {
+                bluetoothDevice = device;
+                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                addLog("Connecting to: " + bluetoothDevice.name);
+                doConnect();
+            }).catch(handleError);
+        }
+
+        function doConnect() {
+            bluetoothDevice.gatt.connect().then(server => {
+                addClog("Found GATT server");
+                gattServer = server;
+                return gattServer.getPrimaryService('00010203-0405-0607-0809-0a0b0c0d1912');
+            }).then(service => {
+                addClog("Found service");
+                Theservice = service;
+                return Theservice.getCharacteristic('00010203-0405-0607-0809-0a0b0c0d2b12');
+            }).then(characteristic => {
+                addClog("Found write characteristic");
+                writeCharacteristic = characteristic;
+                addLog("Connected");
+                setStatus("Connected, please select a file now")
+            }).catch(handleError);
+        }
+
+        function reConnect() {
+            if (bluetoothDevice != null) bluetoothDevice.gatt.disconnect();
+            resetVariables();
+            addLog("Reconnect");
+            connectTrys = 0;
+            doConnect();
+        }
+
+        function startDFU() {
+            addLog("Start DFU");
+            updateBegin();
+        }
+
+        function addLog(logTXT) {
+            var today = new Date();
+            var time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
+            document.getElementById("log").innerHTML += time + logTXT + '<br>';
+            console.log(time + logTXT);
+            while ((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 8) {
+                var logs_br_position = document.getElementById("log").innerHTML.search("<br>");
+                document.getElementById("log").innerHTML = document.getElementById("log").innerHTML.substring(logs_br_position + 4);
+            }
+        }
+
+        function addClog(logTXT) {
+            console.log(logTXT);
+        }
+
+        function clearLog() {
+            document.getElementById("log").innerHTML = "Log:<br>";
+        }
+
+        function setStatus(status) {
+            addClog("Status: " + status);
+            document.getElementById("percent").innerHTML = "Status: " + status;
+        }
+
+        function updateFail(err) {
+            addLog("Update error: " + err);
+            setStatus("Update error: " + err);
+        }
+
+        function decimalToHex(d, padding) {
+            var hex = Number(d).toString(16);
+            while (hex.length < 4) {
+                hex = "0" + hex;
+            }
+            return hex;
+        }
+
+        function crc16_modbus(buffer) {
+            var crc = 0xFFFF;
+            var odd;
+            for (var i = 0; i < buffer.length; i++) {
+                crc = crc ^ buffer[i];
+                for (var j = 0; j < 8; j++) {
+                    odd = crc & 0x0001;
+                    crc = crc >> 1;
+                    if (odd) {
+                        crc = crc ^ 0xA001;
+                    }
+                }
+            }
+            return crc;
+        }
+
+        function hexToBytes(hex) {
+            for (var bytes = [], c = 0; c < hex.length; c += 2)
+                bytes.push(parseInt(hex.substr(c, 2), 16));
+            return new Uint8Array(bytes);
+        }
+
+        function bytesToHex(data) {
+            return new Uint8Array(data).reduce(function (memo, i) {
+                return memo + ("0" + i.toString(16)).slice(-2);
+            }, "");
+        }
+
+        window.onload = function () {
+            document.querySelector("#file").addEventListener("change", function () {
+                var reader = new FileReader();
+                reader.onload = function () {
+                    firmwareArray = bytesToHex(this.result);
+                    if (firmwareArray.substring(16, 24) != "4b4e4c54") {
+                        alert("Select file is no telink firmware .bin");
+                        addLog("Select file is no telink firmware .bin");
+                        blockCount = 0;
+                        firmwareArray = "";
+                        return;
+                    }
+                    addLog("File was selected, size: " + firmwareArray.length / 2 + " bytes");
+                    blockCount = firmwareArray.length / 32;
+                    addLog("Count: " + blockCount);
+                }
+                if (this.files[0] != null) {
+                    reader.readAsArrayBuffer(this.files[0]);
+                    if (bluetoothDevice != null) {
+                        setTimeout(function () {
+                            startDFU();
+                        }, 500);
+                    }
+                }
+                else
+                    addLog("No file selected");
+            }, false);
+        }
+
+        function updateBegin() {
+            if (blockCount <= 0) {
+                addLog("No file selected aborting");
+                return;
+            }
+
+            setTimeout(function () {
+                otaCharSend("00ff").then(function (character) {
+                    otaCharSend("01ff").then(function (character) {
+                        setTimeout(function () {
+                            startTime = new Date().getTime();
+                            sendOTAblock(0);
+                        }, 300);
+                    }).catch(function (err) {
+                        updateFail(err);
+                    });
+                }).catch(function (err) {
+                    updateFail(err);
+                });
+            }, 500);
+        }
+
+        function sendOTAblock(blockNr) {
+            if (blockNr >= blockCount) {
+                sendLastOTA();
+                return;
+            }
+            setStatus("Sending block nr: " + blockNr + " from " + blockCount + ", " + Math.floor(blockNr / (blockCount * 1.0) * 100) + "% done, time since start " + (new Date().getTime() - startTime) / 1000.0 + "s");
+            var blockNrString = getHexBLockCount(blockNr);
+            var blockString = blockNrString + firmwareArray.substring(blockNr * 32, blockNr * 32 + 32);
+            var blockCRC = getHexCRC(blockString);
+            otaCharSend(blockString + blockCRC).then(function (character) {
+                setTimeout(function () {
+                    if ((blockNr + 1) % 8 == 0) {
+                        writeCharacteristic.readValue().then(function (result) {
+                            addClog('reading OTA');
+                            sendOTAblock(blockNr + 1);
+                        }).catch(function (err) {
+                            updateFail(err);
+                        });
+                    } else {
+                        sendOTAblock(blockNr + 1);
+                    }
+                }, 0);
+            }).catch(function (err) {
+                updateFail(err);
+            });
+        }
+
+        function getHexBLockCount(count) {
+            var tempHEX = decimalToHex(count);
+            return tempHEX.substring(2, 4) + tempHEX.substring(0, 2);
+        }
+
+        function getHexCRC(data) {
+            var tempCRC = decimalToHex(crc16_modbus(hexToBytes(data)));
+            return tempCRC.substring(2, 4) + tempCRC.substring(0, 2);
+        }
+
+        function sendLastOTA() {
+            var data = "02ff" + getHexBLockCount(blockCount - 1) + getHexBLockCount(~(blockCount - 1) & 0xffff);
+            otaCharSend(data).then(function (character) {
+                addLog("Update done after " + (new Date().getTime() - startTime) / 1000 + " seconds");
+                setStatus("Update done after " + (new Date().getTime() - startTime) / 1000 + " seconds");
+            }).catch(function (err) {
+                updateFail(err);
+            });
+        }
+
+        var otaCharSend = function (data) {
+            return new Promise(function (resolve, reject) {
+                addClog("OTA: " + data);
+                writeCharacteristic.writeValue(hexToBytes(data)).then(function (character) {
+                    resolve("ok");
+                }).catch(function (err) {
+                    reject("some error while sending char data");
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>
