@@ -96,7 +96,7 @@
         <hr>
         <h5>CAUTION! this can soft-brick your device, make sure to flash the right firmware!</h5>
         <p>Please select a .bin file you want to flash to a Telink BLE device.</p>
-        <p>Select Firmware: <input type="file" accept=".bin" id="file" onclick="resetFileSelector();"></p>
+        <p>Select Firmware: <input type="file" accept=".bin" id="file" onclick="resetFileSelector();" disabled></p>
         <hr>
         <div id="percent">Status: waiting for you to connect a device</div>
         <div id="log">Log:<br></div>
@@ -121,6 +121,7 @@
             gattServer = null;
             Theservice = null;
             writeCharacteristic = null;
+            document.getElementById('file').setAttribute('disabled', 'disabled');
             resetFileSelector();
         }
 
@@ -191,6 +192,7 @@
                 writeCharacteristic = characteristic;
                 addLog("Connected");
                 setStatus("Connected, please select a file now")
+                document.getElementById('file').removeAttribute('disabled');
             }).catch(handleError);
         }
 
@@ -285,6 +287,10 @@
                         return;
                     }
                     addLog("File was selected, size: " + firmwareArray.length / 2 + " bytes");
+                    if (firmwareArray.length % 32 !== 0) { // pad last block to 16bytes
+                        var padHex = "ffffffffffffffffffffffffffffffff";
+                        firmwareArray += padHex.substr(0, 32 - firmwareArray.length % 32);
+                    }
                     blockCount = firmwareArray.length / 32;
                     addLog("Count: " + blockCount);
                 }
