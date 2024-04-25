@@ -28,6 +28,10 @@
             color: #d32f2f;
         }
 
+        h5 {
+            color: #d32f2f;
+        }
+
         button {
             background-color: #d32f2f;
             color: #fff;
@@ -89,6 +93,7 @@
         <label for="namePrefix">BLE device name prefix filter(s)</label>
         <input type="text" id="namePrefix" value="NEMR" placeholder="NEMR"><br>
         <hr>
+        <h5>CAUTION! this can soft-brick your device, make sure to flash the right firmware!</h5>
         <p>Please select a .bin file you want to flash to a Telink BLE device.</p>
         <p>Select Firmware: <input type="file" accept=".bin" id="file" onclick="resetFileSelector();"></p>
         <hr>
