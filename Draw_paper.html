@@ -1,153 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8"/>
-	<meta name="viewport" content="width=320, minimum-scale=1.0, maximum-scale=1.0" />
-    <title>E-Paper Draw</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
-  </head>
-  <body>
-  The Project video can be found here:<br>
-  <a href="https://youtu.be/QrgLoryouCg">YouTube Video</a> <br>
-  E-Paper Drawing:<br>
-  Click in the canvas to enable or disable a pixel!<br>
-  Changed pixels will show after 1 second without further changes + YouTube Delay<br>
-  The time will be shown again after 1 minute no changes
-  <br>
-<!--  Only HACKER know these --><!--<input type="button" value="All White" onclick="allWhite();" /><input type="button" value="All Black" onclick="allBlack();" /><br> -->
-    <canvas id="canvas" style="width:100mm; height:100mm; image-rendering: -moz-crisp-edges; image-rendering: pixelated; margin-bottom: 10px; border:1px solid black;" width="16" height="16"></canvas>
-<br>
-This code is based on Niteks work!<br>
-<a href="https://github.com/TheNitek/draw">https://github.com/TheNitek/draw</a> 
-    <script>
-      const draw_topic = 'paper/fill';
-      const sync_topic = 'paper/sync';
-      const connect_topic = 'paper/connect';
-      client = new Paho.MQTT.Client('wss://broker.emqx.io:8084/mqtt', Math.random().toString(36).substring(20));
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Paper Matrix Live Drawing</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-      var canvas = document.getElementById("canvas");
-      var context = canvas.getContext("2d");
+    .container {
+      max-width: 600px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 
-      client.onConnectionLost = onConnectionLost;
-      client.onMessageArrived = onMessageArrived;
+    #canvas {
+      width: 100%;
+      height: auto;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: pixelated;
+      border: 1px solid #ddd;
+    }
+
+    .info {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .info1 {
+      font-size: 18px;
+      color: #666;
+    }
+    .info2 {
+      font-size: 11px;
+      color: #666;
+    }
+    .info3 {
+      font-size: 16px;
+      color: #666;
+    }
+
+    .info a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    #links a {
+      color: #007bff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>E-Paper Matrix Live Drawing</h1>
+    <div class="info">
+      <p>The project video can be found <a href="https://youtu.be/QrgLoryouCg">here</a>.</p>
+      <p>E-Paper Drawing: Click in the canvas to enable or disable a pixel!</p>
+      <p>Changed pixels will show after 1 second without further changes + YouTube delay.</p>
+      <p>The time will be shown again after 1 minute with no changes.</p>
+    </div>
+    <div class="info1">
+      <p>Live Stream of your drawing: <a href="https://youtu.be/QrgLoryouCg">https://youtu.be/QrgLoryouCg</a></p>
+    </div>
+    <canvas id="canvas" width="16" height="16"></canvas>
+    <!-- <div id="links">
+      <input type="button" value="All White" onclick="allWhite();">
+      <input type="button" value="All Black" onclick="allBlack();">
+    </div> -->
+    <div class="info2">
+      <p>This code is based on <a href="https://github.com/TheNitek/draw">TheNitek's work</a>.</p>
+    </div>
+    <div class="info3">
+	by <a href="https://twitter.com/atc1441">@ATC1441</a>  -  <a href="https://ATCnetz.de">https://ATCnetz.de</a>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+  <script>
+    const draw_topic = 'paper/fill';
+    const sync_topic = 'paper/sync';
+    const connect_topic = 'paper/connect';
+    client = new Paho.MQTT.Client('wss://broker.emqx.io:8084/mqtt', Math.random().toString(36).substring(20));
+
+    var canvas = document.getElementById("canvas");
+    var context = canvas.getContext("2d");
+
+    client.onConnectionLost = onConnectionLost;
+    client.onMessageArrived = onMessageArrived;
+    client.connect({onSuccess:onConnect});
+
+    function onConnect() {
+      console.log("onConnect");
+      client.subscribe(draw_topic);
+      client.subscribe(sync_topic);
+
+      message = new Paho.MQTT.Message("1");
+      message.destinationName = connect_topic;
+      client.send(message);
+    }
+
+    function onConnectionLost(responseObject) {
+      if (responseObject.errorCode !== 0) {
+        console.log("onConnectionLost:"+responseObject.errorMessage);
+      }
+      console.log("Reconnecting");
       client.connect({onSuccess:onConnect});
+    }
 
-      function onConnect() {
-        console.log("onConnect");
-        client.subscribe(draw_topic);
-        client.subscribe(sync_topic);
-
-        message = new Paho.MQTT.Message("1");
-        message.destinationName = connect_topic;
-        client.send(message);
+    function onMessageArrived(message) {
+      console.log("onMessageArrived: "+toHexString(message.payloadBytes));
+      if(message.payloadBytes.length == 3) {
+        processPixel(message.payloadBytes);
+      } else if(message.payloadBytes.length == 16*16) {
+        console.log("got sync: " + message.payloadBytes.length);
+        processMatrix(message.payloadBytes);
+      } else {
+        console.log("invalid msg length: " + message.payloadBytes.length);
       }
+    }
 
-      function onConnectionLost(responseObject) {
-        if (responseObject.errorCode !== 0) {
-          console.log("onConnectionLost:"+responseObject.errorMessage);
-        }
-        console.log("Reconnecting");
-        client.connect({onSuccess:onConnect});
-      }
+    function processPixel(payload) {
+      let x = payload[0];
+      let y = payload[1];
 
-      function onMessageArrived(message) {
-        console.log("onMessageArrived: "+toHexString(message.payloadBytes));
-        if(message.payloadBytes.length == 3) {
-          processPixel(message.payloadBytes);
-        } else if(message.payloadBytes.length == 16*16) {
-          console.log("got sync: " + message.payloadBytes.length);
-          processMatrix(message.payloadBytes);
-        } else {
-          console.log("invalid msg length: " + message.payloadBytes.length);
-        }
-      }
+      let c = payload[2];
 
-      function processPixel(payload) {
-        let x = payload[0];
-        let y = payload[1];
+      if(c)
+          context.fillStyle = '#ffffff';
+      else
+          context.fillStyle = '#000000';
+      context.fillRect(x, y, 1, 1);
+    }
 
-        let c = payload[2];
-
-			if(c)
-            context.fillStyle = '#ffffff';
-			else
-            context.fillStyle = '#000000';
-        context.fillRect(x, y, 1, 1);
-      }
-
-      function processMatrix(payload) {
-        for(x = 0; x < 16; x++) {
-          for(y = 0; y < 16; y++) {
-            let i = (x + (y*16));
-            let c = payload[i];
-			if(c)
-            context.fillStyle = '#ffffff';
-			else
-            context.fillStyle = '#000000';
-            context.fillRect(x, y, 1, 1);
-          }
+    function processMatrix(payload) {
+      for(x = 0; x < 16; x++) {
+        for(y = 0; y < 16; y++) {
+          let i = (x + (y*16));
+          let c = payload[i];
+          if(c)
+              context.fillStyle = '#ffffff';
+          else
+              context.fillStyle = '#000000';
+          context.fillRect(x, y, 1, 1);
         }
       }
-      function toHexString(byteArray) {
-        return Array.from(byteArray, function(byte) {
-          return ('0' + (byte & 0xFF).toString(16)).slice(-2);
-        }).join('')
+    }
+
+    function toHexString(byteArray) {
+      return Array.from(byteArray, function(byte) {
+        return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+      }).join('')
+    }
+
+    var pixel_width = context.canvas.clientWidth / canvas.width;
+    var pixel_height = context.canvas.clientHeight / canvas.height;
+
+    var rect = canvas.getBoundingClientRect();
+
+    context.fillStyle = "black";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    canvas.addEventListener("click", function(e) {
+      var x = Math.floor((e.clientX - rect.left) / pixel_width);
+      var y = Math.floor((e.clientY - rect.top) / pixel_height);
+
+      const data = context.getImageData(x, y, 1, 1).data;
+      if(data[0] == 0x00){
+          context.fillStyle = "#FFFFFF";
+          var new_color = 1;
+      } else {
+          context.fillStyle = "#000000";
+          var new_color = 0;
       }
+      context.fillRect(x, y, 1, 1);
 
-      var pixel_width = context.canvas.clientWidth / canvas.width;
-      var pixel_height = context.canvas.clientHeight / canvas.height;
+      let payload = new Uint8Array(3);
+      payload[0] = x;
+      payload[1] = y;
+      payload[2] = new_color;
+      message = new Paho.MQTT.Message(payload);
+      message.destinationName = draw_topic;
+      client.send(message);
+    }, true);
 
-      var rect = canvas.getBoundingClientRect();
+    function allWhite() {
+      let payload = new Uint8Array(16*16);
+      for(var i = 0; i < payload.length; i++) {
+        payload[i] = 1;
+      }
+      message = new Paho.MQTT.Message(payload);
+      message.destinationName = draw_topic;
+      client.send(message);
+    }
 
-      context.fillStyle = "black";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-
-      canvas.addEventListener("click", function(e) {
-        var x = Math.floor((e.clientX - rect.left) / pixel_width);
-        var y = Math.floor((e.clientY - rect.top) / pixel_height);
-
-		const data = context.getImageData(x, y, 1, 1).data;
-		if(data[0] == 0x00){
-        context.fillStyle = "#FFFFFF";
-		var new_color = 1;
-		}else{
-        context.fillStyle = "#000000";
-		var new_color = 0;
-		}
-        context.fillRect(x, y, 1, 1);
-		
-        let payload = new Uint8Array(3);
-		payload[0] = x;
-		payload[1] = y;
-		payload[2] = new_color;
-        message = new Paho.MQTT.Message(payload);
-        message.destinationName = draw_topic;
-        client.send(message);
-
-
-      }, true);
-	  
-	  function allWhite(){
-        let payload = new Uint8Array(16*16);
-		for(var i=0;i<payload.length;i++){
-			payload[i] = 1;
-		}
-        message = new Paho.MQTT.Message(payload);
-        message.destinationName = draw_topic;
-        client.send(message);
-	  }
-	  
-	  function allBlack(){
-        let payload = new Uint8Array(16*16);
-		for(var i=0;i<payload.length;i++){
-			payload[i] = 0;
-		}
-        message = new Paho.MQTT.Message(payload);
-        message.destinationName = draw_topic;
-        client.send(message);
-	  }
-	  
-	  
-    </script>
+    function allBlack() {
+      let payload = new Uint8Array(16*16);
+      for(var i = 0; i < payload.length; i++) {
+        payload[i] = 0;
+      }
+      message = new Paho.MQTT.Message(payload);
+      message.destinationName = draw_topic;
+      client.send(message);
+    }
+  </script>
 </body>
 </html>
