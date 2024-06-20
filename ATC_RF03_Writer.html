@@ -225,9 +225,6 @@
       addLog('Checksum All: ' + intToHex(checksumallOTA));
       currentOTAstate = 1;
       sendcmd(bytesToHex(addHeader(1, null)));
-      //while (otaBigPart()) {
-      //
-      //}
     }
 
     async function BLEsendBig(arrayIn) {
@@ -242,6 +239,55 @@
         delay(50);
       }
     }
+
+    ////// Other non OTA cmd
+
+    function checkNotifyData(dataIn) {
+      dataIn = hexToBytes(dataIn);
+      if (dataIn.length != 16)
+        return;
+      let crcTemp = 0;
+      for (let i = 0; i < dataIn.length - 1; i++) {
+        crcTemp = (crcTemp + dataIn[i]) & 0xff;
+      }
+      if (crcTemp == dataIn[15]) {
+        switch (dataIn[0]) {
+          case 0x73:
+            addLog("Battery at: " + dataIn[2] + "%");
+            break;
+          case 0x03:
+            addLog("Battery at: " + dataIn[1] + "%");
+            break;
+          case 0x69:
+            if (dataIn[3])
+              addLog("Heart Rate at: " + dataIn[3] + " bpm");
+            else
+              addLog("Please wait...");
+            if (dataIn[2])
+              addLog("Ring not on finger!");
+            break;
+        }
+
+      }
+    }
+
+    async function sendDataArray(arrayIn) {
+      if (arrayIn.length > 15) {
+        addLog("Data too long!");
+        return;
+      }
+      var arrayOut = new Uint8Array(16);
+      for (let i = 0; i < arrayIn.length; i++) {
+        arrayOut[i] = arrayIn[i] & 0xff;
+        arrayOut[15] = (arrayOut[15] + arrayOut[i]) & 0xff;
+      }
+      await sendSettingcmd(bytesToHex(arrayOut));
+    }
+
+    async function sendcmdCMD(cmd, dataIn) {
+      sendcmd(bytesToHex(addHeader(hexToBytes(cmd)[0], hexToBytes(dataIn))));
+    }
+    ////// Other non OTA cmd
 
     function resetOTAVariables() {
       currentOTAstate = 0;
@@ -332,6 +378,7 @@
 
     function handleSettingsNotify(data) {
       addLog("Got Settings bytes: " + bytesToHex(data.buffer));
+      checkNotifyData(bytesToHex(data.buffer));
     }
 
     function preConnect() {
@@ -408,7 +455,8 @@
               }).then(characteristic => {
                 addLog("Found custom notify characteristic");
                 settingsNotifyCharacteristics = characteristic;
-                addLog("CONNECTED, you can now select the firmware and it will be directly flashed.")
+                addLog("CONNECTED, you can now select the firmware and it will be directly flashed.");
+                sendDataArray(hexToBytes("03"));
                 return settingsNotifyCharacteristics.startNotifications().then(() => {
                   settingsNotifyCharacteristics.addEventListener('characteristicvaluechanged', event => {
                     var value = event.target.value;
@@ -536,7 +584,8 @@
     Wait for a successful connection and then select the right firmware file for your Ring.<br>
     When the upload is finished the Ring will disconnect and reboot the new firmware.<br><br>
 
-    Detailed Infos: <a href="https://github.com/atc1441/ATC_RF03_Ring" target="_blank">https://github.com/atc1441/ATC_RF03_Ring</a><br>
+    Detailed Infos: <a href="https://github.com/atc1441/ATC_RF03_Ring"
+      target="_blank">https://github.com/atc1441/ATC_RF03_Ring</a><br>
   </div>
   <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
   <button type="button" onclick="reConnect();">Reconnect</button>
@@ -559,14 +608,26 @@
   <h3>Extra Commands:</h3>
   <div class="debug-container">
     Not needed for normal firmware update.<br><br>
+    Examples:<br>
+    08 = Reboot Ring<br>
+    FF = Reset to default<br>
+    10 = Blink twice<br>
+    690101 = Measure Heart rate<br>
+    0204 = Enable Shoot Camera motion feedback<br>
+    0206 = Disable Camera feedback<br>
+    03 = Get Charging and Battery state<br>
     <label for="cmdSTXT">Setting Command:</label>
-    <input type="text" id="cmdSTXT" value="012406172312350500000000000000b1">
-    <button type="button" onclick="sendSettingcmd(document.getElementById('cmdSTXT').value);">Send Setting
+    <input type="text" id="cmdSTXT" value="03">
+    <button type="button" onclick="sendDataArray(hexToBytes(document.getElementById('cmdSTXT').value));">Send Setting
       CMD</button><br><br>
 
     <label for="cmdTXT">Command:</label>
-    <input type="text" id="cmdTXT" value="bc2a0100bf4000">
-    <button type="button" onclick="sendcmd(document.getElementById('cmdTXT').value);">Send CMD</button>
+    <input type="text" id="cmdTXT" value="2a">
+    <label for="cmdTXTdata">Command:</label>
+    <input type="text" id="cmdTXTdata" value="00">
+    <button type="button"
+      onclick="sendcmdCMD(document.getElementById('cmdTXT').value,document.getElementById('cmdTXTdata').value);">Send
+      CMD</button>
   </div>
 
 </body>
