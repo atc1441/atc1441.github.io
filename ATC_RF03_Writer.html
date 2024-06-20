@@ -1,0 +1,574 @@
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATC_RF03_Ring</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+
+    h1 {
+      color: #11b8c4;
+      text-align: center;
+    }
+
+    button {
+      background-color: #11b8c4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #11b8c4;
+    }
+
+    #log {
+      border: 1px solid #ccc;
+      overflow-y: auto;
+      background-color: #ffffff;
+      padding: 10px;
+      height: 160px;
+      margin-top: 20px;
+      border-radius: 5px;
+      font-family: monospace;
+    }
+
+    .progress-container,
+    .debug-container {
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 10px 0;
+    }
+
+    .progress-bar {
+      height: 24px;
+      width: 0;
+      background-color: #11b8c4;
+      text-align: center;
+      color: rgb(0, 0, 0);
+      border-radius: 5px;
+      transition: width 0.3s;
+    }
+
+    input[type="file"],
+    input[type="text"] {
+      padding: 5px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    .instructions {
+      font-size: 14px;
+      color: #777;
+    }
+
+    .warning {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <script>
+
+    let bleDevice;
+    let gattServer;
+    let Theservice;
+    let ServiceMain;
+    let settingsCharacteristics;
+    let writeCharacteristic;
+    let notifyCharacteristic;
+    let settingsNotifyCharacteristics;
+    let busy = false;
+    let reconnectTrys = 0;
+
+    let currentOTAstate = 0;
+    let currentOTAposition = 0;
+    let firmwareArray;
+    let lenCompleteOTA = 0;
+    let crc16allOTA;
+    let checksumallOTA;
+
+    function handleNotifyOTA(dataIn) {
+      if (currentOTAstate == 0) {
+        return; // nothing OTA related
+      }
+      //addLog("Now we handle the notify :)");
+      if (checkACKdata(dataIn)) {
+        let inCMD = hexToBytes(dataIn)[1] & 0xff;
+        //addLog("In CMD: " + inCMD + " State: " + currentOTAstate);
+        if (currentOTAstate == 1 && inCMD == 1) {
+          sendcmd(bytesToHex(addHeader(2, hexToBytes("01" + intToHex4invers(lenCompleteOTA) + intToHex(crc16allOTA) + intToHex(checksumallOTA)))));
+          currentOTAstate = 2;
+        }
+        else if (currentOTAstate == 2 && inCMD == 2) {
+          if (otaBigPart())
+            currentOTAstate = 3;
+          else {
+            resetOTAVariables();
+            addLog("Here the OTA update should not be finished already!!!");
+          }
+        }
+        else if (currentOTAstate == 3 && inCMD == 3) {
+          if (!otaBigPart()) {
+            currentOTAstate = 4;// Next step if data uplaod if done
+            sendcmd(bytesToHex(addHeader(4, null)));
+          }
+        }
+        else if (currentOTAstate == 4 && inCMD == 4) {
+          sendcmd(bytesToHex(addHeader(5, null)));
+          resetOTAVariables();
+          addLog("The upload is done :), expect a disconnection now!");
+        }
+
+      } else {
+        resetOTAVariables();
+        return; // Wrong Rxed data
+      }
+    }
+
+    function checkACKdata(arrayIn) {
+      arrayIn = hexToBytes(arrayIn);
+      if (arrayIn.length >= 6) {
+        if (arrayIn[0] == 0xbc && arrayIn[2] == ((arrayIn.length - 6) & 0xff) && arrayIn[3] == (((arrayIn.length - 6) >> 8) & 0xff)) {
+          var arrayCheck = new Uint8Array(arrayIn.length - 6);
+          for (let i = 0; i < arrayCheck.length; i++) {
+            arrayCheck[6 + i] = arrayIn[6 + i] & 0xff;
+          }
+          if (((arrayIn[5] << 8) | arrayIn[4]) == crc16(arrayCheck)) {
+            return true;
+          }
+          addLog("Rx wrong CRC!");
+        } else {
+          addLog("Rx wrong header!");
+        }
+      } else
+        addLog("Rx wrong LEN!");
+      return false;
+    }
+
+    function addHeader(type, arrayIn) {
+      var arrayOut = new Uint8Array((arrayIn == null ? 0 : arrayIn.length) + 6);
+      arrayOut[0] = 0xBC;
+      arrayOut[1] = type & 0xff;
+      if (arrayIn != null && arrayIn.length > 0) {
+        partCRC = crc16(arrayIn);
+        arrayOut[2] = arrayIn.length & 0xff;
+        arrayOut[3] = (arrayIn.length >> 8) & 0xff;
+        arrayOut[4] = partCRC & 0xff;
+        arrayOut[5] = (partCRC >> 8) & 0xff;
+        for (let i = 0; i < arrayIn.length; i++) {
+          arrayOut[6 + i] = arrayIn[i] & 0xff;
+        }
+      } else {
+        arrayOut[2] = 0;
+        arrayOut[3] = 0;
+        arrayOut[4] = 0xff;
+        arrayOut[5] = 0xff;
+      }
+      //addLog('Now ' + arrayIn.length + ' long part: ' + bytesToHex(arrayOut));
+      return arrayOut;
+    }
+
+    function otaBigPart() {
+      let i = currentOTAposition * 0x400;
+      if (i < firmwareArray.length) {
+        let lenLeft = 0x400;
+        if (firmwareArray.length - i < 0x400)
+          lenLeft = firmwareArray.length - i;
+        var arrayOut = new Uint8Array(lenLeft + 2);
+        arrayOut[0] = (currentOTAposition + 1) & 0xff;
+        arrayOut[1] = ((currentOTAposition + 1) >> 8) & 0xff;
+        for (let i1 = 0; i1 < lenLeft; i1++) {
+          arrayOut[2 + i1] = firmwareArray[i + i1] & 0xff;
+        }
+        bigPacket = addHeader(3, arrayOut);
+        addLog("Sending OTA Part: " + currentOTAposition + " from: " + Math.round(firmwareArray.length / 0x400));
+        updateProgressBar();
+        BLEsendBig(bigPacket);
+        currentOTAposition++;
+        return true;
+      }
+      addLog("No OTA Parts left");
+      return false;
+    }
+
+    function otaStart() {
+      currentOTAstate = 0;
+      currentOTAposition = 0;
+      lenCompleteOTA = firmwareArray.length;
+      if (lenCompleteOTA > 12288000) {
+        addLog("OTA Size is too big!");
+        lenCompleteOTA = 0;
+        return;
+      }
+      if (lenCompleteOTA == 0) {
+        addLog("OTA Size is 0 no file selected?");
+        return;
+      }
+      crc16allOTA = crc16(firmwareArray);
+      checksumallOTA = checksum16(firmwareArray);
+      addLog('Length OTA: ' + intToHex4invers(lenCompleteOTA));
+      addLog('CRC All: ' + intToHex(crc16allOTA));
+      addLog('Checksum All: ' + intToHex(checksumallOTA));
+      currentOTAstate = 1;
+      sendcmd(bytesToHex(addHeader(1, null)));
+      //while (otaBigPart()) {
+      //
+      //}
+    }
+
+    async function BLEsendBig(arrayIn) {
+      let sizeBlock = 200 * 2;
+      let theData = bytesToHex(arrayIn);
+      while (theData.length > 0) {
+        let currentLen = sizeBlock;
+        if (theData.length < sizeBlock)
+          currentLen = theData.length;
+        await sendCommand(hexToBytes(theData.substring(0, currentLen)));
+        theData = theData.substring(currentLen);
+        delay(50);
+      }
+    }
+
+    function resetOTAVariables() {
+      currentOTAstate = 0;
+      currentOTAposition = 0;
+      lenCompleteOTA = 0;
+      firmwareArray = null;
+      updateProgressBar();
+    }
+
+    function resetVariables() {
+      busy = false;
+      gattServer = null;
+      Theservice = null;
+      writeCharacteristic = null;
+      settingsCharacteristics = null;
+      notifyCharacteristic = null;
+      settingsNotifyCharacteristics = null;
+      resetOTAVariables();
+      document.getElementById("log").value = '';
+    }
+
+    function handleError(error) {
+      console.log(error);
+      resetVariables();
+      if (bleDevice == null)
+        return;
+      if (reconnectTrys <= 5) {
+        reconnectTrys++;
+        connect();
+      }
+      else {
+        addLog("Was not able to connect, aborting");
+        reconnectTrys = 0;
+      }
+    }
+
+    async function sendCommand(cmd) {
+      if (writeCharacteristic) {
+        await writeCharacteristic.writeValue(cmd);
+      }
+    }
+
+    async function sendSettingscmd(cmd) {
+      if (settingsCharacteristics) {
+        await settingsCharacteristics.writeValue(cmd);
+      }
+    }
+
+    function sendcmd(cmdTXT) {
+      console.log('SendCMDnow');
+      let cmd = hexToBytes(cmdTXT);
+      addLog('Send CMD: ' + cmdTXT);
+      console.log('Send CMD: ');
+      console.log(cmdTXT);
+      console.log('Send CMD bytes: ');
+      console.log(cmd);
+      sendCommand(cmd).then(() => {
+        console.log('CMD was Send');
+      })
+        .catch(handleError);
+    }
+
+    function sendSettingcmd(cmdTXT) {
+      console.log('SendCMDnow');
+      let cmd = hexToBytes(cmdTXT);
+      addLog('Send CMD: ' + cmdTXT);
+      console.log('Send CMD: ');
+      console.log(cmdTXT);
+      console.log('Send CMD bytes: ');
+      console.log(cmd);
+      sendSettingscmd(cmd).then(() => {
+        console.log('CMD was Send');
+      })
+        .catch(handleError);
+    }
+
+    function disconnect() {
+      resetVariables();
+      console.log('Disconnected.');
+      addLog('Disconnected.');
+      document.getElementById("connectbutton").innerHTML = 'Connect';
+    }
+
+    function handleNotify(data) {
+      addLog("Got bytes: " + bytesToHex(data.buffer));
+      handleNotifyOTA(bytesToHex(data.buffer));
+    }
+
+    function handleSettingsNotify(data) {
+      addLog("Got Settings bytes: " + bytesToHex(data.buffer));
+    }
+
+    function preConnect() {
+      if (gattServer != null && gattServer.connected) {
+        if (bleDevice != null && bleDevice.gatt.connected)
+          bleDevice.gatt.disconnect();
+      }
+      else {
+        connectTrys = 0;
+        navigator.bluetooth.requestDevice({ optionalServices: ['de5bf728-d711-4e47-af26-65e3012a5dc7', '6e40fff0-b5a3-f393-e0a9-e50e24dcca9e'], acceptAllDevices: true }).then(device => {
+          device.addEventListener('gattserverdisconnected', disconnect);
+          bleDevice = device;
+          connect();
+        }).catch(handleError);
+      }
+    }
+
+    function reConnect() {
+      connectTrys = 0;
+      if (bleDevice != null && bleDevice.gatt.connected)
+        bleDevice.gatt.disconnect();
+      resetVariables();
+      addLog("Reconnect");
+      setTimeout(function () { connect(); }, 300);
+    }
+
+    function connect() {
+      if (writeCharacteristic == null) {
+        addLog("Connecting to: " + bleDevice.name);
+        bleDevice.gatt.connect().then(server => {
+          console.log('> Found GATT server');
+          gattServer = server;
+          return gattServer.getPrimaryService('de5bf728-d711-4e47-af26-65e3012a5dc7');
+        })
+          .then(service => {
+            console.log('> Found service');
+            Theservice = service;
+            return Theservice.getCharacteristic('de5bf72a-d711-4e47-af26-65e3012a5dc7');
+          })
+          .then(characteristic => {
+            console.log('> Found write characteristic');
+            addLog('> Found write characteristic');
+            document.getElementById("connectbutton").innerHTML = 'Disconnect';
+            writeCharacteristic = characteristic;
+            return Theservice.getCharacteristic('de5bf729-d711-4e47-af26-65e3012a5dc7');
+          }).then(characteristic => {
+            notifyCharacteristic = characteristic;
+            return notifyCharacteristic.startNotifications().then(() => {
+              notifyCharacteristic.addEventListener('characteristicvaluechanged', event => {
+                var value = event.target.value;
+                handleNotify(value);
+              });
+              connect_to_rxtx();
+            });
+          })
+          .catch(handleError);
+      }
+    }
+
+    function connect_to_rxtx() {
+      gattServer.getPrimaryServices().then(services => {
+        for (var i = 0; i < services.length; i++) {
+          console.log("Services: " + services[i].uuid);
+          if (services[i].uuid == "6e40fff0-b5a3-f393-e0a9-e50e24dcca9e") {
+            gattServer.getPrimaryService('6e40fff0-b5a3-f393-e0a9-e50e24dcca9e')
+              .then(service => {
+                addLog("Found custom Main service");
+                ServiceMain = service;
+                return ServiceMain.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+              }).then(characteristic => {
+                addLog("Found custom write characteristic");
+                settingsCharacteristics = characteristic;
+                return ServiceMain.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
+              }).then(characteristic => {
+                addLog("Found custom notify characteristic");
+                settingsNotifyCharacteristics = characteristic;
+                return settingsNotifyCharacteristics.startNotifications().then(() => {
+                  settingsNotifyCharacteristics.addEventListener('characteristicvaluechanged', event => {
+                    var value = event.target.value;
+                    handleSettingsNotify(value);
+                  });
+                });
+                addLog("CONNECTED, you can now select the firmware and it will be directly flashed.")
+              }).catch();
+            return;
+          }
+        }
+      }).catch();
+    }
+
+    function addLog(logTXT) {
+      var today = new Date();
+      var time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
+      document.getElementById("log").innerHTML += time + logTXT + '<br>';
+      console.log(time + logTXT);
+      while ((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 10) {
+        var logs_br_position = document.getElementById("log").innerHTML.search("<br>");
+        document.getElementById("log").innerHTML = document.getElementById("log").innerHTML.substring(logs_br_position + 4);
+      }
+    }
+
+    function delay(delayInms) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve(2);
+        }, delayInms);
+      });
+    }
+
+    function hexToBytes(hex) {
+      for (var bytes = [], c = 0; c < hex.length; c += 2)
+        bytes.push(parseInt(hex.substr(c, 2), 16));
+      return new Uint8Array(bytes);
+    }
+
+    function bytesToHex(data) {
+      return new Uint8Array(data).reduce(function (memo, i) {
+        return memo + ("0" + i.toString(16)).slice(-2);
+      }, "");
+    }
+
+    function byteToHex(intIn) {
+      var stringOut = "";
+      stringOut = ("0" + intIn.toString(16)).substr(-2)
+      return stringOut;
+    }
+
+    function intToHex(intIn) {
+      var stringOut = "";
+      stringOut = ("0000" + intIn.toString(16)).substr(-4)
+      return stringOut.substring(2, 4) + stringOut.substring(0, 2);
+    }
+
+    function intToHex4(intIn) {
+      var stringOut = "";
+      stringOut = ("00000000" + intIn.toString(16)).substr(-8)
+      return stringOut;
+    }
+
+    function intToHex4invers(intIn) {
+      var stringOut = "";
+      stringOut = ("00000000" + intIn.toString(16)).substr(-8)
+      return stringOut.substring(6, 8) + stringOut.substring(4, 6) + stringOut.substring(2, 4) + stringOut.substring(0, 2);
+    }
+
+    function crc16(arrayIn) {
+      let crcOut = 0xffff;
+      if (arrayIn.length == 0)
+        return crcOut;
+      for (let i = 0; i < arrayIn.length; i++) {
+        crcOut ^= arrayIn[i] & 0xff;
+        for (let i1 = 0; i1 < 8; i1++) {
+          crcOut = (crcOut & 1) != 0 ? (crcOut >> 1) ^ 0xA001 : crcOut >> 1;
+        }
+      }
+      return crcOut & 0xffff;
+    }
+
+    function checksum16(arrayIn) {
+      let ChecksumOut = 0;
+      if (arrayIn.length == 0)
+        return ChecksumOut;
+      for (let i = 0; i < arrayIn.length; i++) {
+        ChecksumOut += arrayIn[i] & 0xff;
+      }
+      return ChecksumOut & 0xffff;
+    }
+
+    window.onload = function () {
+      document.querySelector("#file").addEventListener("change", function () {
+        var reader = new FileReader();
+        reader.onload = function () {
+          firmwareArray = hexToBytes(bytesToHex(this.result));
+          addLog("File was selected, size: " + firmwareArray.length + " bytes");
+          otaStart();
+        }
+        if (this.files[0] != null)
+          reader.readAsArrayBuffer(this.files[0]);
+        else
+          addLog("No file selected");
+      }, false);
+    }
+
+    function resetFileSelector() {
+      document.getElementById("file").value = '';
+    };
+
+    function updateProgressBar() {
+      const progressBar = document.getElementById("progress-bar");
+      percentage = 0;
+      if (firmwareArray != null)
+        percentage = Math.floor((currentOTAposition / Math.ceil(firmwareArray.length / 0x400)) * 100);
+      progressBar.style.width = percentage + '%';
+      progressBar.textContent = percentage + '%';
+    }
+  </script>
+  <h1>ATC RF03 Ring OTA Flasher</h1>
+  <div class="debug-container">
+    This tool gives a simple way to update the "Colmi" Smart Bluetooth Ring which does use a BlueX RF03 SoC.<br>
+    To start press on Connect to select YOUR ;) Ring out of the selector, make sure to use a WebBluetooth Enables
+    Browser like Chrome<br>
+    Wait for a successful connection and then select the right firmware file for your Ring.<br>
+    When the upload is finished the Ring will disconnect and reboot the new firmware.<br><br>
+
+    Detailed Infos: <a href="https://github.com/atc1441/ATC_RF03_Ring" target="_blank">https://github.com/atc1441/ATC_RF03_Ring</a><br>
+  </div>
+  <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
+  <button type="button" onclick="reConnect();">Reconnect</button>
+  <button type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
+
+  <div class="instructions">
+    <p>Make sure to select the correct firmware! This tool cannot check if the file is correct!!!</p>
+    <p class="warning">A wrong file can damage and/or brick your Smart Ring!</p>
+  </div>
+
+  <label for="file">Select Firmware:</label>
+  <input type="file" accept=".bin" id="file" onclick="resetFileSelector();" />
+
+  <div class="progress-container">
+    <div id="progress-bar" class="progress-bar">0%</div>
+  </div>
+
+  <h2>Logging:</h2>
+  <div id="log"></div>
+  <h3>Extra Commands:</h3>
+  <div class="debug-container">
+    Not needed for normal firmware update.<br><br>
+    <label for="cmdSTXT">Setting Command:</label>
+    <input type="text" id="cmdSTXT" value="012406172312350500000000000000b1">
+    <button type="button" onclick="sendSettingcmd(document.getElementById('cmdSTXT').value);">Send Setting
+      CMD</button><br><br>
+
+    <label for="cmdTXT">Command:</label>
+    <input type="text" id="cmdTXT" value="bc2a0100bf4000">
+    <button type="button" onclick="sendcmd(document.getElementById('cmdTXT').value);">Send CMD</button>
+  </div>
+
+</body>
+
+</html>
