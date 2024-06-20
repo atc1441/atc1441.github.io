@@ -408,13 +408,13 @@
               }).then(characteristic => {
                 addLog("Found custom notify characteristic");
                 settingsNotifyCharacteristics = characteristic;
+                addLog("CONNECTED, you can now select the firmware and it will be directly flashed.")
                 return settingsNotifyCharacteristics.startNotifications().then(() => {
                   settingsNotifyCharacteristics.addEventListener('characteristicvaluechanged', event => {
                     var value = event.target.value;
                     handleSettingsNotify(value);
                   });
                 });
-                addLog("CONNECTED, you can now select the firmware and it will be directly flashed.")
               }).catch();
             return;
           }
