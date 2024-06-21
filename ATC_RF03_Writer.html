@@ -34,7 +34,7 @@
       overflow-y: auto;
       background-color: #ffffff;
       padding: 10px;
-      height: 160px;
+      height: 175px;
       margin-top: 20px;
       border-radius: 5px;
       font-family: monospace;
@@ -252,8 +252,34 @@
       }
       if (crcTemp == dataIn[15]) {
         switch (dataIn[0]) {
-          case 0x73:
-            addLog("Battery at: " + dataIn[2] + "%");
+          case 0x73:// Notification
+		  {
+			switch (dataIn[1]) {
+				case 0x01:// Something sync today data HRS
+				break;
+				case 0x02:// Something sync single bp
+				break;
+				case 0x03:// Something sync today SPo2 data
+				break;
+				case 0x04:// Something sync step detailsingle
+				break;
+				case 0x05:// Something temperature
+				break;
+				case 0x06:// Something Sync today sport
+				break;
+				case 0x07:// Something sport ended
+				break;
+				case 0x10:// Something targed setting resp
+				break;
+				case 0x0C:
+					addLog("Battery at: " + dataIn[2] + "%");
+				break;
+				case 0x0D:// Something blood sugar
+				break;
+				case 0x12:// steps, calorie, distance each uint24
+					addLog("Steps: " + ((dataIn[2]<<16)|(dataIn[3]<<8)|dataIn[4]) + " Calorie: " + ((dataIn[5]<<16)|(dataIn[6]<<8)|dataIn[7])/1000 + " Distance: " + ((dataIn[8]<<16)|(dataIn[9]<<8)|dataIn[10]));
+				break;
+		  }}
             break;
           case 0x03:
             addLog("Battery at: " + dataIn[1] + "%");
