@@ -385,12 +385,12 @@
               addLog("HRS Raw: " + int16((dataIn[2] << 8) | dataIn[3]) + " Max:" + int16((dataIn[4] << 8) | dataIn[5]) + " Min:" + int16((dataIn[6] << 8) | dataIn[7]) + " Difference:" + int16((dataIn[8] << 8) | dataIn[9]));
             }
             if (dataIn[1] == 3) {
-              let rawX = int12((((dataIn[2] << 4) | (dataIn[3] & 0xf)) & 0xfff));
-              let rawY = int12((((dataIn[4] << 4) | (dataIn[5] & 0xf)) & 0xfff));
-              let rawZ = int12((((dataIn[6] << 4) | (dataIn[7] & 0xf)) & 0xfff));
-              rotateX = map(rawX, -2048, 2047, 0, 1);
-              rotateY = map(rawY, -2048, 2047, 0, 1);
-              rotateZ = map(rawZ, -2048, 2047, 0, 1);
+              let rawX = ((((dataIn[2] << 4) | (dataIn[3] & 0xf)) & 0xfff));
+              let rawY = ((((dataIn[4] << 4) | (dataIn[5] & 0xf)) & 0xfff));
+              let rawZ = ((((dataIn[6] << 4) | (dataIn[7] & 0xf)) & 0xfff));
+              rotateX = THREE.MathUtils.degToRad((rawX * 4068) / 71);
+              rotateY = THREE.MathUtils.degToRad((rawY * 4068) / 71);
+              rotateZ = THREE.MathUtils.degToRad((rawZ * 4068) / 71);
               addLog("Raw ACCL Data X:" + rawX + " Y:" + rawY + " Z:" + rawZ);
             }
             break;
@@ -611,7 +611,7 @@
       var time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
       document.getElementById("log").innerHTML += time + logTXT + '<br>';
       console.log(time + logTXT);
-      while ((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 100) {
+      while ((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 10) {
         var logs_br_position = document.getElementById("log").innerHTML.search("<br>");
         document.getElementById("log").innerHTML = document.getElementById("log").innerHTML.substring(logs_br_position + 4);
       }
