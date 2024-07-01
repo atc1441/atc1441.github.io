@@ -77,107 +77,97 @@
       color: red;
       font-weight: bold;
     }
-        canvas { display: block; }
-        #container {
-            width: 40%;
-            height: 40%;
-            display: none; /* Start with the div hidden */
-        }
-        #controls {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        .slider-container {
-            margin: 0 10px;
-        }
+
+    canvas {
+      display: block;
+    }
+
+    #container {
+      width: 100%;
+      height: 40%;
+      display: none;
+      /* Start with the div hidden */
+    }
+
+    #controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .slider-container {
+      margin: 0 10px;
+    }
   </style>
 </head>
 
 <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-        let rotateX = 0;
-        let rotateY = 0;
-        let rotateZ = 0;
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    let rotateX = 0;
+    let rotateY = 0;
+    let rotateZ = 0;
 
-        let scene, camera, renderer, cylinder, animationId;
+    let scene, camera, renderer, cylinder, animationId;
 
-        function startAnimation(){
-			let container = document.getElementById('container');
-			if(container.style.display != 'block')
-			{
-				container.style.display = 'block';
-				init();
-				animate();
-			}
-			sendDataArray(hexToBytes("A101"));
-        }
+    function startAnimation() {
+      let container = document.getElementById('container');
+      if (container.style.display != 'block') {
+        container.style.display = 'block';
+        init();
+        animate();
+      }
+      sendDataArray(hexToBytes("A10404"));
+    }
 
-        function init() {
-			let container = document.getElementById('container');
-            // Scene
-            scene = new THREE.Scene();
+    function init() {
+      let container = document.getElementById('container');
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+      camera.position.z = 5;
+      renderer = new THREE.WebGLRenderer();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+      const radiusTop = 1;
+      const radiusBottom = 1;
+      const height = 0.6;
+      const radialSegments = 100;
+      const heightSegments = 1;
+      const openEnded = true;
+      const geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded);
+      const material = new THREE.MeshBasicMaterial({ color: 0x0077ff, wireframe: true });
+      cylinder = new THREE.Mesh(geometry, material);
+      scene.add(cylinder);
+      window.addEventListener('resize', onWindowResize);
+    }
 
-            // Camera
-            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.z = 5;
+    function animate() {
+      animationId = requestAnimationFrame(animate);
+      if (cylinder) {
+        cylinder.rotation.x = (rotateX);
+        cylinder.rotation.y = (rotateY);
+        cylinder.rotation.z = (rotateZ);
+      }
+      renderer.render(scene, camera);
+    }
 
-            // Renderer
-            renderer = new THREE.WebGLRenderer();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            container.appendChild(renderer.domElement);
+    function onWindowResize() {
+      let container = document.getElementById('container');
+      if (renderer && camera) {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      }
+    }
 
-            // Geometry
-            const radiusTop = 1;
-            const radiusBottom = 1;
-            const height = 0.6;
-            const radialSegments = 100;
-            const heightSegments = 1;
-            const openEnded = true;
-            const geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded);
+    function int16(uint16) {
+      return uint16 > 32767 ? uint16 - 65536 : uint16;
+    }
 
-            // Material
-            const material = new THREE.MeshBasicMaterial({ color: 0x0077ff, wireframe: true });
-
-            // Mesh
-            cylinder = new THREE.Mesh(geometry, material);
-            scene.add(cylinder);
-
-            // Adjust to container resizing
-            window.addEventListener('resize', onWindowResize);
-        }
-
-        function animate() {
-            animationId = requestAnimationFrame(animate);
-
-            // Set rotation based on slider values
-            if (cylinder) {
-                cylinder.rotation.x = (rotateX);
-                cylinder.rotation.y = (rotateY);
-                cylinder.rotation.z = (rotateZ);
-            }
-
-            renderer.render(scene, camera);
-        }
-
-        function onWindowResize() {
-			let container = document.getElementById('container');
-            if (renderer && camera) {
-                camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, container.clientHeight);
-            }
-        }
-		
-		function int16(uint16) {
-            return uint16 > 32767 ? uint16 - 65536 : uint16;
-        }
-		
-        function map(value, minSource, maxSource, minTarget, maxTarget) {
-            return minTarget + (maxTarget - minTarget) * ((value - minSource) / (maxSource - minSource));
-        }
-    </script>
+    function map(value, minSource, maxSource, minTarget, maxTarget) {
+      return minTarget + (maxTarget - minTarget) * ((value - minSource) / (maxSource - minSource));
+    }
+  </script>
   <script>
 
     let bleDevice;
@@ -350,54 +340,55 @@
       if (crcTemp == dataIn[15]) {
         switch (dataIn[0]) {
           case 0x73:// Notification
-		  {
-			switch (dataIn[1]) {
-				case 0x01:// Something sync today data HRS
-				break;
-				case 0x02:// Something sync single bp
-				break;
-				case 0x03:// Something sync today SPo2 data
-				break;
-				case 0x04:// Something sync step detailsingle
-				break;
-				case 0x05:// Something temperature
-				break;
-				case 0x06:// Something Sync today sport
-				break;
-				case 0x07:// Something sport ended
-				break;
-				case 0x10:// Something targed setting resp
-				break;
-				case 0x0C:
-					addLog("Battery at: " + dataIn[2] + "%");
-				break;
-				case 0x0D:// Something blood sugar
-				break;
-				case 0x12:// steps, calorie, distance each uint24
-					addLog("Steps: " + ((dataIn[2]<<16)|(dataIn[3]<<8)|dataIn[4]) + " Calorie: " + ((dataIn[5]<<16)|(dataIn[6]<<8)|dataIn[7])/1000 + " Distance: " + ((dataIn[8]<<16)|(dataIn[9]<<8)|dataIn[10]));
-				break;
-		  }}
+            {
+              switch (dataIn[1]) {
+                case 0x01:// Something sync today data HRS
+                  break;
+                case 0x02:// Something sync single bp
+                  break;
+                case 0x03:// Something sync today SPo2 data
+                  break;
+                case 0x04:// Something sync step detailsingle
+                  break;
+                case 0x05:// Something temperature
+                  break;
+                case 0x06:// Something Sync today sport
+                  break;
+                case 0x07:// Something sport ended
+                  break;
+                case 0x10:// Something targed setting resp
+                  break;
+                case 0x0C:
+                  addLog("Battery at: " + dataIn[2] + "%");
+                  break;
+                case 0x0D:// Something blood sugar
+                  break;
+                case 0x12:// steps, calorie, distance each uint24
+                  addLog("Steps: " + ((dataIn[2] << 16) | (dataIn[3] << 8) | dataIn[4]) + " Calorie: " + ((dataIn[5] << 16) | (dataIn[6] << 8) | dataIn[7]) / 1000 + " Distance: " + ((dataIn[8] << 16) | (dataIn[9] << 8) | dataIn[10]));
+                  break;
+              }
+            }
             break;
           case 0x03:
-			if(dataIn[1] != 0)
-				addLog("Battery at: " + dataIn[1] + "%");
+            if (dataIn[1] != 0)
+              addLog("Battery at: " + dataIn[1] + "%");
             break;
           case 0xA1:
-			if(dataIn[1] == 1)
-			{
-				addLog("Raw Blood: " + int16((dataIn[2]<<8)|dataIn[3]) + " Max:" + dataIn[5] + " Max:" + dataIn[7] + " Max:" + dataIn[9]);
-			}
-			if(dataIn[1] == 2)
-			{
-				addLog("HRS Raw: " + int16((dataIn[2]<<8)|dataIn[3]) + " Max:" + int16((dataIn[4]<<8)|dataIn[5]) + " Min:" + int16((dataIn[6]<<8)|dataIn[7]) + " Difference:" + int16((dataIn[8]<<8)|dataIn[9]));
-			}
-			if(dataIn[1] == 3)
-			{
-				rotateX = map(int16((dataIn[2]<<8)|dataIn[3]), -9000, 9000, 0, 1);
-				rotateZ = map(int16((dataIn[4]<<8)|dataIn[5]), -9000, 9000, 0, 1);
-				rotateY = map(int16((dataIn[6]<<8)|dataIn[7]), -9000, 9000, 0, 1);
-				addLog("Raw ACCL Data X:" + int16((dataIn[2]<<8)|dataIn[3]) + " Y:" + int16((dataIn[4]<<8)|dataIn[5]) + " Z:" + int16((dataIn[6]<<8)|dataIn[7]));
-			}
+            if (dataIn[1] == 1) {
+              addLog("Raw Blood: " + int16((dataIn[2] << 8) | dataIn[3]) + " Max:" + dataIn[5] + " Max:" + dataIn[7] + " Max:" + dataIn[9]);
+            }
+            if (dataIn[1] == 2) {
+              addLog("HRS Raw: " + int16((dataIn[2] << 8) | dataIn[3]) + " Max:" + int16((dataIn[4] << 8) | dataIn[5]) + " Min:" + int16((dataIn[6] << 8) | dataIn[7]) + " Difference:" + int16((dataIn[8] << 8) | dataIn[9]));
+            }
+            if (dataIn[1] == 3) {
+              let rawX = (((dataIn[2] << 4) | (dataIn[3]&0xf))) & 0xfff;
+              let rawY = (((dataIn[4] << 4) | (dataIn[5]&0xf))) & 0xfff;
+              let rawZ = (((dataIn[6] << 4) | (dataIn[7]&0xf))) & 0xfff;
+              rotateX = map(rawX, 0, 0xfff, 0, 1);
+              rotateY = map(rawY, 0, 0xfff, 0, 1);
+              rotateZ = map(rawZ, 0, 0xfff, 0, 1);
+              addLog("Raw ACCL Data X:" + rawX + " Y:" + rawY + " Z:" + rawZ);
+            }
             break;
           case 0x69:
             if (dataIn[3])
@@ -616,7 +607,7 @@
       var time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
       document.getElementById("log").innerHTML += time + logTXT + '<br>';
       console.log(time + logTXT);
-      while ((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 10) {
+      while ((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 100) {
         var logs_br_position = document.getElementById("log").innerHTML.search("<br>");
         document.getElementById("log").innerHTML = document.getElementById("log").innerHTML.substring(logs_br_position + 4);
       }
@@ -716,8 +707,21 @@
       progressBar.style.width = percentage + '%';
       progressBar.textContent = percentage + '%';
     }
+    
+    function handleKeyPressArray(event) {
+      if (event.keyCode === 13) { // 13 is the Enter key code
+        event.preventDefault(); // Prevent the default action (form submission)
+        sendDataArray(hexToBytes(document.getElementById('cmdSTXT').value));
+      }
+    }
+    function handleKeyPressCmd(event) {
+      if (event.keyCode === 13) { // 13 is the Enter key code
+        event.preventDefault(); // Prevent the default action (form submission)
+        sendcmdCMD(document.getElementById('cmdTXT').value, document.getElementById('cmdTXTdata').value);
+      }
+    }
   </script>
-  
+
   <h1>ATC RF03 Ring OTA Flasher</h1>
   <div class="debug-container">
     This tool gives a simple way to update the "Colmi" Smart Bluetooth Ring which does use a BlueX RF03 SoC.<br>
@@ -758,22 +762,23 @@
     0204 = Enable Shoot Camera motion feedback<br>
     0206 = Disable Camera feedback<br>
     03 = Get Charging and Battery state<br>
-    A101 = Enable Raw sensor data<br>
+    A10404 = Enable Raw sensor data<br>
+    A102 = Disable Raw sensor data<br>
     <label for="cmdSTXT">Setting Command:</label>
-    <input type="text" id="cmdSTXT" value="03">
+    <input type="text" id="cmdSTXT" value="03" onkeydown="handleKeyPressArray(event)">
     <button type="button" onclick="sendDataArray(hexToBytes(document.getElementById('cmdSTXT').value));">Send Setting
       CMD</button><br><br>
 
     <label for="cmdTXT">Command:</label>
-    <input type="text" id="cmdTXT" value="2a">
+    <input type="text" id="cmdTXT" value="2A" onkeydown="handleKeyPressCmd(event)">
     <label for="cmdTXTdata">Command:</label>
-    <input type="text" id="cmdTXTdata" value="00">
+    <input type="text" id="cmdTXTdata" value="00" onkeydown="handleKeyPressCmd(event)">
     <button type="button"
       onclick="sendcmdCMD(document.getElementById('cmdTXT').value,document.getElementById('cmdTXTdata').value);">Send
       CMD</button><br>
     <button type="button" onclick="startAnimation();">Enable Animation</button>
   </div>
-    <div id="container"></div>
+  <div id="container"></div>
 
 </body>
 
