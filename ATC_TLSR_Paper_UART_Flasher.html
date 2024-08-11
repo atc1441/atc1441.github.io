@@ -18,7 +18,7 @@
 	<br><br>
 	2. Select Firmware: <input type="file" accept=".bin" id="file"/><br><br>
 	3. <input type="button" title="Write firmware in to Flash" id="butWrite" value="Write to Flash" disabled> <span id="swrite">Open COM & Select file</span><br><br>
-	<input type="button" title="Unlock flash" id="butUnlock" value="Unlock Flash" disabled> <input type="button" title="Clean all flash" id="butErase" value="Erase All Flash" disabled> <input type="button" id="butReset" title="Test restart of MÑU" value="Soft Reset MCU" disabled> <input type="button" id="butClrlog" value="Clear log"><br><hr>
+	<input type="button" title="Unlock flash" id="butUnlock" value="Unlock Flash" disabled> <input type="button" title="Clean all flash" id="butErase" value="Erase All Flash" disabled> <input type="button" id="butReset" title="Test restart of Mï¿½U" value="Soft Reset MCU" disabled> <input type="button" id="butClrlog" value="Clear log"><br><hr>
 	</div>
 	<div id="slog"></div>
   </body>
@@ -97,6 +97,11 @@ async function FlashWakeUp() { // send flash cmd 0xab to wakeup flash
 	return FlashByteCmd(0xab);
 }
 async function FlashUnlock() { // send flash cmd 0x01 unlock flash
+	await FlashWriteEnable();
+	await serialController.write_raw(sws_wr_addr(0x0d, new Uint8Array([0x00]))); // cns low
+	await serialController.write_raw(sws_wr_addr(0x0c, new Uint8Array([0x01]))); // Flash cmd
+	await serialController.write_raw(sws_wr_addr(0x0c, new Uint8Array([0x00, 0x01]))); // Unlock all + cns high
+	await FlashWriteEnable();
 	await serialController.write_raw(sws_wr_addr(0x0d, new Uint8Array([0x00]))); // cns low
 	await serialController.write_raw(sws_wr_addr(0x0c, new Uint8Array([0x01]))); // Flash cmd
 	await serialController.write_raw(sws_wr_addr(0x0c, new Uint8Array([0x00]))); // Unlock all
