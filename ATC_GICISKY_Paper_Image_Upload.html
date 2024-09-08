@@ -135,6 +135,8 @@
         <label for="heightInput">Height:</label>
         <input type="text" id="heightInput" placeholder="Height" value="250">
         <button onclick="createCanvas()">Create Canvas</button><br><br>
+        <input type="file" id="imageInput" accept="image/*"><br/>
+        <button onclick="addImageToCanvas()">Add Image</button><br/>
         <input type="checkbox" id="compressionCheckbox">
         <label for="compressionCheckbox">Compression</label>
         <input type="checkbox" id="secondColorCheckbox">
@@ -246,7 +248,7 @@
                     if (luminance > 128) {
                         currentByte |= (1 << bitPosition);
                     }
-                    if (r < 170) {
+                    if (r > 170 && g < 170) {
                         currentByteRed |= (1 << bitPosition);
                     }
                     bitPosition--;
@@ -310,9 +312,7 @@
                     byteDataCompressed.push(byteData[b]);
                 }
                 if (secondColorEnabled) {
-                    for (var b = 0; b < byteDataRed.length; b++) {
-                        byteDataCompressed.push(byteDataRed[b]);
-                    }
+                        byteDataCompressed = [...byteDataCompressed, ...byteDataRed];
                 }
             }
             pixelDataTextarea.value = buf2hex(byteDataCompressed);
@@ -679,6 +679,105 @@
             stringOut = ("00000000" + intIn.toString(16)).substr(-8)
             return stringOut.substring(6, 8) + stringOut.substring(4, 6) + stringOut.substring(2, 4) + stringOut.substring(0, 2);
         }
+        
+
+        function applyThreeColorDithering(canvas, ctx) {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+        
+            function findNearestColor(r, g, b) {
+                const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        
+                // Black
+                if (luminance < 85) {
+                    return [0, 0, 0]; // Black
+                }
+                // Red
+                else if (r > 128 && g < 128 && b < 128) {
+                    return [255, 0, 0]; // Red
+                }
+                // White
+                return [255, 255, 255]; // White
+            }
+        
+            for (let i = 0; i < data.length; i += 4) {
+                const oldR = data[i];
+                const oldG = data[i + 1];
+                const oldB = data[i + 2];
+                const [newR, newG, newB] = findNearestColor(oldR, oldG, oldB);
+        
+                data[i] = newR;
+                data[i + 1] = newG;
+                data[i + 2] = newB;
+        
+                const errR = oldR - newR;
+                const errG = oldG - newG;
+                const errB = oldB - newB;
+        
+                // Propagate the error
+                if (i + 4 < data.length) {
+                    data[i + 4] += errR * 7 / 16;
+                    data[i + 5] += errG * 7 / 16;
+                    data[i + 6] += errB * 7 / 16;
+                }
+                let nextLine = i + 4 * canvas.width;
+                if (nextLine < data.length) {
+                    data[nextLine - 4] += errR * 3 / 16;
+                    data[nextLine - 3] += errG * 3 / 16;
+                    data[nextLine - 2] += errB * 3 / 16;
+        
+                    data[nextLine] += errR * 5 / 16;
+                    data[nextLine + 1] += errG * 5 / 16;
+                    data[nextLine + 2] += errB * 5 / 16;
+        
+                    if (nextLine + 4 < data.length) {
+                        data[nextLine + 4] += errR * 1 / 16;
+                        data[nextLine + 5] += errG * 1 / 16;
+                        data[nextLine + 6] += errB * 1 / 16;
+                    }
+                }
+            }
+        
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+
+
+        
+        function addImageToCanvas() {
+            const fileInput = document.getElementById('imageInput');
+            const canvas = document.getElementById('myCanvas');
+            const ctx = canvas.getContext('2d');
+        
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.onload = function () {
+                        // Fit the image on the canvas
+                        const scaleFactor = Math.min(
+                            canvas.width / img.width,
+                            canvas.height / img.height
+                        );
+                        const imgWidth = img.width * scaleFactor;
+                        const imgHeight = img.height * scaleFactor;
+        
+                        // Clear canvas and draw the scaled image
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, (canvas.width - imgWidth) / 2, (canvas.height - imgHeight) / 2, imgWidth, imgHeight);
+
+                        // Apply dithering
+                        applyThreeColorDithering(canvas, ctx);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+
+
+        
     </script>
 </body>
 
