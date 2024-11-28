@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATC1441 BLE E-Paper Uploader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        h1 {
+            color: #007bff;
+            margin-bottom: 1px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-right: 5px;
+            color: #555;
+        }
+
+        input[type="text"],
+        select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 8px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        canvas {
+            border: 1px solid black;
+        }
+
+        textarea {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #ble-upload {
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 10px;
+        }
+
+        #ble-upload button {
+            background-color: #fff;
+            color: #007bff;
+        }
+
+        #ble-upload button:hover {
+            background-color: #ddd;
+        }
+
+        #log {
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f3f3f3;
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>ATC1441 BLE OEPL E-Paper Uploader</h1>
+        <label for="widthInput">Width:</label>
+        <input type="text" id="widthInput" placeholder="Width" value="184">
+        <label for="heightInput">Height:</label>
+        <input type="text" id="heightInput" placeholder="Height" value="384">
+        <button onclick="createCanvas()">Create Canvas</button><br><br>
+        <canvas id="myCanvas" width="184" height="384"></canvas><br><br>
+        <label for="textInput">Enter Text:</label>
+        <input type="text" id="textInput" placeholder="Text" value="Hello">
+        <button onclick="addText()">Add Text</button><br><br>
+        <label for="imageUpload">Upload Image:</label>
+        <input type="file" id="imageUpload" accept="image/*" onchange="uploadImage()"><br><br>
+        <input type="checkbox" id="secondColorCheckbox">
+        <label for="secondColorCheckbox">Second Color</label><br>
+        <button onclick="getPixelData()">Get Pixel Data</button><br><br>
+        <textarea id="pixelData" rows="4" cols="10" readonly></textarea>
+        <div id="ble-upload">
+            <h2>BLE Upload</h2>
+            <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
+            <button type="button" onclick="reConnect();">Reconnect</button>
+            <button type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
+            <br><br>
+            <button type="button" onclick="sendimg(document.getElementById(&quot;pixelData&quot;).value);">Upload
+                Image</button>
+            <br><br>
+            <input type="text" id="cmdTXT" value="01">
+            <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">Send Debug
+                CMD</button>
+            <br>
+            <div id="status">Upload status</div>
+            <div id="log">Logs:</div>
+        </div>
+    </div>
+    <script>
+        function createCanvas() {
+            var width = parseInt(document.getElementById('widthInput').value);
+            var height = parseInt(document.getElementById('heightInput').value);
+            var canvas = document.getElementById('myCanvas');
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        function addText() {
+            var canvas = document.getElementById('myCanvas');
+            var ctx = canvas.getContext('2d', { willReadFrequently: true });
+            var text = document.getElementById('textInput').value;
+            var fontSize = 72;
+            var maxWidth = canvas.width - 20;
+            var x = canvas.width / 2;
+            var y = canvas.height / 2;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'black';
+
+            do {
+                fontSize--;
+                ctx.font = fontSize + 'px Arial';
+            } while (ctx.measureText(text).width > maxWidth && fontSize > 0);
+
+            ctx.fillText(text, x, y);
+            var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
+            if (secondColorEnabled) {
+                ctx.fillStyle = 'red';
+                ctx.fillText(text, x, y + 40);
+            }
+        }
+
+        function buf2hex(buffer) {
+            return [...new Uint8Array(buffer)]
+                .map(x => x.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        function getPixelData() {
+            var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
+            var mirrorEnabled = 0;//document.getElementById('mirrorCheckbox').checked;
+
+            var canvas = document.getElementById('myCanvas');
+            var ctx = canvas.getContext('2d', { willReadFrequently: true });
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            if (mirrorEnabled) {
+                var tempCanvas = document.createElement('canvas');
+                var tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+
+                tempCtx.translate(canvas.width, 0);
+                tempCtx.scale(-1, 1);
+                tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+                imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+            }
+
+            var pixels = imageData.data;
+            var byteData = [];
+            var byteDataRed = [];
+            var currentByte = 0;
+            var currentByteRed = 0;
+            var bitPosition = 7;
+
+            for (var i = 0; i < canvas.width; i++) {
+                for (var x = 0; x < canvas.height; x++) {
+                    var curr = ((i * canvas.height) + x) * 4;
+                    var r = pixels[curr];
+                    var g = pixels[curr + 1];
+                    var b = pixels[curr + 2];
+                    var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                    if (luminance > 128) {
+                        currentByte |= (1 << bitPosition);
+                    }
+                    if (r < 170) {
+                        currentByteRed |= (1 << bitPosition);
+                    }
+                    bitPosition--;
+                    if (bitPosition < 0) {
+                        byteData.push(currentByte);
+                        byteDataRed.push(currentByteRed);
+                        currentByte = 0;
+                        currentByteRed = 0;
+                        bitPosition = 7;
+                    }
+                }
+            }
+
+            if (bitPosition !== 7) {
+                byteData.push(currentByte);
+                byteDataRed.push(currentByteRed);
+            }
+
+            var byteDataCompressed = [];
+            var pixelDataTextarea = document.getElementById('pixelData');
+
+            for (var b = 0; b < byteData.length; b++) {
+                byteDataCompressed.push(~byteData[b]);
+            }
+            if (secondColorEnabled) {
+                for (var b = 0; b < byteDataRed.length; b++) {
+                    byteDataCompressed.push(byteDataRed[b]);
+                }
+            }
+            pixelDataTextarea.value = buf2hex(byteDataCompressed);
+
+        }
+        function uploadImage() {
+            const fileInput = document.getElementById('imageUpload');
+            const canvas = document.getElementById('myCanvas');
+            const ctx = canvas.getContext('2d');
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.onload = function () {
+                        // Canvas und Bildgrößen ermitteln
+                        const canvasWidth = canvas.width;
+                        const canvasHeight = canvas.height;
+                        const imgWidth = img.width;
+                        const imgHeight = img.height;
+
+                        // Verhältnis berechnen, um das Bild zu füllen (Cover-Effekt)
+                        const scale = Math.max(canvasWidth / imgWidth, canvasHeight / imgHeight);
+
+                        // Neue Bildmaße
+                        const newWidth = imgWidth * scale;
+                        const newHeight = imgHeight * scale;
+
+                        // Position berechnen, um das Bild zu zentrieren
+                        const offsetX = (canvasWidth - newWidth) / 2;
+                        const offsetY = (canvasHeight - newHeight) / 2;
+
+                        // Canvas löschen und Bild zeichnen
+                        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                        ctx.fillStyle = 'white'; // Hintergrundfarbe setzen, falls benötigt
+                        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                        ctx.drawImage(img, offsetX, offsetY, newWidth, newHeight);
+                    };
+                    img.src = e.target.result;
+                };
+
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+
+
+        function doAll() {
+            createCanvas();
+            addText();
+            getPixelData();
+        }
+        window.onload = function () {
+            doAll();
+        }
+    </script>
+    <script>
+        let bleDevice;
+        let gattServer;
+        let Theservice;
+        let writeCharacteristic;
+        let reconnectTrys = 0;
+
+        let imgArray = "";
+        let imgArrayLen = 0;
+        let uploadPart = 0;
+
+        function resetVariables() {
+            gattServer = null;
+            Theservice = null;
+            writeCharacteristic = null;
+            document.getElementById("log").value = '';
+            imgArray = "";
+            imgArrayLen = 0;
+            uploadPart = 0;
+        }
+
+        function handleError(error) {
+            console.log(error);
+            resetVariables();
+            if (bleDevice == null)
+                return;
+            if (reconnectTrys <= 5) {
+                reconnectTrys++;
+                connect();
+            }
+            else {
+                addLog("Was not able to connect, aborting");
+                reconnectTrys = 0;
+            }
+        }
+
+        function delayPromise(delay) {
+            return new Promise(resolve => {
+                setTimeout(resolve, delay);
+            });
+        }
+
+        async function sendCommand(cmd) {
+            if (writeCharacteristic) {
+                await writeCharacteristic.writeValueWithoutResponse(cmd)
+                    .catch(() => {
+                        addLog("DOMException: GATT operation already in progress.")
+                        return Promise.resolve()
+                            .then(() => this.delayPromise(500))
+                            .then(() => { writeCharacteristic.writeValueWithoutResponse(cmd); });
+                    });
+            }
+        }
+
+        async function sendcmd(cmdTXT) {
+            let cmd = hexToBytes(cmdTXT);
+            addLog('Send CMD: ' + cmdTXT);
+            await sendCommand(cmd);
+        }
+        function reverseEndian(hex) {
+            // Hier wird die Byte-Reihenfolge eines Hex-Strings umgekehrt
+            const bytes = hex.match(/.{2}/g);  // Hex-String in 2-Byte-Chunks aufteilen
+            return bytes.reverse().join('');   // Chunks umkehren und wieder zusammenfügen
+        }
+        class AvailDataInfo {
+            constructor(checksum, dataVer, dataSize, dataType, dataTypeArgument, nextCheckIn) {
+                this.checksum = checksum;                  // 8-bit Wert (0-255)
+                this.dataVer = dataVer;            // 64-bit Wert, mit BigInt dargestellt
+                this.dataSize = dataSize;                  // 32-bit Wert (0-4294967295)
+                this.dataType = dataType;                  // 8-bit Wert (0-255)
+                this.dataTypeArgument = dataTypeArgument;  // 8-bit Wert (0-255)
+                this.nextCheckIn = nextCheckIn;            // 16-bit Wert (0-65535)
+            }
+
+            // Wandelt das Objekt in einen Hex-Byte-String um
+            toHexString() {
+                const hexChecksum = this.toHex(this.checksum, 1);                  // 8-bit (1 Byte)
+                const hexDataVer = reverseEndian(this.toHex(this.dataVer, 8));                    // 64-bit (8 Bytes)
+                const hexDataSize = reverseEndian(this.toHex(this.dataSize, 4));                  // 32-bit (4 Bytes)
+                const hexDataType = this.toHex(this.dataType, 1);                  // 8-bit (1 Byte)
+                const hexDataTypeArgument = this.toHex(this.dataTypeArgument, 1);  // 8-bit (1 Byte)
+                const hexNextCheckIn = reverseEndian(this.toHex(this.nextCheckIn, 2));            // 16-bit (2 Bytes)
+
+                return hexChecksum + hexDataVer + hexDataSize + hexDataType + hexDataTypeArgument + hexNextCheckIn;
+            }
+
+            toHex(value, bytes) {
+                return value
+                    .toString(16)                      // In Hexadezimal umwandeln
+                    .padStart(bytes * 2, '0')          // Auffüllen mit Nullen, um die Byte-Länge zu erreichen
+                    .toUpperCase();                     // Hex-Werte in Großbuchstaben
+            }
+        }
+
+        const BLOCK_REQ_PARTS_BYTES = 6;
+
+        class BlockRequest {
+            constructor(hexString) {
+                this.checksum = this.fromHex(hexString.substring(0, 2));           // 1 Byte
+                this.ver = BigInt("0x" + reverseEndian(hexString.substring(2, 18)));              // 8 Bytes
+                this.blockId = this.fromHex(hexString.substring(18, 20));          // 1 Byte
+                this.type = this.fromHex(hexString.substring(20, 22));             // 1 Byte
+
+                const requestedPartsHex = hexString.substring(22, 22 + BLOCK_REQ_PARTS_BYTES * 2);
+                this.requestedParts = this.hexToBitField(requestedPartsHex);       // Bitfeld aus 6 Bytes
+            }
+
+            fromHex(hexStr) {
+                return parseInt(hexStr, 16);
+            }
+
+            hexToBitField(hexStr) {
+                const bitField = [];
+                for (let i = 0; i < hexStr.length; i += 2) {
+                    const byte = parseInt(hexStr.substring(i, i + 2), 16);
+                    for (let bit = 7; bit >= 0; bit--) {
+                        bitField.push((byte >> bit) & 1);
+                    }
+                }
+                return bitField;
+            }
+
+            display() {
+                console.log(`Checksum: ${this.checksum}`);
+                console.log(`Version: ${this.ver.toString(16).toUpperCase()}`);
+                console.log(`Block ID: ${this.blockId}`);
+                console.log(`Type: ${this.type}`);
+                console.log(`Requested Parts Bitfield: ${this.requestedParts.join('')}`);
+            }
+        }
+        const BLOCK_DATA_SIZE = 4096;
+        const BLOCK_PART_DATA_SIZE = 230;
+        const BLOCK_XFER_BUFFER_SIZE = BLOCK_DATA_SIZE + 3;
+
+        class BlockPart {
+            constructor(blockId, blockPart, dataSlice) {
+                this.blockId = blockId;
+                this.blockPart = blockPart;
+                this.data = dataSlice;
+
+                this.buffer = new Uint8Array(3 + BLOCK_PART_DATA_SIZE);
+                this.buffer[1] = blockId;
+                this.buffer[2] = blockPart;
+
+                for (let i = 0; i < BLOCK_PART_DATA_SIZE; i++) {
+                    this.buffer[3 + i] = dataSlice[i] || 0;
+                }
+                this.addCRC();
+            }
+
+            addCRC() {
+                let total = 0;
+                for (let i = 1; i < this.buffer.length; i++) {
+                    total += this.buffer[i];
+                }
+                this.buffer[0] = total & 0xFF;
+            }
+
+            toHexString() {
+                return Array.from(this.buffer)
+                    .map(byte => byte.toString(16).padStart(2, '0').toUpperCase())
+                    .join('');
+            }
+        }
+
+        let packets = [];
+        let totalPackets = 0;
+        let packetIndex = 0;
+
+        function nextBlkPart() {
+            console.log(`Sende Paket: ${packets[packetIndex]}`);
+            sendCommand(hexToBytes("0065" + packets[packetIndex]));
+        }
+
+        async function sendBlockData(blockId, largeHexData) {
+            const blockSizeHex = (BLOCK_DATA_SIZE * 2);
+            const totalBlocks = Math.ceil(largeHexData.length / blockSizeHex);
+            if (blockId >= totalBlocks) {
+                console.error(`Block-ID ${blockId} überschreitet die Anzahl verfügbarer Blöcke (${totalBlocks}).`);
+                return;
+            }
+            const start = blockId * blockSizeHex;
+            const end = start + blockSizeHex;
+            const blockHexData = largeHexData.substring(start, end);
+            console.log(`Verarbeite Block ${blockId + 1}/${totalBlocks}...`);
+            const dataBytes = hexToByteArray(blockHexData);
+            packets = [];
+            totalPackets = Math.ceil(dataBytes.length / BLOCK_PART_DATA_SIZE);
+            for (let i = 0; i < totalPackets; i++) {
+                const start = i * BLOCK_PART_DATA_SIZE;
+                const slice = dataBytes.slice(start, start + BLOCK_PART_DATA_SIZE);
+                const packet = new BlockPart(blockId, i, slice);
+                packets.push(packet.toHexString());
+            }
+            packetIndex = 0;
+            nextBlkPart();
+        }
+
+        function hexToByteArray(hexStr) {
+            const byteArray = [];
+            byteArray.push((hexStr.length / 2) & 0xff);
+            byteArray.push(((hexStr.length / 2) >> 8) & 0xff);
+            byteArray.push(0x00);
+            byteArray.push(0x00);
+            let theCrc = 0;
+            for (let i = 0; i < hexStr.length; i += 2) {
+                theCrc += parseInt(hexStr.substring(i, i + 2), 16);
+                byteArray.push(parseInt(hexStr.substring(i, i + 2), 16));
+            }
+            byteArray[2] = theCrc & 0xff;
+            byteArray[3] = (theCrc >> 8) & 0xff;
+            return byteArray;
+        }
+        function crc32(input) {
+            const table = [];
+            const polynomial = 0xedb88320;
+            for (let i = 0; i < 256; i++) {
+                let crc = i;
+                for (let j = 8; j > 0; j--) {
+                    if (crc & 1) {
+                        crc = (crc >>> 1) ^ polynomial;
+                    } else {
+                        crc >>>= 1;
+                    }
+                }
+                table[i] = crc;
+            }
+            let crc = 0xffffffff;
+            for (let i = 0; i < input.length; i++) {
+                const byte = input.charCodeAt(i);
+                const tableIndex = (crc ^ byte) & 0xff;
+                crc = (crc >>> 8) ^ table[tableIndex];
+            }
+            return (crc ^ 0xffffffff) >>> 0;
+        }
+        function computeCRC32(hexData) {
+            const byteArray = hexToByteArray(hexData);
+            const crc32Value = crc32(String.fromCharCode(...byteArray));
+            return crc32Value;
+        }
+
+        function sendimg(cmdIMG) {
+            var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
+            imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            imgArrayLen = imgArray.length;
+            uploadPart = 0;
+            console.log('Sending image ' + imgArrayLen / 2);
+            const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, secondColorEnabled ? 0x21 : 0x20, 0, 0);
+            sendcmd("0064" + dataInfo.toHexString());
+        }
+
+        function img_state_handle(data) {
+            switch (data.substring(0, 4).toUpperCase()) {
+                case "00C6":
+                    const blockRequest = new BlockRequest(data.substring(4));
+                    blockRequest.display();
+                    sendBlockData(blockRequest.blockId, imgArray);
+                    break;
+                case "00C4":// BLKPRT ERR
+                    nextBlkPart();
+                    break;
+                case "00C5":// BLKPRT ACK
+                    if (packetIndex > totalPackets) {
+                        addLog("Thats wrong, we dont have so many packets!");
+                        return;
+                    }
+                    packetIndex++;
+                    nextBlkPart();
+                    break;
+                case "00C7":
+                    addLog("Image will be displayed now :)");
+                    break;
+                case "00C8":
+                    addLog("Image is already displayed");
+                    break;
+            }
+        }
+
+        function disconnect() {
+            resetVariables();
+            addLog('Disconnected.');
+            document.getElementById("connectbutton").innerHTML = 'Connect';
+        }
+
+        function handleNotify(data) {
+            addLog("Got bytes: " + bytesToHex(data.buffer));
+            img_state_handle(bytesToHex(data.buffer));
+        }
+
+        function preConnect() {
+            if (gattServer != null && gattServer.connected) {
+                if (bleDevice != null && bleDevice.gatt.connected)
+                    bleDevice.gatt.disconnect();
+            }
+            else {
+                connectTrys = 0;
+                navigator.bluetooth.requestDevice({ optionalServices: [0x1337], acceptAllDevices: true }).then(device => {
+                    device.addEventListener('gattserverdisconnected', disconnect);
+                    bleDevice = device;
+                    connect();
+                }).catch(handleError);
+            }
+        }
+
+        function reConnect() {
+            connectTrys = 0;
+            if (bleDevice != null && bleDevice.gatt.connected)
+                bleDevice.gatt.disconnect();
+            resetVariables();
+            addLog("Reconnect");
+            setTimeout(function () { connect(); }, 300);
+        }
+
+        function connect() {
+            if (writeCharacteristic == null) {
+                addLog("Connecting to: " + bleDevice.name);
+                bleDevice.gatt.connect().then(server => {
+                    console.log('> Found GATT server');
+                    gattServer = server;
+                    return gattServer.getPrimaryService(0x1337);
+                }).then(service => {
+                    console.log('> Found service');
+                    Theservice = service;
+                    return Theservice.getCharacteristic(0x1337);
+                }).then(characteristic => {
+                    addLog('> Found write characteristic');
+                    document.getElementById("connectbutton").innerHTML = 'Disconnected';
+                    writeCharacteristic = characteristic;
+                    return writeCharacteristic.startNotifications().then(() => {
+                        setTimeout(function () { sendcmd("0002"); }, 50);// Make the connection faster
+                        writeCharacteristic.addEventListener('characteristicvaluechanged', event => {
+                            var value = event.target.value;
+                            handleNotify(value);
+                        });
+                    });
+                }).catch(handleError);
+            }
+        }
+
+        function setStatus(statusText) {
+            document.getElementById("status").innerHTML = statusText;
+        }
+
+        function addLog(logTXT) {
+            var today = new Date();
+            var time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
+            document.getElementById("log").innerHTML += time + logTXT + '<br>';
+            console.log(time + logTXT);
+            while ((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 10) {
+                var logs_br_position = document.getElementById("log").innerHTML.search("<br>");
+                document.getElementById("log").innerHTML = document.getElementById("log").innerHTML.substring(logs_br_position + 4);
+            }
+        }
+
+        function hexToBytes(hex) {
+            for (var bytes = [], c = 0; c < hex.length; c += 2)
+                bytes.push(parseInt(hex.substr(c, 2), 16));
+            return new Uint8Array(bytes);
+        }
+
+        function bytesToHex(data) {
+            return new Uint8Array(data).reduce(
+                function (memo, i) {
+                    return memo + ("0" + i.toString(16)).slice(-2);
+                }, "");
+        }
+
+        function intToHex(intIn) {
+            var stringOut = "";
+            stringOut = ("00000000" + intIn.toString(16)).substr(-8)
+            return stringOut.substring(6, 8) + stringOut.substring(4, 6) + stringOut.substring(2, 4) + stringOut.substring(0, 2);
+        }
+    </script>
+</body>
+
+</html>
