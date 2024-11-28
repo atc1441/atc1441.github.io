@@ -542,7 +542,7 @@
             uploadPart = 0;
             console.log('Sending image ' + imgArrayLen / 2);
             const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, secondColorEnabled ? 0x21 : 0x20, 0, 0);
-            sendcmd("0064" + dataInfo.toHexString());
+			sendcmd("0064" + dataInfo.toHexString());
         }
 
         function img_state_handle(data) {
@@ -550,7 +550,8 @@
                 case "00C6":
                     const blockRequest = new BlockRequest(data.substring(4));
                     blockRequest.display();
-                    sendBlockData(blockRequest.blockId, imgArray);
+					sendcmd("0002");
+                    setTimeout(function () { sendBlockData(blockRequest.blockId, imgArray); }, 50);
                     break;
                 case "00C4":// BLKPRT ERR
                     nextBlkPart();
@@ -565,9 +566,11 @@
                     break;
                 case "00C7":
                     addLog("Image will be displayed now :)");
+					sendcmd("0003");// Make the connection slow again
                     break;
                 case "00C8":
                     addLog("Image is already displayed");
+					sendcmd("0003");// Make the connection slow again
                     break;
             }
         }
@@ -623,7 +626,6 @@
                     document.getElementById("connectbutton").innerHTML = 'Disconnected';
                     writeCharacteristic = characteristic;
                     return writeCharacteristic.startNotifications().then(() => {
-                        setTimeout(function () { sendcmd("0002"); }, 50);// Make the connection faster
                         writeCharacteristic.addEventListener('characteristicvaluechanged', event => {
                             var value = event.target.value;
                             handleNotify(value);
