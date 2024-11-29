@@ -126,6 +126,14 @@
             <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">Send Debug
                 CMD</button>
             <br>
+            <select id="cmdTYPE">
+                <option value="1">350 BWY UC</option>
+                <option value="2">350 BWY UC Inverted</option>
+                <option value="3">350 BWY SSD</option>
+                <option value="4">350 BW UC</option>
+            </select>
+            <button type="button" onclick="setDisplayType(document.getElementById(&quot;cmdTYPE&quot;).value);">Set Display Type</button>
+            <br>
             <div id="status">Upload status</div>
             <div id="log">Logs:</div>
         </div>
@@ -353,6 +361,12 @@
             addLog('Send CMD: ' + cmdTXT);
             await sendCommand(cmd);
         }
+
+        function setDisplayType(newType)
+        {
+            sendcmd("0004"+newType.toString(16).padStart(4, '0').toUpperCase());
+        }
+
         function reverseEndian(hex) {
             // Hier wird die Byte-Reihenfolge eines Hex-Strings umgekehrt
             const bytes = hex.match(/.{2}/g);  // Hex-String in 2-Byte-Chunks aufteilen
