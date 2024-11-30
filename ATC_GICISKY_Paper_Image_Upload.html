@@ -634,7 +634,7 @@
                     return Theservice.getCharacteristic(0xFEF1);
                 }).then(characteristic => {
                     addLog('> Found write characteristic');
-                    document.getElementById("connectbutton").innerHTML = 'Disconnected';
+                    document.getElementById("connectbutton").innerHTML = 'Disconnect';
                     writeCharacteristic = characteristic;
                     return writeCharacteristic.startNotifications().then(() => {
                         writeCharacteristic.addEventListener('characteristicvaluechanged', event => {
