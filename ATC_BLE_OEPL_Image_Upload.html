@@ -112,7 +112,7 @@
         <input type="checkbox" id="secondColorCheckbox">
         <label for="secondColorCheckbox">Second Color</label><br>
         <button onclick="getPixelData()">Get Pixel Data</button><br><br>
-        <textarea id="pixelData" rows="4" cols="10" readonly></textarea>
+        <textarea id="pixelData" rows="4" cols="10"></textarea>
         <div id="ble-upload">
             <h2>BLE Upload</h2>
             <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
@@ -135,10 +135,17 @@
                 <option value="4">350 BW UC</option>
                 <option value="5">200 BWY SSD</option>
                 <option value="6">750 BWY UC</option>
+                <option value="7">350 BWR UC</option>
+                <option value="8">350 BWR SSD</option>
+                <option value="9">266 BWR SSD</option>
+                <option value="10">213 BW UC</option>
             </select>
             <button type="button" onclick="setDisplayType(document.getElementById(&quot;cmdTYPE&quot;).value);">Set
                 Display Type</button>
             <br>
+            <label for="selectFirmware">Select Firmware:</label>
+            <input type="file" id="selectFirmware" onclick="resetFileSelector()" onchange="selectFirmwareVoid()">
+            <br><br>
             <div id="status">Upload status</div>
             <div id="log">Logs:</div>
         </div>
@@ -256,6 +263,7 @@
             pixelDataTextarea.value = buf2hex(byteDataCompressed);
 
         }
+
         function uploadImage() {
             const fileInput = document.getElementById('imageUpload');
             const canvas = document.getElementById('myCanvas');
@@ -296,7 +304,6 @@
                 reader.readAsDataURL(fileInput.files[0]);
             }
         }
-
 
         function doAll() {
             createCanvas();
@@ -560,6 +567,43 @@
             uploadPart = 0;
             console.log('Sending image ' + imgArrayLen / 2);
             const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, secondColorEnabled ? 0x21 : 0x20, 0, 0);
+            sendcmd("0064" + dataInfo.toHexString());
+        }
+
+        function resetFileSelector() {
+            document.getElementById("selectFirmware").value = '';
+        };
+        function selectFirmwareVoid() {
+            const file = document.getElementById('selectFirmware').files[0];
+            if (!file) {
+                alert("Bitte eine Datei auswählen.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const arrayBuffer = e.target.result;
+                const byteArray = new Uint8Array(arrayBuffer);
+                let hexString = "";
+                for (let byte of byteArray) {
+                    hexString += byte.toString(16).padStart(2, '0').toUpperCase();
+                }
+                sendFw(hexString);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function sendFw(cmdFW) {
+            imgArray = cmdFW.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            imgArrayLen = imgArray.length;
+            fw_header_img_len = parseInt(imgArray.substring(54, 56).toUpperCase() + imgArray.substring(52, 54).toUpperCase() + imgArray.substring(50, 52).toUpperCase() + imgArray.substring(48, 50).toUpperCase(), 16);
+            addLog(fw_header_img_len);
+            if (imgArray.substring(16, 24).toUpperCase() != "4B4E4C54" || (imgArrayLen / 2) != fw_header_img_len) {
+                addLog("ERROR SOMETHING WRONG WITH THE FIRMWARE");
+                return;
+            }
+            uploadPart = 0;
+            console.log('Sending Firmware ' + imgArrayLen / 2);
+            const dataInfo = new AvailDataInfo(255, 123, imgArrayLen / 2, 0x03, 0, 0);
             sendcmd("0064" + dataInfo.toHexString());
         }
 
