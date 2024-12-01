@@ -126,6 +126,8 @@
             <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">Send Debug
                 CMD</button>
             <br>
+            <button type="button" onclick="sendcmd('0005');">Read Screen infos</button>
+            <br><br>
             <select id="cmdTYPE">
                 <option value="1">350 BWY UC</option>
                 <option value="2">350 BWY UC Inverted</option>
@@ -134,7 +136,8 @@
                 <option value="5">200 BWY SSD</option>
                 <option value="6">750 BWY UC</option>
             </select>
-            <button type="button" onclick="setDisplayType(document.getElementById(&quot;cmdTYPE&quot;).value);">Set Display Type</button>
+            <button type="button" onclick="setDisplayType(document.getElementById(&quot;cmdTYPE&quot;).value);">Set
+                Display Type</button>
             <br>
             <div id="status">Upload status</div>
             <div id="log">Logs:</div>
@@ -364,9 +367,8 @@
             await sendCommand(cmd);
         }
 
-        function setDisplayType(newType)
-        {
-            sendcmd("0004"+newType.toString(16).padStart(4, '0').toUpperCase());
+        function setDisplayType(newType) {
+            sendcmd("0004" + newType.toString(16).padStart(4, '0').toUpperCase());
         }
 
         function reverseEndian(hex) {
@@ -558,7 +560,7 @@
             uploadPart = 0;
             console.log('Sending image ' + imgArrayLen / 2);
             const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, secondColorEnabled ? 0x21 : 0x20, 0, 0);
-			sendcmd("0064" + dataInfo.toHexString());
+            sendcmd("0064" + dataInfo.toHexString());
         }
 
         function img_state_handle(data) {
@@ -566,7 +568,7 @@
                 case "00C6":
                     const blockRequest = new BlockRequest(data.substring(4));
                     blockRequest.display();
-					sendcmd("0002");
+                    sendcmd("0002");
                     setTimeout(function () { sendBlockData(blockRequest.blockId, imgArray); }, 50);
                     break;
                 case "00C4":// BLKPRT ERR
@@ -582,11 +584,17 @@
                     break;
                 case "00C7":
                     addLog("Image will be displayed now :)");
-					sendcmd("0003");// Make the connection slow again
+                    sendcmd("0003");// Make the connection slow again
                     break;
                 case "00C8":
                     addLog("Image is already displayed");
-					sendcmd("0003");// Make the connection slow again
+                    sendcmd("0003");// Make the connection slow again
+                    break;
+                case "0005":
+                    addLog("Got display config");
+                    document.getElementById('heightInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 23);
+                    document.getElementById('widthInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 25);
+                    doAll();
                     break;
             }
         }
@@ -666,6 +674,9 @@
             }
         }
 
+        function getUint16FromBytes(bytes, offset) {
+            return (bytes[offset] | (bytes[offset + 1] << 8));
+        }
         function hexToBytes(hex) {
             for (var bytes = [], c = 0; c < hex.length; c += 2)
                 bytes.push(parseInt(hex.substr(c, 2), 16));
