@@ -109,7 +109,9 @@
         <button onclick="addText()">Add Text</button><br><br>
         <label for="imageUpload">Upload Image:</label>
         <input type="file" id="imageUpload" accept="image/*" onchange="uploadImage()"><br><br>
-        <input type="checkbox" id="secondColorCheckbox">
+        <input onchange="getPixelData()" type="checkbox" checked="true" id="ditherrin">
+        <label for="ditherrin">Dithering</label><br>
+        <input onchange="getPixelData()" type="checkbox" id="secondColorCheckbox">
         <label for="secondColorCheckbox">Second Color</label><br>
         <button onclick="getPixelData()">Get Pixel Data</button><br><br>
         <textarea id="pixelData" rows="4" cols="10"></textarea>
@@ -200,6 +202,8 @@
         }
 
         function getPixelData() {
+            if (document.getElementById('ditherrin').checked)
+                applyBlackWhiteDithering();
             var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
             var mirrorEnabled = 0;//document.getElementById('mirrorCheckbox').checked;
 
@@ -235,10 +239,10 @@
                     var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
                     if (luminance > 128) {
                         currentByte |= (1 << bitPosition);
-                    }else
-                    if (r > 170) {
-                        currentByteRed |= (1 << bitPosition);
-                    }
+                    } else
+                        if (r > 170) {
+                            currentByteRed |= (1 << bitPosition);
+                        }
                     bitPosition--;
                     if (bitPosition < 0) {
                         byteData.push(currentByte);
@@ -319,6 +323,58 @@
         }
         window.onload = function () {
             doAll();
+        }
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const BW_COLORS = [
+            { r: 0, g: 0, b: 0 },
+            { r: 255, g: 255, b: 255 }
+        ];
+        function applyBlackWhiteDithering() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const i = (y * canvas.width + x) * 4;
+                    const r = pixels[i];
+                    const g = pixels[i + 1];
+                    const b = pixels[i + 2];
+                    const luminance = 0.3 * r + 0.59 * g + 0.11 * b;
+                    const newColor = getClosestBlackWhiteColor(luminance);
+                    const error = luminance - newColor.luminance;
+                    pixels[i] = newColor.color.r;
+                    pixels[i + 1] = newColor.color.g;
+                    pixels[i + 2] = newColor.color.b;
+                    distributeError(x, y, error, pixels);
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function getClosestBlackWhiteColor(luminance) {
+            if (luminance < 128) {
+                return { color: BW_COLORS[0], luminance: 0 };
+            } else {
+                return { color: BW_COLORS[1], luminance: 255 };
+            }
+        }
+
+        function distributeError(x, y, error, pixels) {
+            const width = canvas.width;
+
+            function adjustPixel(i, factor) {
+                if (i < 0 || i >= pixels.length) return;
+                pixels[i] += error * factor;
+                pixels[i + 1] += error * factor;
+                pixels[i + 2] += error * factor;
+            }
+
+            if (x + 1 < canvas.width) adjustPixel(((y) * width + (x + 1)) * 4, 7 / 16);
+            if (x - 1 >= 0 && y + 1 < canvas.height) adjustPixel(((y + 1) * width + (x - 1)) * 4, 3 / 16);
+            if (y + 1 < canvas.height) adjustPixel(((y + 1) * width + (x)) * 4, 5 / 16);
+            if (x + 1 < canvas.width && y + 1 < canvas.height) adjustPixel(((y + 1) * width + (x + 1)) * 4, 1 / 16);
         }
     </script>
     <script>
@@ -644,7 +700,7 @@
                 case "0005":
                     addLog("Got display config");
                     if (getUint32FromBytes(hexToBytes(data.substring(4)), 4) >= 14) {
-                        document.getElementById('secondColorCheckbox').checked = getUint8FromBytes(hexToBytes(data.substring(4)), 30)==2;
+                        document.getElementById('secondColorCheckbox').checked = getUint8FromBytes(hexToBytes(data.substring(4)), 30) == 2;
                         if (getUint8FromBytes(hexToBytes(data.substring(4)), 19) == 1) {
                             document.getElementById('heightInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 24);
                             document.getElementById('widthInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 22);
