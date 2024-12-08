@@ -641,8 +641,8 @@
                     break;
                 case "0005":
                     addLog("Got display config");
-                    document.getElementById('heightInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 23);
-                    document.getElementById('widthInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 25);
+                    document.getElementById('heightInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 21);
+                    document.getElementById('widthInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 23);
                     doAll();
                     break;
             }
