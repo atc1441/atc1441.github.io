@@ -110,7 +110,7 @@
         <label for="imageUpload">Upload Image:</label>
         <input type="file" id="imageUpload" accept="image/*" onchange="uploadImage()"><br><br>
         <input onchange="getPixelData()" type="checkbox" checked="true" id="ditherrin">
-        <label for="ditherrin">Dithering</label><br>
+        <label for="ditherrin">Dithering(BW Only)</label><br>
         <input onchange="getPixelData()" type="checkbox" id="secondColorCheckbox">
         <label for="secondColorCheckbox">Second Color</label><br>
         <button onclick="getPixelData()">Get Pixel Data</button><br><br>
@@ -140,18 +140,35 @@
                 <option value="7">350 BWR UC</option>
                 <option value="8">350 BWR SSD</option>
                 <option value="9">266 BWR SSD</option>
-                <option value="A">213 BW UC</option>
-                <option value="B">213 Gici BWR SSD</option>
-                <option value="C">290 Gici BWR SSD</option>
-                <option value="D">213 Gici BW TFT</option>
-                <option value="E">970 BWR</option>
-                <option value="F">1200 BWR</option>
+                <option value="10">213 BW UC</option>
+                <option value="11">213 Gici BWR SSD</option>
+                <option value="12">290 Gici BWR SSD</option>
+                <option value="13">213 Gici BW TFT</option>
+                <option value="14">970 BWR</option>
+                <option value="15">1200 BWR</option>
             </select>
             <button type="button" onclick="setDisplayType(document.getElementById(&quot;cmdTYPE&quot;).value);">Set
                 Display Type</button>
             <br>
             <label for="selectFirmware">Select Firmware:</label>
             <input type="file" id="selectFirmware" onclick="resetFileSelector()" onchange="selectFirmwareVoid()">
+            <br><br>
+            <button type="button" onclick="sendcmd('0007');">Disable OEPL</button>
+            <button type="button" onclick="sendcmd('0006');">Enable OEPL</button>
+            <br><br>
+            <select id="cmdBLESpeed">
+                <option value="1000">625ms</option>
+                <option value="3200">2000ms</option>
+                <option value="4000">2500ms</option>
+                <option value="5000">3125ms</option>
+                <option value="6000">3750ms</option>
+                <option value="7000">4375ms</option>
+                <option value="8000">5000ms</option>
+                <option value="10000">6250ms</option>
+            </select>
+            <button type="button" onclick="setBleAdvInterval(document.getElementById(&quot;cmdBLESpeed&quot;).value);">Set
+                Display Type</button>
+            <br>
             <br><br>
             <div id="status">Upload status</div>
             <div id="log">Logs:</div>
@@ -438,7 +455,11 @@
         }
 
         function setDisplayType(newType) {
-            sendcmd("0004" + newType.toString(16).padStart(4, '0').toUpperCase());
+            sendcmd("0004" + Number(newType).toString(16).padStart(4, '0').toUpperCase());
+        }
+
+        function setBleAdvInterval(newAdvInt) {
+            sendcmd("0008" + Number(newAdvInt).toString(16).padStart(4, '0').toUpperCase());
         }
 
         function reverseEndian(hex) {
