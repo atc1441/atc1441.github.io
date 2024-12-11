@@ -321,14 +321,13 @@
 
         function findNearestColor(r, g, b) {
             if (r > 128 && g < 128 && b < 128) {
-                // Strictly map bright red
                 return [255, 0, 0];
             }
             const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
             if (luminance < 85) {
-                return [0, 0, 0]; // Black
+                return [0, 0, 0];
             }
-            return [255, 255, 255]; // White
+            return [255, 255, 255];
         }
 
         function applyDithering() {
