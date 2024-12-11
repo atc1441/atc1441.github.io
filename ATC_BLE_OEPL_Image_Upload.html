@@ -110,7 +110,7 @@
         <label for="imageUpload">Upload Image:</label>
         <input type="file" id="imageUpload" accept="image/*" onchange="uploadImage()"><br><br>
         <input onchange="getPixelData()" type="checkbox" checked="true" id="ditherrin">
-        <label for="ditherrin">Dithering(BW Only)</label><br>
+        <label for="ditherrin">Dithering</label><br>
         <input onchange="getPixelData()" type="checkbox" id="secondColorCheckbox">
         <label for="secondColorCheckbox">Second Color</label><br>
         <button onclick="getPixelData()">Get Pixel Data</button><br><br>
@@ -166,7 +166,8 @@
                 <option value="8000">5000ms</option>
                 <option value="10000">6250ms</option>
             </select>
-            <button type="button" onclick="setBleAdvInterval(document.getElementById(&quot;cmdBLESpeed&quot;).value);">Set
+            <button type="button"
+                onclick="setBleAdvInterval(document.getElementById(&quot;cmdBLESpeed&quot;).value);">Set
                 ADV interval</button>
             <br>
             <br><br>
@@ -220,26 +221,11 @@
 
         function getPixelData() {
             if (document.getElementById('ditherrin').checked)
-                applyBlackWhiteDithering();
+                applyDithering();
             var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
-            var mirrorEnabled = 0;//document.getElementById('mirrorCheckbox').checked;
-
             var canvas = document.getElementById('myCanvas');
             var ctx = canvas.getContext('2d', { willReadFrequently: true });
             var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-            if (mirrorEnabled) {
-                var tempCanvas = document.createElement('canvas');
-                var tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = canvas.height;
-
-                tempCtx.translate(canvas.width, 0);
-                tempCtx.scale(-1, 1);
-                tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
-                imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
-            }
-
             var pixels = imageData.data;
             var byteData = [];
             var byteDataRed = [];
@@ -295,40 +281,28 @@
             const fileInput = document.getElementById('imageUpload');
             const canvas = document.getElementById('myCanvas');
             const ctx = canvas.getContext('2d');
-
             if (fileInput.files && fileInput.files[0]) {
                 const reader = new FileReader();
-
                 reader.onload = function (e) {
                     const img = new Image();
                     img.onload = function () {
-                        // Canvas und Bildgrößen ermitteln
                         const canvasWidth = canvas.width;
                         const canvasHeight = canvas.height;
                         const imgWidth = img.width;
                         const imgHeight = img.height;
-
-                        // Verhältnis berechnen, um das Bild zu füllen (Cover-Effekt)
                         const scale = Math.max(canvasWidth / imgWidth, canvasHeight / imgHeight);
-
-                        // Neue Bildmaße
                         const newWidth = imgWidth * scale;
                         const newHeight = imgHeight * scale;
-
-                        // Position berechnen, um das Bild zu zentrieren
                         const offsetX = (canvasWidth - newWidth) / 2;
                         const offsetY = (canvasHeight - newHeight) / 2;
-
-                        // Canvas löschen und Bild zeichnen
                         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-                        ctx.fillStyle = 'white'; // Hintergrundfarbe setzen, falls benötigt
+                        ctx.fillStyle = 'white';
                         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
                         ctx.drawImage(img, offsetX, offsetY, newWidth, newHeight);
                         getPixelData();
                     };
                     img.src = e.target.result;
                 };
-
                 reader.readAsDataURL(fileInput.files[0]);
             }
         }
@@ -341,58 +315,66 @@
         window.onload = function () {
             doAll();
         }
+
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
 
-        const BW_COLORS = [
-            { r: 0, g: 0, b: 0 },
-            { r: 255, g: 255, b: 255 }
-        ];
-        function applyBlackWhiteDithering() {
+        function findNearestColor(r, g, b) {
+            if (r > 128 && g < 128 && b < 128) {
+                // Strictly map bright red
+                return [255, 0, 0];
+            }
+            const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            if (luminance < 85) {
+                return [0, 0, 0]; // Black
+            }
+            return [255, 255, 255]; // White
+        }
+
+        function applyDithering() {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const pixels = imageData.data;
-            for (let y = 0; y < canvas.height; y++) {
-                for (let x = 0; x < canvas.width; x++) {
-                    const i = (y * canvas.width + x) * 4;
-                    const r = pixels[i];
-                    const g = pixels[i + 1];
-                    const b = pixels[i + 2];
-                    const luminance = 0.3 * r + 0.59 * g + 0.11 * b;
-                    const newColor = getClosestBlackWhiteColor(luminance);
-                    const error = luminance - newColor.luminance;
-                    pixels[i] = newColor.color.r;
-                    pixels[i + 1] = newColor.color.g;
-                    pixels[i + 2] = newColor.color.b;
-                    distributeError(x, y, error, pixels);
+            const data = imageData.data;
+
+            function clamp(value) {
+                return Math.max(0, Math.min(255, value));
+            }
+
+            for (let i = 0; i < data.length; i += 4) {
+                const oldR = data[i];
+                const oldG = data[i + 1];
+                const oldB = data[i + 2];
+                const [newR, newG, newB] = findNearestColor(oldR, oldG, oldB);
+                data[i] = newR;
+                data[i + 1] = newG;
+                data[i + 2] = newB;
+
+                const errR = oldR - newR;
+                const errG = oldG - newG;
+                const errB = oldB - newB;
+
+                function distributeError(index, factor) {
+                    if (index < 0 || index >= data.length) return;
+                    data[index] = clamp(data[index] + errR * factor);
+                    data[index + 1] = clamp(data[index + 1] + errG * factor);
+                    data[index + 2] = clamp(data[index + 2] + errB * factor);
+                }
+
+                if (i + 4 < data.length) {
+                    distributeError(i + 4, 7 / 16);
+                }
+                let nextLine = i + 4 * canvas.width;
+                if (nextLine < data.length) {
+                    distributeError(nextLine - 4, 3 / 16);
+                    distributeError(nextLine, 5 / 16);
+                    if (nextLine + 4 < data.length) {
+                        distributeError(nextLine + 4, 1 / 16);
+                    }
                 }
             }
 
             ctx.putImageData(imageData, 0, 0);
         }
 
-        function getClosestBlackWhiteColor(luminance) {
-            if (luminance < 128) {
-                return { color: BW_COLORS[0], luminance: 0 };
-            } else {
-                return { color: BW_COLORS[1], luminance: 255 };
-            }
-        }
-
-        function distributeError(x, y, error, pixels) {
-            const width = canvas.width;
-
-            function adjustPixel(i, factor) {
-                if (i < 0 || i >= pixels.length) return;
-                pixels[i] += error * factor;
-                pixels[i + 1] += error * factor;
-                pixels[i + 2] += error * factor;
-            }
-
-            if (x + 1 < canvas.width) adjustPixel(((y) * width + (x + 1)) * 4, 7 / 16);
-            if (x - 1 >= 0 && y + 1 < canvas.height) adjustPixel(((y + 1) * width + (x - 1)) * 4, 3 / 16);
-            if (y + 1 < canvas.height) adjustPixel(((y + 1) * width + (x)) * 4, 5 / 16);
-            if (x + 1 < canvas.width && y + 1 < canvas.height) adjustPixel(((y + 1) * width + (x + 1)) * 4, 1 / 16);
-        }
     </script>
     <script>
         let bleDevice;
@@ -776,6 +758,7 @@
         function connect() {
             if (writeCharacteristic == null) {
                 addLog("Connecting to: " + bleDevice.name);
+                addLog("please wait a moment...");
                 bleDevice.gatt.connect().then(server => {
                     console.log('> Found GATT server');
                     gattServer = server;
