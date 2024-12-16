@@ -136,7 +136,7 @@
         <input type="text" id="heightInput" placeholder="Height" value="250">
         <button onclick="createCanvas()">Create Canvas</button><br><br>
         <label for="imageUpload">Upload Image:</label>
-        <input type="file" id="imageUpload" accept="image/*" onchange="uploadImage()"><br><br>
+        <input type="file" id="imageUpload" accept="image/*" onclick="resetImageSelector()" onchange="uploadImage()"><br><br>
         <input onchange="getPixelData()" type="checkbox" checked="true" id="ditherrin">
         <label for="ditherrin">Dithering</label><br>
         <input type="checkbox" id="compressionCheckbox">
@@ -449,6 +449,10 @@
 
             doAll();
         }
+
+        function resetImageSelector() {
+            document.getElementById("imageUpload").value = '';
+        };
     </script>
     <script>
         let bleDevice;

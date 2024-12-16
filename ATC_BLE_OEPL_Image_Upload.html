@@ -108,7 +108,7 @@
         <input type="text" id="textInput" placeholder="Text" value="Hello">
         <button onclick="addText()">Add Text</button><br><br>
         <label for="imageUpload">Upload Image:</label>
-        <input type="file" id="imageUpload" accept="image/*" onchange="uploadImage()"><br><br>
+        <input type="file" id="imageUpload" accept="image/*" onclick="resetImageSelector()" onchange="uploadImage()"><br><br>
         <input onchange="getPixelData()" type="checkbox" checked="true" id="ditherrin">
         <label for="ditherrin">Dithering</label><br>
         <input onchange="getPixelData()" type="checkbox" id="secondColorCheckbox">
@@ -638,6 +638,10 @@
 
         function resetFileSelector() {
             document.getElementById("selectFirmware").value = '';
+        };
+
+        function resetImageSelector() {
+            document.getElementById("imageUpload").value = '';
         };
         function selectFirmwareVoid() {
             const file = document.getElementById('selectFirmware').files[0];
