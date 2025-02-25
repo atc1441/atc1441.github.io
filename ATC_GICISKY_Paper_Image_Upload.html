@@ -536,13 +536,22 @@
             sendcmd("01");
         }
 
+        // will be set based on chunk size requested by display
+        let imagePartSize;
         function img_state_handle(data) {
             switch (data.substring(0, 2)) {
                 case "01":
-                    if (data == "01f400")
-                        sendcmd("02" + intToHex(imgArrayLen / 2) + "000000");
-                    else
-                        addLog("Please reconnect to send a new Image");
+                    // Read image part message size from response bytes 2 & 3 as uint16le
+                    // Typically, this will be 0xf400 = 244d
+                    const imagePartMessageSize =
+                      new DataView(hexToBytes(data).buffer).getUint16(1, true);
+                    console.log(`Display requested image part message size ${imagePartMessageSize}`);
+
+                    // Image part size will be four bytes less than the message size
+                    // to account for the 4 byte uint32le part number starting each message
+                    imagePartSize = imagePartMessageSize - 4;
+
+                    sendcmd("02" + intToHex(imgArrayLen / 2) + "000000");
                     break;
 
                 case "02":
@@ -575,9 +584,9 @@
                 let currentpart = oldPart;
                 console.log("PartACK: " + partAcked + " PartUpload: " + intToHex(uploadPart));
                 if (partAcked == intToHex(uploadPart)) {
-                    currentpart = intToHex(uploadPart) + imgArray.substring(0, 480);
+                    currentpart = intToHex(uploadPart) + imgArray.substring(0, imagePartSize * 2);
                     oldPart = currentpart;
-                    imgArray = imgArray.substring(480);
+                    imgArray = imgArray.substring(imagePartSize * 2);
                     setStatus('Current part: ' + uploadPart);
                     uploadPart++;
                 } else {
