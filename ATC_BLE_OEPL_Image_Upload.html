@@ -118,6 +118,8 @@
         <textarea id="pixelData" rows="4" cols="10"></textarea>
         <div id="ble-upload">
             <h2>BLE Upload</h2>
+            <label for="namePrefix">E-Paper prefix filter(s)</label>
+            <input type="text" id="namePrefix" value="ATC_" placeholder="ATC_"><br>
             <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
             <button type="button" onclick="reConnect();">Reconnect</button>
             <button type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
@@ -759,7 +761,17 @@
             }
             else {
                 connectTrys = 0;
-                navigator.bluetooth.requestDevice({ optionalServices: [0x1337], acceptAllDevices: true }).then(device => {
+            var deviceoptions = {
+                optionalServices: [0x1337],
+                acceptAllDevices: true,
+            };
+            const namePrefix = document.getElementById('namePrefix').value;
+            if (namePrefix) {
+                deviceoptions.acceptAllDevices = false;
+                deviceoptions.filters = namePrefix.split(",")
+                    .map((x) => ({ namePrefix: x }));
+            }
+                navigator.bluetooth.requestDevice(deviceoptions).then(device => {
                     device.addEventListener('gattserverdisconnected', disconnect);
                     bleDevice = device;
                     connect();
