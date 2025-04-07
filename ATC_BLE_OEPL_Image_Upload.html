@@ -263,6 +263,8 @@
                 <button type="button"
                     onclick="sendCustomLUT(document.getElementById(&quot;lutData&quot;).value);">Upload
                     RAW LUT</button>
+                <button type="button" onclick="sendcmd('000D');">Download
+                    RAW LUT</button>
                 <br><br>
             </div>
         </div>
@@ -865,6 +867,17 @@
                     } else {
                         addLog("Config version not supported, please update FW to the latest release");
                     }
+                    break;
+                case "00CA":
+                    document.getElementById("lutData").value = "";
+                    sendcmd("000E");
+                    break;
+                case "00CB":
+                    document.getElementById("lutData").value = document.getElementById("lutData").value + data.substring(4);
+                    sendcmd("000E");
+                    break;
+                case "00CC":
+                    addLog("All LUT Data received");
                     break;
             }
         }
