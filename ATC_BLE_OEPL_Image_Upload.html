@@ -55,20 +55,22 @@
         }
 
         textarea {
-            padding: 5px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
+            width: 95%;
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
+        .upload-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
         }
 
         #ble-upload {
+            flex: 1;
+            min-width: 600px;
             padding: 10px;
             background-color: #007bff;
             color: #fff;
@@ -81,6 +83,24 @@
         }
 
         #ble-upload button:hover {
+            background-color: #ddd;
+        }
+
+        #lut-upload {
+            flex: 1;
+            min-width: 600px;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 10px;
+        }
+
+        #lut-upload button {
+            background-color: #fff;
+            color: #007bff;
+        }
+
+        #lut-upload button:hover {
             background-color: #ddd;
         }
 
@@ -116,96 +136,140 @@
         <label for="secondColorCheckbox">Second Color</label><br>
         <button onclick="getPixelData()">Get Pixel Data</button><br><br>
         <textarea id="pixelData" rows="4" cols="10"></textarea>
-        <div id="ble-upload">
-            <h2>BLE Upload</h2>
-            <label for="namePrefix">E-Paper prefix filter(s)</label>
-            <input type="text" id="namePrefix" value="ATC_" placeholder="ATC_"><br>
-            <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
-            <button type="button" onclick="reConnect();">Reconnect</button>
-            <button type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
-            <br><br>
-            <button type="button" onclick="sendimg(document.getElementById(&quot;pixelData&quot;).value);">Upload
-                Image</button>
-            <br><br>
-            <input type="text" id="cmdTXT" value="01">
-            <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">Send Debug
-                CMD</button>
-            <br>
-            <button type="button" onclick="sendcmd('0005');">Read Screen infos</button>
-            <br><br>
-            <select id="cmdTYPE">
-                <option value="1">350 HS BWY UC</option>
-                <option value="2">350 HS BWY UC Inverted</option>
-                <option value="3">350 HS BWY SSD</option>
-                <option value="4">350 HS BW UC</option>
-                <option value="5">200 HS BWY SSD</option>
-                <option value="6">750 HS BWY UC</option>
-                <option value="7">350 HS BWR UC</option>
-                <option value="8">350 HS BWR SSD</option>
-                <option value="9">266 HS BWR SSD</option>
-                <option value="10">213 HS BW UC</option>
-                <option value="11">213 Gici BWR SSD</option>
-                <option value="12">290 Gici BWR SSD</option>
-                <option value="13">213 Gici BW TFT</option>
-                <option value="14">970 DIY BWR</option>
-                <option value="15">1200 DIY BWR</option>
-                <option value="16">213 HS BWR SSD</option>
-                <option value="17">350 HS BWRY UC</option>
-                <option value="18">154 HS BWR SSD</option>
-                <option value="19">213 HS BWR UC</option>
-                <option value="20">420 HS BWR SSD</option>
-                <option value="21">420 HS BWR UC</option>
-                <option value="22">420 Gici BWR SSD</option>
-                <option value="23">1200 DIY BWR V2</option>
-                <option value="24">290 HS BWR SSD</option>
-                <option value="25">213 HS BW SSD LowRes</option>
-                <option value="26">581 DIY BW</option>
-                <option value="27">581 DIY BWR</option>
-                <option value="28">213 Gici BWR UC</option>
-                <option value="29">213 Gici BW SSD</option>
-                <option value="30">213 Gici BW UC</option>
-                <option value="31">583 HS BWR UC</option>
-                <option value="32">350 HS BW SSD</option>
-            </select>
-            <button type="button" onclick="setDisplayType(document.getElementById(&quot;cmdTYPE&quot;).value);">Set
-                Display Type</button>
-            <br>
-            <label for="selectFirmware">Select Firmware:</label>
-            <input type="file" id="selectFirmware" onclick="resetFileSelector()" onchange="selectFirmwareVoid()">
-            <br><br>
-            <button type="button" onclick="sendcmd('0007');">Disable OEPL</button>
-            <button type="button" onclick="sendcmd('0006');">Enable OEPL</button>
-            <br><br>
-            <button type="button" onclick="sendClockMode()">Set Clock Mode</button>
-            <button type="button" onclick="sendcmd('000C');">Disable Clock Mode</button>
-            <br><br>
-            <select id="cmdBLESpeed">
-                <option value="1000">625ms</option>
-                <option value="3200">2000ms</option>
-                <option value="4000">2500ms</option>
-                <option value="5000">3125ms</option>
-                <option value="6000">3750ms</option>
-                <option value="7000">4375ms</option>
-                <option value="8000">5000ms</option>
-                <option value="10000">6250ms</option>
-            </select>
-            <button type="button"
-                onclick="setBleAdvInterval(document.getElementById(&quot;cmdBLESpeed&quot;).value);">Set
-                ADV interval</button>
-            <br>
-            <input type="text" id="cmdCustomMac" value="1234567890ABCDEF">
-            <button type="button" onclick="sendcmd('0009' + document.getElementById(&quot;cmdCustomMac&quot;).value);">Set Custom MAC</button>
-            <br>
-            <button type="button" onclick="sendcmd('000A1234');">Reset Configs in Display</button>
-            <br>
-            <br><br>
-            <div id="status">Upload status</div>
-            <div id="log">Logs:</div>
+        <div class="upload-row">
+            <div id="ble-upload">
+                <h2>BLE Upload</h2>
+                <label for="namePrefix">E-Paper prefix filter(s)</label>
+                <input type="text" id="namePrefix" value="ATC_" placeholder="ATC_"><br>
+                <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
+                <button type="button" onclick="reConnect();">Reconnect</button>
+                <button type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
+                <br><br>
+                <button type="button" onclick="sendimg(document.getElementById(&quot;pixelData&quot;).value);">Upload
+                    Image</button>
+                <br><br>
+                <input type="text" id="cmdTXT" value="01">
+                <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">Send Debug
+                    CMD</button>
+                <br>
+                <button type="button" onclick="sendcmd('0005');">Read Screen infos</button>
+                <br><br>
+                <select id="cmdTYPE">
+                    <option value="1">350 HS BWY UC</option>
+                    <option value="2">350 HS BWY UC Inverted</option>
+                    <option value="3">350 HS BWY SSD</option>
+                    <option value="4">350 HS BW UC</option>
+                    <option value="5">200 HS BWY SSD</option>
+                    <option value="6">750 HS BWY UC</option>
+                    <option value="7">350 HS BWR UC</option>
+                    <option value="8">350 HS BWR SSD</option>
+                    <option value="9">266 HS BWR SSD</option>
+                    <option value="10">213 HS BW UC</option>
+                    <option value="11">213 Gici BWR SSD</option>
+                    <option value="12">290 Gici BWR SSD</option>
+                    <option value="13">213 Gici BW TFT</option>
+                    <option value="14">970 DIY BWR</option>
+                    <option value="15">1200 DIY BWR</option>
+                    <option value="16">213 HS BWR SSD</option>
+                    <option value="17">350 HS BWRY UC</option>
+                    <option value="18">154 HS BWR SSD</option>
+                    <option value="19">213 HS BWR UC</option>
+                    <option value="20">420 HS BWR SSD</option>
+                    <option value="21">420 HS BWR UC</option>
+                    <option value="22">420 Gici BWR SSD</option>
+                    <option value="23">1200 DIY BWR V2</option>
+                    <option value="24">290 HS BWR SSD</option>
+                    <option value="25">213 HS BW SSD LowRes</option>
+                    <option value="26">581 DIY BW</option>
+                    <option value="27">581 DIY BWR</option>
+                    <option value="28">213 Gici BWR UC</option>
+                    <option value="29">213 Gici BW SSD</option>
+                    <option value="30">213 Gici BW UC</option>
+                    <option value="31">583 HS BWR UC</option>
+                    <option value="32">350 HS BW SSD</option>
+                </select>
+                <button type="button" onclick="setDisplayType(document.getElementById(&quot;cmdTYPE&quot;).value);">Set
+                    Display Type</button>
+                <br>
+                <label for="selectFirmware">Select Firmware:</label>
+                <input type="file" id="selectFirmware" onclick="resetFileSelector()" onchange="selectFirmwareVoid()">
+                <br><br>
+                <button type="button" onclick="sendcmd('0007');">Disable OEPL</button>
+                <button type="button" onclick="sendcmd('0006');">Enable OEPL</button>
+                <br><br>
+                <button type="button" onclick="sendClockMode()">Set Clock Mode</button>
+                <button type="button" onclick="sendcmd('000C');">Disable Clock Mode</button>
+                <br><br>
+                <select id="cmdBLESpeed">
+                    <option value="1000">625ms</option>
+                    <option value="3200">2000ms</option>
+                    <option value="4000">2500ms</option>
+                    <option value="5000">3125ms</option>
+                    <option value="6000">3750ms</option>
+                    <option value="7000">4375ms</option>
+                    <option value="8000">5000ms</option>
+                    <option value="10000">6250ms</option>
+                </select>
+                <button type="button"
+                    onclick="setBleAdvInterval(document.getElementById(&quot;cmdBLESpeed&quot;).value);">Set
+                    ADV interval</button>
+                <br>
+                <input type="text" id="cmdCustomMac" value="1234567890ABCDEF">
+                <button type="button"
+                    onclick="sendcmd('0009' + document.getElementById(&quot;cmdCustomMac&quot;).value);">Set Custom
+                    MAC</button>
+                <br>
+                <button type="button" onclick="sendcmd('000A1234');">Reset Configs in Display</button>
+                <br>
+                <br><br>
+                <div id="status">Upload status</div>
+                <div id="log">Logs:</div>
+            </div>
+            <div id="lut-upload">
+                <h2>LUT Playground</h2>
+                <div id="uc-lut">
+                    UC VCOM LUT Reg 0x20
+                    <textarea id="uc_reg_20" rows="2">26 0A 39 39 A0 00 00 00 19 19 19 19 19 19 19 19</textarea><br>
+                    UC W2W LUT Reg 0x21
+                    <textarea id="uc_reg_21"
+                        rows="2">14 02 01 02 01 01 01 01 14 27 24 09 01 02 01 02 14 02 14 01 01 05 88 48 88 48 01 01 1C 03 01 03 01 01 01 04 03 03 03 03 02 01 03 03 02 28 06 01 01 02 03 02 06 25 01 01</textarea><br>
+                    UC B2W LUT Reg 0x22
+                    <textarea id="uc_reg_22"
+                        rows="2">14 42 01 82 81 01 01 01 94 27 24 49 01 02 01 02 94 02 94 01 01 05 48 88 48 88 01 01 1C 43 01 83 01 01 01 04 03 03 43 83 02 01 03 83 02 E8 06 01 01 02 83 02 C6 E5 01 01</textarea><br>
+                    UC W2B LUT Reg 0x23
+                    <textarea id="uc_reg_23"
+                        rows="2">14 42 01 82 81 01 01 01 94 67 64 49 01 02 01 02 94 02 94 01 01 05 48 88 48 88 01 01 1C 03 01 03 01 01 01 04 03 83 03 03 02 01 03 83 82 28 06 01 01 02 83 82 06 25 01 01</textarea><br>
+                    UC B2B LUT Reg 0x24
+                    <textarea id="uc_reg_24"
+                        rows="2">14 42 01 82 81 01 01 01 94 27 64 49 01 02 01 02 94 02 94 01 01 05 48 88 48 88 01 01 1C 43 01 83 81 01 01 04 43 83 03 83 02 01 03 03 02 28 46 01 01 02 03 02 46 25 01 01</textarea><br>
+                    UC B2B LUT Reg 0x25
+                    <textarea id="uc_reg_25" rows="2"></textarea><br>
+
+                    <button type="button"
+                        onclick="sendCustomUCLUT(document.getElementById(&quot;uc_reg_20&quot;).value, document.getElementById(&quot;uc_reg_21&quot;).value, document.getElementById(&quot;uc_reg_22&quot;).value, document.getElementById(&quot;uc_reg_23&quot;).value, document.getElementById(&quot;uc_reg_24&quot;).value, document.getElementById(&quot;uc_reg_25&quot;).value);">Upload
+                        UC LUT</button>
+                </div>
+                <hr>
+                <div id="ssd-lut">
+                    SSD LUT Reg 0x32
+                    <textarea id="ssd_reg_32" rows="30"></textarea><br>
+                    <button type="button"
+                        onclick="sendCustomSSDLUT(document.getElementById(&quot;ssd_reg_32&quot;).value);">Upload
+                        SSD LUT</button>
+                </div>
+                <hr>
+                <textarea id="lutData" rows="30"></textarea>
+                <br>
+                <button type="button"
+                    onclick="sendCustomLUT(document.getElementById(&quot;lutData&quot;).value);">Upload
+                    RAW LUT</button>
+                <br><br>
+            </div>
         </div>
     </div>
     <script>
         function sendClockMode() {
-			var timeHexString = (Math.floor((Date.now() / 1000)  + (-(new Date().getTimezoneOffset()*60)))).toString(16);
+            var timeHexString = (Math.floor((Date.now() / 1000) + (-(new Date().getTimezoneOffset() * 60)))).toString(16);
             sendcmd('000B' + timeHexString.substring(6, 8) + timeHexString.substring(4, 6) + timeHexString.substring(2, 4) + timeHexString.substring(0, 2));
         }
         function createCanvas() {
@@ -667,6 +731,56 @@
             sendcmd("0064" + dataInfo.toHexString());
         }
 
+        function sendCustomUCLUT(curLUT20, curLUT21, curLUT22, curLUT23, curLUT24, curLUT25) {
+            var ourUC_LUT = "";
+            curLUT20 = curLUT20.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT20len = ((curLUT20.length / 2) + 4).toString(16).padStart(4, '0');
+            ourUC_LUT = ourUC_LUT + curLUT20len + "01" + "20" + curLUT20;
+            curLUT21 = curLUT21.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT21len = ((curLUT21.length / 2) + 4).toString(16).padStart(4, '0');
+            ourUC_LUT = ourUC_LUT + curLUT21len + "01" + "21" + curLUT21;
+            curLUT22 = curLUT22.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT22len = ((curLUT22.length / 2) + 4).toString(16).padStart(4, '0');
+            ourUC_LUT = ourUC_LUT + curLUT22len + "01" + "22" + curLUT22;
+            curLUT23 = curLUT23.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT23len = ((curLUT23.length / 2) + 4).toString(16).padStart(4, '0');
+            ourUC_LUT = ourUC_LUT + curLUT23len + "01" + "23" + curLUT23;
+            curLUT24 = curLUT24.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT24len = ((curLUT24.length / 2) + 4).toString(16).padStart(4, '0');
+            ourUC_LUT = ourUC_LUT + curLUT24len + "01" + "24" + curLUT24;
+            if (curLUT25.length != 0) {
+                curLUT25 = curLUT25.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+                var curLUT25len = ((curLUT25.length / 2) + 4).toString(16).padStart(4, '0');
+                ourUC_LUT = ourUC_LUT + curLUT25len + "01" + "25" + curLUT25;
+            }
+            var allLength = (ourUC_LUT.length / 2).toString(16).padStart(4, '0');
+            ourUC_LUT = allLength + ourUC_LUT;
+            console.log('Sending UC LUT ' + ourUC_LUT.length / 2);
+            document.getElementById("lutData").value = ourUC_LUT;
+            sendCustomLUT(ourUC_LUT)
+        }
+
+        function sendCustomSSDLUT(curLUT32) {
+            var ourSSD_LUT = "";
+            curLUT32 = curLUT32.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT32len = ((curLUT32.length / 2) + 4).toString(16).padStart(4, '0');
+            ourSSD_LUT = ourSSD_LUT + curLUT32len + "01" + "32" + curLUT32;
+            var allLength = (ourSSD_LUT.length / 2).toString(16).padStart(4, '0');
+            ourSSD_LUT = allLength + ourSSD_LUT;
+            console.log('Sending SSD LUT ' + ourSSD_LUT.length / 2);
+            document.getElementById("lutData").value = ourSSD_LUT;
+            sendCustomLUT(ourSSD_LUT)
+        }
+
+        function sendCustomLUT(curLUT) {
+            imgArray = curLUT.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            imgArrayLen = imgArray.length;
+            uploadPart = 0;
+            console.log('Sending Custom LUT ' + imgArrayLen / 2);
+            const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, 0xB0, 0, 0);
+            sendcmd("0064" + dataInfo.toHexString());
+        }
+
         function resetFileSelector() {
             document.getElementById("selectFirmware").value = '';
         };
@@ -773,16 +887,16 @@
             }
             else {
                 connectTrys = 0;
-            var deviceoptions = {
-                optionalServices: [0x1337],
-                acceptAllDevices: true,
-            };
-            const namePrefix = document.getElementById('namePrefix').value;
-            if (namePrefix) {
-                deviceoptions.acceptAllDevices = false;
-                deviceoptions.filters = namePrefix.split(",")
-                    .map((x) => ({ namePrefix: x }));
-            }
+                var deviceoptions = {
+                    optionalServices: [0x1337],
+                    acceptAllDevices: true,
+                };
+                const namePrefix = document.getElementById('namePrefix').value;
+                if (namePrefix) {
+                    deviceoptions.acceptAllDevices = false;
+                    deviceoptions.filters = namePrefix.split(",")
+                        .map((x) => ({ namePrefix: x }));
+                }
                 navigator.bluetooth.requestDevice(deviceoptions).then(device => {
                     device.addEventListener('gattserverdisconnected', disconnect);
                     bleDevice = device;
