@@ -1079,8 +1079,7 @@
             if (isNaN(typeInt)) {
                 addLog("Invalid display type selected."); return;
             }
-            // Command 0004, payload is 2 bytes type ID (Little Endian)
-            sendcmd("0004" + toHexUint16LE(typeInt));
+            sendcmd("0004" + Number(newType).toString(16).padStart(4, '0').toUpperCase());
         }
 
         function setBleAdvInterval(newAdvInt) {
@@ -1088,8 +1087,7 @@
             if (isNaN(intervalInt)) {
                 addLog("Invalid ADV interval."); return;
             }
-            // Command 0008, payload is 2 bytes interval (Little Endian)
-            sendcmd("0008" + toHexUint16LE(intervalInt));
+            sendcmd("0008" +  Number(newAdvInt).toString(16).padStart(4, '0').toUpperCase());
         }
 
         function setCustomMac() {
