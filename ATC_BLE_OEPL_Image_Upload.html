@@ -446,6 +446,7 @@
                 </div>
                 <div>
                     <button type="button" onclick="sendcmd('000A1234');">Reset Configs in Display</button>
+                    <button type="button" onclick="sendcmd('0012');">Disable BLE until reboot</button>
                 </div>
             </div>
 
@@ -635,6 +636,7 @@
     <script>
         // --- Constants ---
         const deviceTypes = [
+            { id: 65535, name: "Dynamic (HW Config Tab)" },
             { id: 1, name: "1: 350 HS BWY UC" },
             { id: 2, name: "2: 350 HS BWY UC Inverted" },
             { id: 3, name: "3: 350 HS BWY SSD" },
@@ -669,7 +671,7 @@
             { id: 32, name: "32: 350 HS BW SSD" },
             { id: 33, name: "33: 266 HS BWR SSD Offset" },
             { id: 34, name: "34: 581 TI BWR UC" },
-            { id: 65535, name: "Dynamic (HW Config Tab)" }
+            { id: 35, name: "35: 346 HS BWY UC" },
         ];
         const gpioPins = {
             "None": 0x0000, "PA0": 0x0001, "PA1": 0x0002, "PA2": 0x0004, "PA3": 0x0008, "PA4": 0x0010, "PA5 (DM)": 0x0020, "PA6 (DP)": 0x0040, "PA7 (SWS)": 0x0080,
@@ -1521,8 +1523,8 @@
                     break;
                 case "0063": // Generic Command ACK
                     setStatus("Command ACK."); break; // Briefly show ACK status
-                case "0000": // General Error Response
-                    addLog("ERROR: Device reported General CMD Error (0000)."); setStatus("Command Error (0000).");
+                case "FFFF": // General Error Response
+                    addLog("ERROR: Device reported General CMD Error (FFFF)."); setStatus("Command Error (FFFF).");
                     break;
                 default:
                     addLog("Unhandled CMD: " + cmdHex + " Payload: " + payloadHex.substring(0, 40) + "...");
