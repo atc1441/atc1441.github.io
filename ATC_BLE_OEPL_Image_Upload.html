@@ -1,49 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
-<!DOCTYPE html>
-<html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ATC1441 BLE E-Paper Uploader</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
     <style>
         body {
-            font-family: 'Roboto', sans-serif;
-            text-align: center;
-            margin: 20px;
-            background-color: #f8f9fa;
+            font-family: "Roboto", sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: #e9ecef;
             color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1300px;
+            /* Increased max-width */
+            width: 100%;
+            text-align: center;
         }
 
         h1 {
             color: #007bff;
-            margin-bottom: 1px;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        h2 {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            color: #fff;
         }
 
         label {
             font-weight: bold;
             margin-right: 5px;
             color: #555;
+            display: inline-block;
+            margin-bottom: 5px;
+            min-width: 80px;
+            text-align: right;
+            vertical-align: middle;
         }
 
         input[type="text"],
+        input[type="number"],
         select {
-            padding: 8px;
-            margin-bottom: 10px;
-            border-radius: 5px;
+            padding: 6px 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
             border: 1px solid #ccc;
+            margin-right: 8px;
+            vertical-align: middle;
+            box-sizing: border-box;
+            /* Added for better sizing */
+        }
+
+        input[type="checkbox"] {
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        input[type="checkbox"]+label {
+            font-weight: normal;
+            min-width: unset;
+            text-align: left;
+            margin-left: 3px;
         }
 
         button {
-            padding: 8px 20px;
+            padding: 6px 15px;
             background-color: #007bff;
             color: #fff;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s ease;
+            margin: 4px;
+            /* Added margin */
+            vertical-align: middle;
         }
 
         button:hover {
@@ -52,65 +93,238 @@
 
         canvas {
             border: 1px solid black;
+            background-color: white;
+            /* Ensure background is white */
+            display: block;
+            /* Center canvas */
+            margin: 10px auto;
+            /* Center canvas with margin */
         }
 
         textarea {
             border: 1px solid #ccc;
-            border-radius: 5px;
+            border-radius: 4px;
             width: 95%;
+            font-family: monospace;
+            /* Monospace for hex data */
+            box-sizing: border-box;
+            /* Include padding/border in width */
+            margin-top: 5px;
+            /* Spacing */
         }
 
-        .upload-row {
+        .top-controls>div {
+            margin-bottom: 8px;
+            /* Spacing between control rows */
+        }
+
+        .main-content-area {
+            margin-top: 15px;
+            text-align: left;
+            /* Align content left within the area */
+        }
+
+        /* Specific styling for main interactive boxes */
+        #ble-upload,
+        #lut-upload,
+        #display-type-set {
+            min-width: 380px;
+            /* Minimum width */
+            max-width: 600px;
+            /* Maximum width */
+            padding: 12px;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            margin: 0 auto 15px auto;
+            /* Center the box and add bottom margin */
+        }
+
+        #ble-upload button,
+        #lut-upload button,
+        #display-type-set button {
+            background-color: #fff;
+            color: #007bff;
+        }
+
+        #ble-upload button:hover,
+        #lut-upload button:hover,
+        #display-type-set button:hover {
+            background-color: #ddd;
+        }
+
+        #ble-upload label {
+            color: #fff;
+            min-width: 140px;
+            /* Align labels in BLE section */
+        }
+
+        #ble-upload input[type="text"],
+        #ble-upload input[type="number"],
+        #ble-upload input[type="file"],
+        #ble-upload select {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #0056b3;
+            max-width: 200px;
+            /* Limit width of inputs */
+        }
+
+        #ble-upload input[type="file"] {
+            max-width: none;
+            /* Allow file input to take more space */
+            padding: 4px;
+        }
+
+        #ble-upload div {
+            margin-bottom: 6px;
+            /* Spacing inside BLE upload */
+        }
+
+        /* Config Tab Specifics */
+        #display-type-set label {
+            color: #fff;
+            min-width: 140px;
+        }
+
+        #display-type-set input[type="text"],
+        #display-type-set input[type="number"],
+        #display-type-set select {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #0056b3;
+            max-width: 200px;
+        }
+
+        #display-type-set input[type="checkbox"]+label {
+            color: #fff;
+            /* White label for checkboxes in config */
+        }
+
+        #display-type-set fieldset {
+            border: 1px solid #fff;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        #display-type-set legend {
+            font-weight: bold;
+            color: #fff;
+            padding: 0 5px;
+        }
+
+        #display-type-set legend input[type="checkbox"] {
+            margin-right: 5px;
+            vertical-align: baseline;
+        }
+
+        #display-type-set fieldset div {
+            margin-bottom: 6px;
+        }
+
+        .pull-type-select {
+            max-width: 160px;
+            /* Specific width for pull type selects */
+        }
+
+        /* Status and Log Area */
+        #status-area {
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 8px;
+        }
+
+        #status {
+            font-weight: bold;
+            color: #333;
+        }
+
+        #log-area {
+            max-width: 1300px;
+            /* Match container width */
+            width: 100%;
+            margin-top: 15px;
+            /* Space above log */
+            margin-bottom: 15px;
+            /* Space below log */
+        }
+
+        .log-header {
             display: flex;
             justify-content: space-between;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
+            align-items: center;
+            margin-bottom: 4px;
+            padding: 0 8px;
+            /* Padding for header text/button */
         }
 
-        #ble-upload {
-            flex: 1;
-            min-width: 600px;
-            padding: 10px;
-            background-color: #007bff;
-            color: #fff;
-            border-radius: 10px;
+        .log-header span {
+            font-weight: bold;
+            color: #333;
         }
 
-        #ble-upload button {
-            background-color: #fff;
-            color: #007bff;
+        .log-header button {
+            padding: 4px 10px;
+            /* Smaller padding for clear button */
+            background-color: #6c757d;
+            /* Grey button */
         }
 
-        #ble-upload button:hover {
-            background-color: #ddd;
-        }
-
-        #lut-upload {
-            flex: 1;
-            min-width: 600px;
-            padding: 10px;
-            background-color: #007bff;
-            color: #fff;
-            border-radius: 10px;
-        }
-
-        #lut-upload button {
-            background-color: #fff;
-            color: #007bff;
-        }
-
-        #lut-upload button:hover {
-            background-color: #ddd;
+        .log-header button:hover {
+            background-color: #5a6268;
         }
 
         #log {
             text-align: left;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #f3f3f3;
-            color: black;
+            border-radius: 4px;
+            background-color: #333;
+            /* Dark background for log */
+            color: #f0f0f0;
+            /* Light text for log */
+            height: 180px;
+            /* Fixed height */
+            overflow-y: scroll;
+            /* Enable scrolling */
+            font-family: monospace;
+            /* Monospace for logs */
+            font-size: 0.9em;
+            /* Slightly smaller font */
+            box-sizing: border-box;
+            width: 100%;
+            /* Full width */
+        }
+
+        /* View Toggle Buttons */
+        .view-toggle-buttons {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .view-toggle-buttons button {
+            background-color: #6c757d;
+            /* Grey */
+            color: #fff;
+        }
+
+        .view-toggle-buttons button:hover {
+            background-color: #5a6268;
+        }
+
+        .view-toggle-buttons button.active {
+            background-color: #007bff;
+            /* Blue when active */
+            color: #fff;
+        }
+
+        /* Style for Pixel Data Textarea */
+        #pixelData {
+            width: 95%;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -118,268 +332,529 @@
 <body>
     <div class="container">
         <h1>ATC1441 BLE OEPL E-Paper Uploader</h1>
-        <label for="widthInput">Width:</label>
-        <input type="text" id="widthInput" placeholder="Width" value="184">
-        <label for="heightInput">Height:</label>
-        <input type="text" id="heightInput" placeholder="Height" value="384">
-        <button onclick="createCanvas()">Create Canvas</button><br><br>
-        <canvas id="myCanvas" width="184" height="384"></canvas><br><br>
-        <label for="textInput">Enter Text:</label>
-        <input type="text" id="textInput" placeholder="Text" value="Hello">
-        <button onclick="addText()">Add Text</button><br><br>
-        <label for="imageUpload">Upload Image:</label>
-        <input type="file" id="imageUpload" accept="image/*" onclick="resetImageSelector()"
-            onchange="uploadImage()"><br><br>
-        <input onchange="getPixelData()" type="checkbox" checked="true" id="ditherrin">
-        <label for="ditherrin">Dithering</label><br>
-        <input onchange="getPixelData()" type="checkbox" id="secondColorCheckbox">
-        <label for="secondColorCheckbox">Second Color</label><br>
-        <button onclick="getPixelData()">Get Pixel Data</button><br><br>
-        <textarea id="pixelData" rows="4" cols="10"></textarea>
-        <div class="upload-row">
-            <div id="ble-upload">
-                <h2>BLE Upload</h2>
-                <label for="namePrefix">E-Paper prefix filter(s)</label>
-                <input type="text" id="namePrefix" value="ATC_" placeholder="ATC_"><br>
-                <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
-                <button type="button" onclick="reConnect();">Reconnect</button>
-                <button type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
-                <br><br>
-                <button type="button" onclick="sendimg(document.getElementById(&quot;pixelData&quot;).value);">Upload
-                    Image</button>
-                <br><br>
-                <input type="text" id="cmdTXT" value="01">
-                <button type="button" onclick="sendcmd(document.getElementById(&quot;cmdTXT&quot;).value);">Send Debug
-                    CMD</button>
-                <br>
-                <button type="button" onclick="sendcmd('0005');">Read Screen infos</button>
-                <br><br>
-                <select id="cmdTYPE">
-                    <option value="1">350 HS BWY UC</option>
-                    <option value="2">350 HS BWY UC Inverted</option>
-                    <option value="3">350 HS BWY SSD</option>
-                    <option value="4">350 HS BW UC</option>
-                    <option value="5">200 HS BWY SSD</option>
-                    <option value="6">750 HS BWY UC</option>
-                    <option value="7">350 HS BWR UC</option>
-                    <option value="8">350 HS BWR SSD</option>
-                    <option value="9">266 HS BWR SSD</option>
-                    <option value="10">213 HS BW UC</option>
-                    <option value="11">213 Gici BWR SSD</option>
-                    <option value="12">290 Gici BWR SSD</option>
-                    <option value="13">213 Gici BW TFT</option>
-                    <option value="14">970 DIY BWR</option>
-                    <option value="15">1200 DIY BWR</option>
-                    <option value="16">213 HS BWR SSD</option>
-                    <option value="17">350 HS BWRY UC</option>
-                    <option value="18">154 HS BWR SSD</option>
-                    <option value="19">213 HS BWR UC</option>
-                    <option value="20">420 HS BWR SSD</option>
-                    <option value="21">420 HS BWR UC</option>
-                    <option value="22">420 Gici BWR SSD</option>
-                    <option value="23">1200 DIY BWR V2</option>
-                    <option value="24">290 HS BWR SSD</option>
-                    <option value="25">213 HS BW SSD LowRes</option>
-                    <option value="26">581 DIY BW</option>
-                    <option value="27">581 DIY BWR</option>
-                    <option value="28">213 Gici BWR UC</option>
-                    <option value="29">213 Gici BW SSD</option>
-                    <option value="30">213 Gici BW UC</option>
-                    <option value="31">583 HS BWR UC</option>
-                    <option value="32">350 HS BW SSD</option>
-                    <option value="33">266 HS BWR SSD Offset</option>
-                    <option value="34">581 DIY BWR UC</option>
-                </select>
-                <button type="button" onclick="setDisplayType(document.getElementById(&quot;cmdTYPE&quot;).value);">Set
-                    Display Type</button>
-                <br>
-                <label for="selectFirmware">Select Firmware:</label>
-                <input type="file" id="selectFirmware" onclick="resetFileSelector()" onchange="selectFirmwareVoid()">
-                <br><br>
-                <button type="button" onclick="sendcmd('0007');">Disable OEPL</button>
-                <button type="button" onclick="sendcmd('0006');">Enable OEPL</button>
-                <br><br>
-                <button type="button" onclick="sendClockMode()">Set Clock Mode</button>
-                <button type="button" onclick="sendcmd('000C');">Disable Clock Mode</button>
-                <br><br>
-                <select id="cmdBLESpeed">
-                    <option value="1000">625ms</option>
-                    <option value="3200">2000ms</option>
-                    <option value="4000">2500ms</option>
-                    <option value="5000">3125ms</option>
-                    <option value="6000">3750ms</option>
-                    <option value="7000">4375ms</option>
-                    <option value="8000">5000ms</option>
-                    <option value="10000">6250ms</option>
-                </select>
-                <button type="button"
-                    onclick="setBleAdvInterval(document.getElementById(&quot;cmdBLESpeed&quot;).value);">Set
-                    ADV interval</button>
-                <br>
-                <input type="text" id="cmdCustomMac" value="1234567890ABCDEF">
-                <button type="button"
-                    onclick="sendcmd('0009' + document.getElementById(&quot;cmdCustomMac&quot;).value);">Set Custom
-                    MAC</button>
-                <br>
-                <button type="button" onclick="sendcmd('000A1234');">Reset Configs in Display</button>
-                <br>
-                <br><br>
-                <div id="status">Upload status</div>
-                <div id="log">Logs:</div>
+
+        <!-- Top Controls for Canvas and Image -->
+        <div class="top-controls">
+            <div>
+                <label for="widthInput">Width:</label>
+                <input type="text" id="widthInput" placeholder="Width" value="184" style="width: 70px;" />
+                <label for="heightInput">Height:</label>
+                <input type="text" id="heightInput" placeholder="Height" value="384" style="width: 70px;" />
+                <button onclick="createCanvas()">Create Canvas</button>
             </div>
-            <div id="lut-upload">
+            <div>
+                <label for="textInput">Enter Text:</label>
+                <input type="text" id="textInput" placeholder="Text" value="Hello" />
+                <button onclick="addText()">Add Text</button>
+            </div>
+            <div>
+                <label for="imageUpload">Upload Image:</label>
+                <input type="file" id="imageUpload" accept="image/*" onclick="resetImageSelector()"
+                    onchange="uploadImage()" />
+            </div>
+            <div>
+                <input onchange="getPixelData()" type="checkbox" checked="true" id="ditherrin" />
+                <label for="ditherrin">Dithering</label>
+                <input onchange="getPixelData()" type="checkbox" id="secondColorCheckbox" />
+                <label for="secondColorCheckbox">Second Color</label>
+                <button onclick="getPixelData()" style="margin-left: 15px;">Get Pixel Data</button>
+            </div>
+        </div>
+
+        <canvas id="myCanvas" width="184" height="384" style="margin-top: 10px; margin-bottom: 5px;"></canvas>
+        <textarea id="pixelData" rows="3" placeholder="Pixel data HEX will appear here..."></textarea>
+
+        <!-- Status and Log Area -->
+        <div id="status-area">
+            <div id="status">Upload status</div>
+        </div>
+        <div id="log-area">
+            <div class="log-header">
+                <span>Logs:</span>
+                <button type="button" onclick="document.getElementById('log').innerHTML = '';">Clear Log</button>
+            </div>
+            <div id="log"></div>
+        </div>
+
+        <!-- View Toggle Buttons -->
+        <div class="view-toggle-buttons">
+            <button id="btn-show-ble" onclick="showView('ble')">BLE Connection</button>
+            <button id="btn-show-config" onclick="showView('config')">HW Config</button>
+            <button id="btn-show-lut" onclick="showView('lut')">LUT Playground</button>
+        </div>
+
+        <!-- Main Content Area (holds the toggled views) -->
+        <div class="main-content-area">
+            <!-- BLE Upload Section -->
+            <div id="ble-upload">
+                <h2>BLE Connection</h2>
+                <div>
+                    <label for="namePrefix">E-Paper prefix filter(s):</label>
+                    <input type="text" id="namePrefix" value="ATC_" placeholder="ATC_ (comma separated)" />
+                </div>
+                <div>
+                    <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
+                    <button type="button" onclick="reConnect();">Reconnect</button>
+                    <button type="button" onclick="sendcmd('0005');"
+                        title="Read basic info, updates canvas if possible">Read Screen infos</button>
+                    <button type="button" onclick="sendimg(document.getElementById('pixelData').value);">Upload
+                        Image</button>
+                </div>
+                <div>
+                    <label for="cmdTXT">Debug CMD (Hex):</label>
+                    <input type="text" id="cmdTXT" value="0001" />
+                    <button type="button" onclick="sendcmd(document.getElementById('cmdTXT').value);">Send Debug
+                        CMD</button>
+                </div>
+                <div>
+                    <label for="cmdTYPE">Set Device Type (Preset):</label>
+                    <select id="cmdTYPE" style="max-width: 250px;"></select> <!-- Populated by JS -->
+                    <button type="button" onclick="setDisplayType(document.getElementById('cmdTYPE').value);">Set
+                        Type</button>
+                </div>
+                <div>
+                    <label for="selectFirmware">Select Firmware:</label>
+                    <input type="file" id="selectFirmware" onclick="resetFileSelector()"
+                        onchange="selectFirmwareVoid()" />
+                </div>
+                <div>
+                    <button type="button" onclick="sendcmd('0007');">Disable OEPL</button>
+                    <button type="button" onclick="sendcmd('0006');">Enable OEPL</button>
+                    <button type="button" onclick="sendClockMode()">Set Clock Mode</button>
+                    <button type="button" onclick="sendcmd('000C');">Disable Clock Mode</button>
+                </div>
+                <div>
+                    <label for="cmdBLESpeed">BLE ADV Interval:</label>
+                    <select id="cmdBLESpeed">
+                        <option value="1000">625ms</option>
+                        <option value="3200">2000ms</option>
+                        <option value="4000">2500ms</option>
+                        <option value="5000">3125ms</option>
+                        <option value="6000">3750ms</option>
+                        <option value="7000">4375ms</option>
+                        <option value="8000">5000ms</option>
+                        <option value="10000">6250ms</option>
+                    </select>
+                    <button type="button" onclick="setBleAdvInterval(document.getElementById('cmdBLESpeed').value);">Set
+                        Interval</button>
+                </div>
+                <div>
+                    <label for="cmdCustomMac">Custom MAC (Hex, 8 Bytes):</label>
+                    <input type="text" id="cmdCustomMac" value="1122334455667788" maxlength="16" />
+                    <!-- Corrected length -->
+                    <button type="button" onclick="setCustomMac()">Set MAC</button>
+                </div>
+                <div>
+                    <button type="button" onclick="sendcmd('000A1234');">Reset Configs in Display</button>
+                </div>
+            </div>
+
+            <!-- Config Section -->
+            <div id="display-type-set" style="display: none;">
+                <h2>HW Config</h2>
+                <button type="button" onclick="readDynamicConfig()">Read Current Config</button>
+                <button type="button" onclick="sendDynamicConfigTest()">Test Config</button>
+                <button type="button" onclick="sendDynamicConfigSave()">Save Config & Reboot</button>
+                <hr /> <!-- Separator -->
+                <fieldset>
+                    <legend>Display Settings</legend>
+                    <div>
+                        <label for="conf_screen_type">Special Screen Type:</label>
+                        <select id="conf_screen_type"></select>
+                    </div>
+                    <div>
+                        <label for="conf_hw_type">OEPL Type (Hex):</label>
+                        <input type="text" id="conf_hw_type" value="0001" maxlength="4" style="width: 70px;" />
+                    </div>
+
+                    <div>
+                        <label for="conf_screen_functions">Controller:</label>
+                        <select id="conf_screen_functions">
+                            <option value="0">NONE</option>
+                            <option value="1">UC</option>
+                            <option value="2">SSD</option>
+                            <option value="3">ST</option>
+                            <option value="4">TI</option>
+                            <option value="5">UC_PRO</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="conf_screen_w">Width:</label>
+                        <input type="number" id="conf_screen_w" value="184" style="width: 70px;" />
+                        <label for="conf_screen_h" style="min-width: 50px;">Height:</label>
+                        <input type="number" id="conf_screen_h" value="384" style="width: 70px;" />
+                    </div>
+
+                    <div>
+                        <label for="conf_screen_w_offset">Width Offset:</label>
+                        <input type="number" id="conf_screen_w_offset" value="0" style="width: 70px;" />
+                        <label for="conf_screen_h_offset" style="min-width: 50px;">Height Offset:</label>
+                        <input type="number" id="conf_screen_h_offset" value="0" style="width: 70px;" />
+                    </div>
+
+                    <div>
+                        <label for="conf_screen_colors">Colors(Exc. White):</label>
+                        <input type="number" id="conf_screen_colors" value="2" style="width: 70px;" />
+                    </div>
+
+                    <div>
+                        <input type="checkbox" id="conf_screen_w_h_inversed_ble" />
+                        <label for="conf_screen_w_h_inversed_ble">Invert W/H for BLE</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="conf_screen_w_h_inversed" />
+                        <label for="conf_screen_w_h_inversed">Invert W/H Display</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="conf_screen_black_invert" />
+                        <label for="conf_screen_black_invert">Invert Black</label>
+                        <input type="checkbox" id="conf_screen_second_color_invert" />
+                        <label for="conf_screen_second_color_invert">Invert 2nd Color</label>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>
+                        <input type="checkbox" id="conf_epd_pinout_enabled" checked
+                            onchange="togglePinoutSection('epd_pinout_details', this.checked)" />
+                        <label for="conf_epd_pinout_enabled">EPD Pinout</label>
+                    </legend>
+                    <div id="epd_pinout_details">
+                        <div><label>RESET:</label><select class="gpio-select" id="conf_epd_RESET"></select></div>
+                        <div><label>DC:</label><select class="gpio-select" id="conf_epd_DC"></select></div>
+                        <div><label>BUSY:</label><select class="gpio-select" id="conf_epd_BUSY"></select></div>
+                        <div><label>BUSYs:</label><select class="gpio-select" id="conf_epd_BUSYs"></select></div>
+                        <div><label>CS:</label><select class="gpio-select" id="conf_epd_CS"></select></div>
+                        <div><label>CSs:</label><select class="gpio-select" id="conf_epd_CSs"></select></div>
+                        <div><label>CLK:</label><select class="gpio-select" id="conf_epd_CLK"></select></div>
+                        <div><label>MOSI:</label><select class="gpio-select" id="conf_epd_MOSI"></select></div>
+                        <div><label>ENABLE:</label><select class="gpio-select" id="conf_epd_ENABLE"></select></div>
+                        <div><label>ENABLE1:</label><select class="gpio-select" id="conf_epd_ENABLE1"></select></div>
+                        <div><label>FLASH_CS:</label><select class="gpio-select" id="conf_epd_FLASH_CS"></select></div>
+                        <div>
+                            <input type="checkbox" id="conf_epd_ENABLE_INVERT" />
+                            <label for="conf_epd_ENABLE_INVERT">Invert ENABLE Pin</label>
+                        </div>
+                        <hr style="border-color: #fff; margin: 6px 0;" />
+                        <div><label>Pull CFG Sleep:</label><select class="pull-type-select"
+                                id="conf_epd_PIN_CONFIG_SLEEP"></select></div>
+                        <div><label>Pull ENABLE:</label><select class="pull-type-select"
+                                id="conf_epd_PIN_ENABLE"></select></div>
+                        <div><label>Pull ENABLE Sleep:</label><select class="pull-type-select"
+                                id="conf_epd_PIN_ENABLE_SLEEP"></select></div>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>
+                        <input type="checkbox" id="conf_led_pinout_enabled"
+                            onchange="togglePinoutSection('led_pinout_details', this.checked)" />
+                        <label for="conf_led_pinout_enabled">LED Pinout</label>
+                    </legend>
+                    <div id="led_pinout_details" style="display: none;">
+                        <div><label>R:</label><select class="gpio-select" id="conf_led_R"></select></div>
+                        <div><label>G:</label><select class="gpio-select" id="conf_led_G"></select></div>
+                        <div><label>B:</label><select class="gpio-select" id="conf_led_B"></select></div>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>
+                        <input type="checkbox" id="conf_nfc_pinout_enabled"
+                            onchange="togglePinoutSection('nfc_pinout_details', this.checked)" />
+                        <label for="conf_nfc_pinout_enabled">NFC Pinout</label>
+                    </legend>
+                    <div id="nfc_pinout_details" style="display: none;">
+                        <div><label>SDA:</label><select class="gpio-select" id="conf_nfc_SDA"></select></div>
+                        <div><label>SCL:</label><select class="gpio-select" id="conf_nfc_SCL"></select></div>
+                        <div><label>CS:</label><select class="gpio-select" id="conf_nfc_CS"></select></div>
+                        <div><label>IRQ:</label><select class="gpio-select" id="conf_nfc_IRQ"></select></div>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>
+                        <input type="checkbox" id="conf_flash_pinout_enabled"
+                            onchange="togglePinoutSection('flash_pinout_details', this.checked)" />
+                        <label for="conf_flash_pinout_enabled">External Flash Pinout</label>
+                    </legend>
+                    <div id="flash_pinout_details" style="display: none;">
+                        <div><label>CS:</label><select class="gpio-select" id="conf_flash_CS"></select></div>
+                        <div><label>CLK:</label><select class="gpio-select" id="conf_flash_CLK"></select></div>
+                        <div><label>MISO:</label><select class="gpio-select" id="conf_flash_MISO"></select></div>
+                        <div><label>MOSI:</label><select class="gpio-select" id="conf_flash_MOSI"></select></div>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Other Pins</legend>
+                    <div><label>ADC Pin:</label><select class="gpio-select" id="conf_ADC_pinout"></select></div>
+                    <div><label>UART TX Pin:</label><select class="gpio-select" id="conf_UART_pinout"></select></div>
+                </fieldset>
+                <textarea id="dynamicConfigPayload" rows="4" readonly placeholder="Generated Payload HEX"></textarea>
+            </div>
+
+            <div id="lut-upload" style="display: none;">
                 <h2>LUT Playground</h2>
                 <div id="uc-lut">
                     UC VCOM LUT Reg 0x20
-                    <textarea id="uc_reg_20" rows="2">26 0A 39 39 A0 00 00 00 19 19 19 19 19 19 19 19</textarea><br>
+                    <textarea id="uc_reg_20" rows="2">26 0A 39 39 A0 00 00 00 19 19 19 19 19 19 19 19</textarea><br />
                     UC W2W LUT Reg 0x21
                     <textarea id="uc_reg_21"
-                        rows="2">14 02 01 02 01 01 01 01 14 27 24 09 01 02 01 02 14 02 14 01 01 05 88 48 88 48 01 01 1C 03 01 03 01 01 01 04 03 03 03 03 02 01 03 03 02 28 06 01 01 02 03 02 06 25 01 01</textarea><br>
+                        rows="2">14 02 01 02 01 01 01 01 14 27 24 09 01 02 01 02 14 02 14 01 01 05 88 48 88 48 01 01 1C 03 01 03 01 01 01 04 03 03 03 03 02 01 03 03 02 28 06 01 01 02 03 02 06 25 01 01</textarea><br />
                     UC B2W LUT Reg 0x22
                     <textarea id="uc_reg_22"
-                        rows="2">14 42 01 82 81 01 01 01 94 27 24 49 01 02 01 02 94 02 94 01 01 05 48 88 48 88 01 01 1C 43 01 83 01 01 01 04 03 03 43 83 02 01 03 83 02 E8 06 01 01 02 83 02 C6 E5 01 01</textarea><br>
+                        rows="2">14 42 01 82 81 01 01 01 94 27 24 49 01 02 01 02 94 02 94 01 01 05 48 88 48 88 01 01 1C 43 01 83 01 01 01 04 03 03 43 83 02 01 03 83 02 E8 06 01 01 02 83 02 C6 E5 01 01</textarea><br />
                     UC W2B LUT Reg 0x23
                     <textarea id="uc_reg_23"
-                        rows="2">14 42 01 82 81 01 01 01 94 67 64 49 01 02 01 02 94 02 94 01 01 05 48 88 48 88 01 01 1C 03 01 03 01 01 01 04 03 83 03 03 02 01 03 83 82 28 06 01 01 02 83 82 06 25 01 01</textarea><br>
+                        rows="2">14 42 01 82 81 01 01 01 94 67 64 49 01 02 01 02 94 02 94 01 01 05 48 88 48 88 01 01 1C 03 01 03 01 01 01 04 03 83 03 03 02 01 03 83 82 28 06 01 01 02 83 82 06 25 01 01</textarea><br />
                     UC B2B LUT Reg 0x24
                     <textarea id="uc_reg_24"
-                        rows="2">14 42 01 82 81 01 01 01 94 27 64 49 01 02 01 02 94 02 94 01 01 05 48 88 48 88 01 01 1C 43 01 83 81 01 01 04 43 83 03 83 02 01 03 03 02 28 46 01 01 02 03 02 46 25 01 01</textarea><br>
+                        rows="2">14 42 01 82 81 01 01 01 94 27 64 49 01 02 01 02 94 02 94 01 01 05 48 88 48 88 01 01 1C 43 01 83 81 01 01 04 43 83 03 83 02 01 03 03 02 28 46 01 01 02 03 02 46 25 01 01</textarea><br />
                     UC Border LUT Reg 0x25
-                    <textarea id="uc_reg_25" rows="2"></textarea><br>
+                    <textarea id="uc_reg_25" rows="2"></textarea><br />
 
                     <button type="button"
-                        onclick="sendCustomUCLUT(document.getElementById(&quot;uc_reg_20&quot;).value, document.getElementById(&quot;uc_reg_21&quot;).value, document.getElementById(&quot;uc_reg_22&quot;).value, document.getElementById(&quot;uc_reg_23&quot;).value, document.getElementById(&quot;uc_reg_24&quot;).value, document.getElementById(&quot;uc_reg_25&quot;).value);">Upload
+                        onclick="sendCustomUCLUT(document.getElementById('uc_reg_20').value, document.getElementById('uc_reg_21').value, document.getElementById('uc_reg_22').value, document.getElementById('uc_reg_23').value, document.getElementById('uc_reg_24').value, document.getElementById('uc_reg_25').value);">Upload
                         UC LUT</button>
                 </div>
-                <hr>
+                <hr />
                 <div id="ssd-lut">
                     SSD LUT Reg 0x32
-                    <textarea id="ssd_reg_32" rows="30"></textarea><br>
+                    <textarea id="ssd_reg_32" rows="8"></textarea><br />
                     <button type="button"
-                        onclick="sendCustomSSDLUT(document.getElementById(&quot;ssd_reg_32&quot;).value);">Upload
-                        SSD LUT</button>
+                        onclick="sendCustomSSDLUT(document.getElementById('ssd_reg_32').value);">Upload SSD LUT</button>
                 </div>
-                <hr>
-                <textarea id="lutData" rows="30"></textarea>
-                <br>
-                <button type="button"
-                    onclick="sendCustomLUT(document.getElementById(&quot;lutData&quot;).value);">Upload
-                    RAW LUT</button>
-                <button type="button" onclick="sendcmd('000D');">Download
-                    RAW LUT</button>
-                <br><br>
+                <hr />
+                <label for="lutData" style="color: #fff; min-width: unset; text-align: left;">Raw LUT Data
+                    (Hex):</label>
+                <textarea id="lutData" rows="8"></textarea><br />
+                <button type="button" onclick="sendCustomLUT(document.getElementById('lutData').value);">Upload RAW
+                    LUT</button>
+                <button type="button" onclick="sendcmd('000D');">Download RAW LUT</button>
+                <br /><br />
             </div>
         </div>
     </div>
+
     <script>
-        function sendClockMode() {
-            var timeHexString = (Math.floor((Date.now() / 1000) + (-(new Date().getTimezoneOffset() * 60)))).toString(16);
-            sendcmd('000B' + timeHexString.substring(6, 8) + timeHexString.substring(4, 6) + timeHexString.substring(2, 4) + timeHexString.substring(0, 2));
-        }
+        // --- Constants ---
+        const deviceTypes = [
+            { id: 1, name: "1: 350 HS BWY UC" },
+            { id: 2, name: "2: 350 HS BWY UC Inverted" },
+            { id: 3, name: "3: 350 HS BWY SSD" },
+            { id: 4, name: "4: 350 HS BW UC" },
+            { id: 5, name: "5: 200 HS BWY SSD" },
+            { id: 6, name: "6: 750 HS BWY UC" },
+            { id: 7, name: "7: 350 HS BWR UC" },
+            { id: 8, name: "8: 350 HS BWR SSD" },
+            { id: 9, name: "9: 266 HS BWR SSD" },
+            { id: 10, name: "10: 213 HS BW UC" },
+            { id: 11, name: "11: 213 Gici BWR SSD" },
+            { id: 12, name: "12: 290 Gici BWR SSD" },
+            { id: 13, name: "13: 213 Gici BW ST" },
+            { id: 14, name: "14: 970 TI BWR" },
+            { id: 15, name: "15: 1200 TI BWR" },
+            { id: 16, name: "16: 213 HS BWR SSD" },
+            { id: 17, name: "17: 350 HS BWRY JD" },
+            { id: 18, name: "18: 154 HS BWR H SSD" },
+            { id: 19, name: "19: 213 HS BWR UC" },
+            { id: 20, name: "20: 420 HS BWR SSD" },
+            { id: 21, name: "21: 420 HS BWR UC" },
+            { id: 22, name: "22: 420 Gici BWR SSD" },
+            { id: 23, name: "23: 1200 TI BWR V2" },
+            { id: 24, name: "24: 290 HS BWR SSD" },
+            { id: 25, name: "25: 213 HS BW SSD" },
+            { id: 26, name: "26: 581 TI BW" },
+            { id: 27, name: "27: 581 TI BWR" },
+            { id: 28, name: "28: 213 Gici BWR UC" },
+            { id: 29, name: "29: 213 Gici BW SSD" },
+            { id: 30, name: "30: 213 Gici BW UC" },
+            { id: 31, name: "31: 583 HS BWY UC" },
+            { id: 32, name: "32: 350 HS BW SSD" },
+            { id: 33, name: "33: 266 HS BWR SSD Offset" },
+            { id: 34, name: "34: 581 TI BWR UC" },
+            { id: 65535, name: "Dynamic (HW Config Tab)" }
+        ];
+        const gpioPins = {
+            "None": 0x0000, "PA0": 0x0001, "PA1": 0x0002, "PA2": 0x0004, "PA3": 0x0008, "PA4": 0x0010, "PA5 (DM)": 0x0020, "PA6 (DP)": 0x0040, "PA7 (SWS)": 0x0080,
+            "PB0": 0x0101, "PB1": 0x0102, "PB2": 0x0104, "PB3": 0x0108, "PB4": 0x0110, "PB5": 0x0120, "PB6": 0x0140, "PB7": 0x0180, "PC0": 0x0201, "PC1": 0x0202,
+            "PC2": 0x0204, "PC3": 0x0208, "PC4": 0x0210, "PC5": 0x0220, "PC6": 0x0240, "PC7": 0x0280, "PD0": 0x0301, "PD1": 0x0302, "PD2": 0x0304, "PD3": 0x0308,
+            "PD4": 0x0310, "PD5": 0x0320, "PD6": 0x0340, "PD7": 0x0380, "PE0": 0x0401, "PE1": 0x0402, "PE2": 0x0404, "PE3": 0x0408,
+        };
+        const gpioPullTypes = { "Float": 0, "Pullup 1M": 1, "Pulldown 100K": 2, "Pullup 10K": 3, };
+        const SIZEOF_DEFAULT_SETTINGS = 41;
+        const SIZEOF_SCREEN_PINOUT = 26;
+        const SIZEOF_LED_PINOUT = 6;
+        const SIZEOF_NFC_PINOUT = 8;
+        const SIZEOF_FLASH_PINOUT = 8;
+        const BLOCK_DATA_SIZE = 4096;
+        const BLOCK_PART_DATA_SIZE = 230;
+        const BLOCK_REQ_PARTS_BYTES = 6;
+
+        // --- Global Variables ---
+        let bleDevice;
+        let gattServer;
+        let Theservice;
+        let writeCharacteristic;
+        let reconnectTrys = 0;
+        let packets = [];
+        let totalPackets = 0;
+        let packetIndex = 0;
+        let currentBlockId = 0;
+        let imgArray = "";
+        let imgArrayLen = 0;
+
+        // --- Canvas & Image Functions ---
         function createCanvas() {
             var width = parseInt(document.getElementById('widthInput').value);
             var height = parseInt(document.getElementById('heightInput').value);
             var canvas = document.getElementById('myCanvas');
+            if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0) {
+                addLog("Invalid canvas dimensions."); return;
+            }
+            if (width > 4000 || height > 4000) {
+                addLog("Canvas dimensions too large."); return;
+            }
             canvas.width = width;
             canvas.height = height;
             var ctx = canvas.getContext('2d', { willReadFrequently: true });
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = 'white'; // Ensure background is white
             ctx.fillRect(0, 0, width, height);
+            addLog(`Canvas created/cleared: ${width}x${height}`);
         }
 
         function addText() {
             var canvas = document.getElementById('myCanvas');
+            if (!canvas || canvas.width === 0 || canvas.height === 0) {
+                addLog("Cannot add text: Canvas not ready."); return;
+            }
             var ctx = canvas.getContext('2d', { willReadFrequently: true });
             var text = document.getElementById('textInput').value;
-            var fontSize = 72;
-            var maxWidth = canvas.width - 20;
+            var fontSize = 72; // Start with a large font size
+            var maxWidth = canvas.width - 20; // Max width allowing for some padding
             var x = canvas.width / 2;
             var y = canvas.height / 2;
+
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle = 'black';
+            ctx.fillStyle = 'black'; // Default text color
 
+            // Reduce font size until text fits
             do {
                 fontSize--;
                 ctx.font = fontSize + 'px Arial';
-            } while (ctx.measureText(text).width > maxWidth && fontSize > 0);
+            } while (ctx.measureText(text).width > maxWidth && fontSize > 1);
 
+            if (fontSize <= 1) {
+                addLog("Warning: Text too long to fit significantly.");
+                // Optionally draw very small or omit
+            }
+
+            // Draw black text
+            ctx.fillStyle = 'black';
             ctx.fillText(text, x, y);
+
+            // Draw second color text if enabled (adjust position slightly)
             var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
             if (secondColorEnabled) {
-                ctx.fillStyle = 'red';
-                ctx.fillText(text, x, y + 40);
-            }
-            getPixelData();
-        }
+                // Simple positioning below the first text line
+                let y2 = y + fontSize * 0.7; // Adjust multiplier as needed
+                if (y2 > canvas.height - fontSize / 2) y2 = y - fontSize * 0.7; // If below bottom, try above
+                if (y2 < fontSize / 2) y2 = canvas.height * 0.75; // Fallback position
 
-        function buf2hex(buffer) {
-            return [...new Uint8Array(buffer)]
-                .map(x => x.toString(16).padStart(2, '0'))
-                .join('');
+                ctx.fillStyle = 'red'; // Assume second color is red
+                ctx.fillText(text, x, y2);
+            }
+            getPixelData(); // Update pixel data after drawing
         }
 
         function getPixelData() {
-            if (document.getElementById('ditherrin').checked)
-                applyDithering();
-            var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
-            var canvas = document.getElementById('myCanvas');
-            var ctx = canvas.getContext('2d', { willReadFrequently: true });
-            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            var pixels = imageData.data;
-            var byteData = [];
-            var byteDataRed = [];
-            var currentByte = 0;
-            var currentByteRed = 0;
-            var bitPosition = 7;
+            const canvas = document.getElementById('myCanvas');
+            if (!canvas || canvas.width === 0 || canvas.height === 0) {
+                addLog("Cannot get pixel data: Canvas not ready.");
+                document.getElementById('pixelData').value = ""; return;
+            }
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
+            const useDithering = document.getElementById('ditherrin').checked;
 
-            for (var i = 0; i < canvas.width; i++) {
-                for (var x = 0; x < canvas.height; x++) {
-                    var curr = ((i * canvas.height) + x) * 4;
-                    var r = pixels[curr];
-                    var g = pixels[curr + 1];
-                    var b = pixels[curr + 2];
-                    var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                    if (luminance > 128) {
-                        currentByte |= (1 << bitPosition);
-                    } else
-                        if (r > 170) {
-                            currentByteRed |= (1 << bitPosition);
-                        }
+            if (useDithering) {
+                applyDithering(ctx, canvas.width, canvas.height, secondColorEnabled); // Apply dithering to temp canvas
+            }
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            const byteData = []; // Black/White plane
+            const byteDataRed = []; // Red/Yellow plane
+            let currentByte = 0;
+            let currentByteRed = 0;
+            let bitPosition = 7;
+
+            // Correct iteration: y = rows (height), x = columns (width)
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const i = (y * canvas.width + x) * 4; // Pixel index
+                    const r = pixels[i];
+                    const g = pixels[i + 1];
+                    const b = pixels[i + 2];
+
+                    let isBlack = false;
+                    let isRed = false;
+
+                    // Determine color based on pixel value (after potential dithering)
+                    if (r < 128 && g < 128 && b < 128) { // Closer to black
+                        isBlack = true;
+                    } else if (secondColorEnabled && r > 128 && g < 128 && b < 128) { // Closer to red
+                        isRed = true;
+                    } // Else: Closer to white
+
+                    // Map to EPD bit planes (Common convention: 0=Black, 1=White for BW)
+                    // BWR/Y: Black Plane (0=Black, 1=White/Color), Color Plane (0=White/Black, 1=Color)
+                    // We'll map: White=(1,0), Black=(0,0), Red/Yellow=(1,1) before final inversion
+
+                    if (!isBlack && !isRed) { // White
+                        currentByte |= (1 << bitPosition); // Black plane bit = 1
+                        // currentByteRed bit = 0 (default) // Color plane bit = 0
+                    } else if (isBlack) { // Black
+                        // currentByte bit = 0 (default)    // Black plane bit = 0
+                        // currentByteRed bit = 0 (default) // Color plane bit = 0
+                    } else if (isRed) { // Red/Yellow
+                        currentByte |= (1 << bitPosition); // Black plane bit = 1
+                        currentByteRed |= (1 << bitPosition); // Color plane bit = 1
+                    }
+
                     bitPosition--;
                     if (bitPosition < 0) {
                         byteData.push(currentByte);
-                        byteDataRed.push(currentByteRed);
+                        if (secondColorEnabled) byteDataRed.push(currentByteRed);
                         currentByte = 0;
                         currentByteRed = 0;
                         bitPosition = 7;
                     }
                 }
             }
-
+            // Push any remaining bits
             if (bitPosition !== 7) {
                 byteData.push(currentByte);
-                byteDataRed.push(currentByteRed);
+                if (secondColorEnabled) byteDataRed.push(currentByteRed);
             }
 
-            var byteDataCompressed = [];
-            var pixelDataTextarea = document.getElementById('pixelData');
-
-            for (var b = 0; b < byteData.length; b++) {
-                byteDataCompressed.push(~byteData[b]);
+            // Combine planes: Invert black plane, append color plane (if used)
+            let byteDataCombined = [];
+            for (let b = 0; b < byteData.length; b++) {
+                byteDataCombined.push(~byteData[b] & 0xFF); // Invert black plane
             }
             if (secondColorEnabled) {
-                for (var b = 0; b < byteDataRed.length; b++) {
-                    byteDataCompressed.push(byteDataRed[b]);
+                for (let b = 0; b < byteDataRed.length; b++) {
+                    byteDataCombined.push(byteDataRed[b]); // Append color plane (not inverted)
                 }
             }
-            pixelDataTextarea.value = buf2hex(byteDataCompressed);
 
+            document.getElementById('pixelData').value = bytesToHex(byteDataCombined); // Use bytesToHex helper
         }
 
         function uploadImage() {
             const fileInput = document.getElementById('imageUpload');
             const canvas = document.getElementById('myCanvas');
+            if (!canvas || canvas.width === 0 || canvas.height === 0) {
+                addLog("Cannot upload image: Canvas not ready."); return;
+            }
             const ctx = canvas.getContext('2d');
             if (fileInput.files && fileInput.files[0]) {
                 const reader = new FileReader();
@@ -401,146 +876,236 @@
                         ctx.drawImage(img, offsetX, offsetY, newWidth, newHeight);
                         getPixelData();
                     };
+                    img.onerror = function () { addLog("Error loading image file."); }
                     img.src = e.target.result;
                 };
+                reader.onerror = function (e) { addLog("Error reading file: " + e); };
                 reader.readAsDataURL(fileInput.files[0]);
             }
         }
 
-        function doAll() {
-            createCanvas();
-            addText();
-            getPixelData();
-        }
-        window.onload = function () {
-            doAll();
-        }
-
-        const canvas = document.getElementById('myCanvas');
-        const ctx = canvas.getContext('2d');
-
-        function findNearestColor(r, g, b) {
-            if (r > 128 && g < 128 && b < 128) {
-                return [255, 0, 0];
+        // --- Dithering Functions (Floyd-Steinberg from newer version) ---
+        function findNearestColor(r, g, b, secondColorEnabled) {
+            const distWhite = Math.sqrt((r - 255) ** 2 + (g - 255) ** 2 + (b - 255) ** 2);
+            const distBlack = Math.sqrt((r - 0) ** 2 + (g - 0) ** 2 + (b - 0) ** 2);
+            let distRed = Infinity;
+            if (secondColorEnabled) {
+                distRed = Math.sqrt((r - 255) ** 2 + (g - 0) ** 2 + (b - 0) ** 2); // Red = (255,0,0)
             }
-            const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-            if (luminance < 85) {
-                return [0, 0, 0];
+
+            let minDist = distWhite;
+            let nearestColor = [255, 255, 255]; // White
+
+            if (distBlack < minDist) {
+                minDist = distBlack;
+                nearestColor = [0, 0, 0]; // Black
             }
-            return [255, 255, 255];
+            if (distRed < minDist) {
+                nearestColor = [255, 0, 0]; // Red
+            }
+            return nearestColor;
         }
 
-        function applyDithering() {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        function applyDithering(ctx, width, height, secondColorEnabled) {
+            const imageData = ctx.getImageData(0, 0, width, height);
             const data = imageData.data;
+            const errorsR = new Array(width * height).fill(0);
+            const errorsG = new Array(width * height).fill(0);
+            const errorsB = new Array(width * height).fill(0);
 
-            function clamp(value) {
-                return Math.max(0, Math.min(255, value));
+            function clamp(value) { return Math.max(0, Math.min(255, value)); }
+
+            function setPixelError(x, y, errR, errG, errB, factor) {
+                if (x < 0 || x >= width || y < 0 || y >= height) return;
+                const index = y * width + x;
+                errorsR[index] += errR * factor;
+                errorsG[index] += errG * factor;
+                errorsB[index] += errB * factor;
             }
 
-            for (let i = 0; i < data.length; i += 4) {
-                const oldR = data[i];
-                const oldG = data[i + 1];
-                const oldB = data[i + 2];
-                const [newR, newG, newB] = findNearestColor(oldR, oldG, oldB);
-                data[i] = newR;
-                data[i + 1] = newG;
-                data[i + 2] = newB;
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const index = y * width + x;
+                    const dataIndex = index * 4;
 
-                const errR = oldR - newR;
-                const errG = oldG - newG;
-                const errB = oldB - newB;
+                    const oldR = clamp(data[dataIndex] + errorsR[index]);
+                    const oldG = clamp(data[dataIndex + 1] + errorsG[index]);
+                    const oldB = clamp(data[dataIndex + 2] + errorsB[index]);
 
-                function distributeError(index, factor) {
-                    if (index < 0 || index >= data.length) return;
-                    data[index] = clamp(data[index] + errR * factor);
-                    data[index + 1] = clamp(data[index + 1] + errG * factor);
-                    data[index + 2] = clamp(data[index + 2] + errB * factor);
-                }
+                    const [newR, newG, newB] = findNearestColor(oldR, oldG, oldB, secondColorEnabled);
 
-                if (i + 4 < data.length) {
-                    distributeError(i + 4, 7 / 16);
-                }
-                let nextLine = i + 4 * canvas.width;
-                if (nextLine < data.length) {
-                    distributeError(nextLine - 4, 3 / 16);
-                    distributeError(nextLine, 5 / 16);
-                    if (nextLine + 4 < data.length) {
-                        distributeError(nextLine + 4, 1 / 16);
-                    }
+                    data[dataIndex] = newR;
+                    data[dataIndex + 1] = newG;
+                    data[dataIndex + 2] = newB;
+
+                    const errR = oldR - newR;
+                    const errG = oldG - newG;
+                    const errB = oldB - newB;
+
+                    // Floyd-Steinberg distribution
+                    setPixelError(x + 1, y, errR, errG, errB, 7 / 16);
+                    setPixelError(x - 1, y + 1, errR, errG, errB, 3 / 16);
+                    setPixelError(x, y + 1, errR, errG, errB, 5 / 16);
+                    setPixelError(x + 1, y + 1, errR, errG, errB, 1 / 16);
                 }
             }
-
             ctx.putImageData(imageData, 0, 0);
         }
 
-    </script>
-    <script>
-        let bleDevice;
-        let gattServer;
-        let Theservice;
-        let writeCharacteristic;
-        let reconnectTrys = 0;
-
-        let imgArray = "";
-        let imgArrayLen = 0;
-        let uploadPart = 0;
-
+        // --- BLE Logic ---
         function resetVariables() {
+            // Don't nullify bleDevice if we are in a retry loop
             gattServer = null;
             Theservice = null;
             writeCharacteristic = null;
-            document.getElementById("log").value = '';
+            packets = [];
+            totalPackets = 0;
+            packetIndex = 0;
+            currentBlockId = 0;
             imgArray = "";
             imgArrayLen = 0;
-            uploadPart = 0;
+            setStatus("Disconnected");
+            // Reset button text on full disconnect/reset
+            document.getElementById("connectbutton").innerHTML = 'Connect';
         }
 
         function handleError(error) {
-            console.log(error);
-            resetVariables();
-            if (bleDevice == null)
+            console.error("BLE Error:", error);
+            addLog("BLE Error: " + error.message);
+
+            if (error.name === 'NotFoundError' || error.name === 'AbortError') {
+                addLog("Connection cancelled or device not found.");
+                resetVariables();
+                bleDevice = null; // Clear device ref here
+                reconnectTrys = 0;
                 return;
-            if (reconnectTrys <= 5) {
-                reconnectTrys++;
-                connect();
             }
-            else {
-                addLog("Was not able to connect, aborting");
+
+            const canRetry = !!bleDevice;
+            const deviceToRetry = bleDevice; // Store ref before reset
+
+            resetVariables(); // Reset connection state
+            // Don't reset button text here, retry logic will handle it
+
+            if (canRetry && reconnectTrys < 5) {
+                reconnectTrys++;
+                const delay = 1000 * reconnectTrys;
+                addLog(`Connection failed/lost. Retrying connection attempt ${reconnectTrys}/5 in ${delay / 1000}s...`);
+                setStatus(`Connection Failed. Retrying ${reconnectTrys}/5...`);
+                document.getElementById("connectbutton").innerHTML = 'Retrying...';
+                bleDevice = deviceToRetry; // Restore device ref
+                setTimeout(connect, delay); // Schedule connect
+            } else if (canRetry) {
+                addLog("Connection failed after retries.");
+                setStatus("Connection Failed.");
+                document.getElementById("connectbutton").innerHTML = 'Connect';
+                reconnectTrys = 0;
+                bleDevice = null; // Clear device if retries exhausted
+            } else {
+                addLog("Connection failed (no device?).");
+                setStatus("Connection Failed.");
+                document.getElementById("connectbutton").innerHTML = 'Connect';
                 reconnectTrys = 0;
             }
         }
 
         function delayPromise(delay) {
-            return new Promise(resolve => {
-                setTimeout(resolve, delay);
-            });
+            return new Promise(resolve => { setTimeout(resolve, delay); });
         }
 
         async function sendCommand(cmd) {
             if (writeCharacteristic) {
-                await writeCharacteristic.writeValueWithoutResponse(cmd)
-                    .catch(() => {
-                        addLog("DOMException: GATT operation already in progress.")
-                        return Promise.resolve()
-                            .then(() => this.delayPromise(500))
-                            .then(() => { writeCharacteristic.writeValueWithoutResponse(cmd); });
-                    });
+                try {
+                    await writeCharacteristic.writeValueWithoutResponse(cmd);
+                } catch (error) {
+                    if (error.name === 'NetworkError' && error.message.includes('GATT operation')) {
+                        addLog("GATT busy, retrying send...");
+                        await delayPromise(150);
+                        try {
+                            await writeCharacteristic.writeValueWithoutResponse(cmd);
+                        } catch (retryError) {
+                            addLog("GATT Retry Error: " + retryError);
+                            handleError(retryError);
+                        }
+                    } else {
+                        addLog("Send Error: " + error);
+                        handleError(error);
+                    }
+                }
+            } else {
+                addLog("Cannot send command: Not connected.");
+                setStatus("Not Connected");
             }
         }
 
         async function sendcmd(cmdTXT) {
+            // Added command ID '00' if only payload is provided (like old code)
+            if (cmdTXT.length % 2 !== 0 || cmdTXT.length < 2) {
+                addLog(`Invalid debug cmd format (must be hex): ${cmdTXT}`); return;
+            }
+            if (cmdTXT.length == 2) { // Assume it's just the payload byte if length is 2
+                cmdTXT = "00" + cmdTXT;
+            } else if (cmdTXT.length >= 4 && cmdTXT.substring(0, 2) !== "00") {
+                // Heuristic: If it doesn't start with 00, maybe it's a full command?
+                // Keep as is. If it's short and doesn't start with 00, it's likely invalid.
+            }
+
+            if (cmdTXT.length < 4 || cmdTXT.length % 2 !== 0) {
+                addLog(`Invalid cmd format: ${cmdTXT}`); return;
+            }
+
+            const commandIdHex = cmdTXT.substring(0, 4);
+            const payloadHex = cmdTXT.substring(4);
+            const logPayload = payloadHex.length > 40 ? payloadHex.substring(0, 40) + '...' : payloadHex;
+            addLog(`CMD> ${commandIdHex} Payload: ${logPayload} (${payloadHex.length / 2}B)`);
+
             let cmd = hexToBytes(cmdTXT);
-            addLog('Send CMD: ' + cmdTXT);
             await sendCommand(cmd);
         }
 
+        function sendClockMode() {
+            var timeHexString = (Math.floor((Date.now() / 1000) + (-(new Date().getTimezoneOffset() * 60)))).toString(16);
+            // Ensure 8 hex digits (4 bytes) for timestamp, pad if needed (though unlikely)
+            timeHexString = timeHexString.padStart(8, '0');
+            // Send in correct byte order (assuming device expects Little Endian for timestamp)
+            sendcmd('000B' + timeHexString.substring(6, 8) + timeHexString.substring(4, 6) + timeHexString.substring(2, 4) + timeHexString.substring(0, 2));
+        }
+
         function setDisplayType(newType) {
-            sendcmd("0004" + Number(newType).toString(16).padStart(4, '0').toUpperCase());
+            const typeInt = parseInt(newType);
+            if (typeInt === 65535) {
+                addLog("Selected Dynamic Type. Use Config Tab."); return;
+            }
+            if (isNaN(typeInt)) {
+                addLog("Invalid display type selected."); return;
+            }
+            // Command 0004, payload is 2 bytes type ID (Little Endian)
+            sendcmd("0004" + toHexUint16LE(typeInt));
         }
 
         function setBleAdvInterval(newAdvInt) {
-            sendcmd("0008" + Number(newAdvInt).toString(16).padStart(4, '0').toUpperCase());
+            const intervalInt = parseInt(newAdvInt);
+            if (isNaN(intervalInt)) {
+                addLog("Invalid ADV interval."); return;
+            }
+            // Command 0008, payload is 2 bytes interval (Little Endian)
+            sendcmd("0008" + toHexUint16LE(intervalInt));
+        }
+
+        function setCustomMac() {
+            const macInput = document.getElementById('cmdCustomMac');
+            const macHex = macInput.value.trim().toUpperCase();
+            // Expecting 8 bytes = 16 hex chars for custom MAC
+            if (macHex.length !== 16) {
+                addLog("Error: Custom MAC must be 16 hex chars (8 bytes).");
+                macInput.focus(); return;
+            }
+            if (!/^[0-9A-F]{16}$/.test(macHex)) {
+                addLog("Error: Invalid hex chars in MAC.");
+                macInput.focus(); return;
+            }
+            // Command 0009, payload is 8 bytes MAC
+            sendcmd('0009' + macHex);
         }
 
         function reverseEndian(hex) {
@@ -578,8 +1143,6 @@
             }
         }
 
-        const BLOCK_REQ_PARTS_BYTES = 6;
-
         class BlockRequest {
             constructor(hexString) {
                 this.checksum = this.fromHex(hexString.substring(0, 2));           // 1 Byte
@@ -614,8 +1177,6 @@
                 console.log(`Requested Parts Bitfield: ${this.requestedParts.join('')}`);
             }
         }
-        const BLOCK_DATA_SIZE = 4096;
-        const BLOCK_PART_DATA_SIZE = 230;
         const BLOCK_XFER_BUFFER_SIZE = BLOCK_DATA_SIZE + 3;
 
         class BlockPart {
@@ -649,10 +1210,6 @@
             }
         }
 
-        let packets = [];
-        let totalPackets = 0;
-        let packetIndex = 0;
-
         function nextBlkPart() {
             console.log(`Sende Paket: ${packets[packetIndex]}`);
             sendCommand(hexToBytes("0065" + packets[packetIndex]));
@@ -679,6 +1236,7 @@
                 packets.push(packet.toHexString());
             }
             packetIndex = 0;
+            updateUploadProgress();
             nextBlkPart();
         }
 
@@ -735,6 +1293,21 @@
             sendcmd("0064" + dataInfo.toHexString());
         }
 
+        function sendFw(cmdFW) {
+            imgArray = cmdFW.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            imgArrayLen = imgArray.length;
+            fw_header_img_len = parseInt(imgArray.substring(54, 56).toUpperCase() + imgArray.substring(52, 54).toUpperCase() + imgArray.substring(50, 52).toUpperCase() + imgArray.substring(48, 50).toUpperCase(), 16);
+            addLog(fw_header_img_len);
+            if (imgArray.substring(16, 24).toUpperCase() != "4B4E4C54" || (imgArrayLen / 2) != fw_header_img_len) {
+                addLog("ERROR SOMETHING WRONG WITH THE FIRMWARE");
+                return;
+            }
+            uploadPart = 0;
+            console.log('Sending Firmware ' + imgArrayLen / 2);
+            const dataInfo = new AvailDataInfo(255, 123, imgArrayLen / 2, 0x03, 0, 0);
+            sendcmd("0064" + dataInfo.toHexString());
+        }
+
         function sendCustomUCLUT(curLUT20, curLUT21, curLUT22, curLUT23, curLUT24, curLUT25) {
             var ourUC_LUT = "";
             curLUT20 = curLUT20.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
@@ -785,218 +1358,695 @@
             sendcmd("0064" + dataInfo.toHexString());
         }
 
-        function resetFileSelector() {
-            document.getElementById("selectFirmware").value = '';
-        };
 
-        function resetImageSelector() {
-            document.getElementById("imageUpload").value = '';
-        };
+        // --- File Handling ---
+        function resetFileSelector() { document.getElementById("selectFirmware").value = ''; };
+        function resetImageSelector() { document.getElementById("imageUpload").value = ''; };
+
         function selectFirmwareVoid() {
-            const file = document.getElementById('selectFirmware').files[0];
-            if (!file) {
-                alert("Bitte eine Datei auswählen.");
-                return;
+            const fileInput = document.getElementById('selectFirmware');
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const arrayBuffer = e.target.result;
+                    const byteArray = new Uint8Array(arrayBuffer);
+                    let hexString = bytesToHex(byteArray); // Use reliable helper
+                    sendFw(hexString);
+                };
+                reader.onerror = function (e) {
+                    addLog("Error reading firmware file: " + e); setStatus("Error reading FW file");
+                };
+                reader.readAsArrayBuffer(file);
             }
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const arrayBuffer = e.target.result;
-                const byteArray = new Uint8Array(arrayBuffer);
-                let hexString = "";
-                for (let byte of byteArray) {
-                    hexString += byte.toString(16).padStart(2, '0').toUpperCase();
-                }
-                sendFw(hexString);
-            };
-            reader.readAsArrayBuffer(file);
         }
 
-        function sendFw(cmdFW) {
-            imgArray = cmdFW.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
-            imgArrayLen = imgArray.length;
-            fw_header_img_len = parseInt(imgArray.substring(54, 56).toUpperCase() + imgArray.substring(52, 54).toUpperCase() + imgArray.substring(50, 52).toUpperCase() + imgArray.substring(48, 50).toUpperCase(), 16);
-            addLog(fw_header_img_len);
-            if (imgArray.substring(16, 24).toUpperCase() != "4B4E4C54" || (imgArrayLen / 2) != fw_header_img_len) {
-                addLog("ERROR SOMETHING WRONG WITH THE FIRMWARE");
-                return;
+        function updateUploadProgress() {
+            if (imgArrayLen > 0) {
+                // Base bytes on completed blocks
+                let bytesSent = currentBlockId * BLOCK_DATA_SIZE;
+                // Add bytes from the current block based on the *next* index to be sent
+                bytesSent += packetIndex * BLOCK_PART_DATA_SIZE;
+                bytesSent = Math.min(bytesSent, imgArrayLen / 2); // Clamp to total
+                const percentage = Math.floor((bytesSent / (imgArrayLen / 2)) * 100);
+                setStatus(`Uploading... ${percentage}% (${bytesSent}/${imgArrayLen / 2} bytes)`);
             }
-            uploadPart = 0;
-            console.log('Sending Firmware ' + imgArrayLen / 2);
-            const dataInfo = new AvailDataInfo(255, 123, imgArrayLen / 2, 0x03, 0, 0);
-            sendcmd("0064" + dataInfo.toHexString());
         }
 
-        function img_state_handle(data) {
-            switch (data.substring(0, 4).toUpperCase()) {
-                case "00C6":
-                    const blockRequest = new BlockRequest(data.substring(4));
-                    blockRequest.display();
-                    sendcmd("0002");
-                    setTimeout(function () { sendBlockData(blockRequest.blockId, imgArray); }, 50);
-                    break;
-                case "00C4":// BLKPRT ERR
-                    nextBlkPart();
-                    break;
-                case "00C5":// BLKPRT ACK
-                    if (packetIndex > totalPackets) {
-                        addLog("Thats wrong, we dont have so many packets!");
-                        return;
+        // --- BLE Notification Handler ---
+        function img_state_handle(data) { // Renamed from handleNotify in old code
+            const cmdHex = data.substring(0, 4).toUpperCase();
+            const payloadHex = data.substring(4);
+
+            switch (cmdHex) {
+                case "00C6": // Device requests a block
+                    try {
+                        const blockRequest = new BlockRequest(payloadHex);
+                        blockRequest.display();
+                        setStatus(`Device requests Block ${blockRequest.blockId}`);
+                        currentBlockId = blockRequest.blockId;
+                        sendcmd("0002");
+                        setTimeout(() => {
+                            sendBlockData(blockRequest.blockId, imgArray);
+                        }, 50);
+                    } catch (e) {
+                        addLog("Error parsing Block Request (00C6): " + e.message);
+                        setStatus("Error: Bad Block Req");
                     }
+                    break;
+                case "00C4": // Device reports error in last part (NACK)
+                    addLog(`Part Error Blk ${currentBlockId} Pt ${packetIndex}. Retrying same part...`);
+                    setStatus(`Part Error Retry ${packetIndex}...`);
+                    // Resend the *same* packet that failed
+                    setTimeout(nextBlkPart, 100); // Delay before retry
+                    break;
+                case "00C5": // Device acknowledges last part OK (ACK)
+                    // Increment packet index *after* successful ACK
                     packetIndex++;
-                    nextBlkPart();
-                    break;
-                case "00C7":
-                    addLog("Image will be displayed now :)");
-                    sendcmd("0003");// Make the connection slow again
-                    break;
-                case "00C8":
-                    addLog("Image is already displayed");
-                    sendcmd("0003");// Make the connection slow again
-                    break;
-                case "0005":
-                    addLog("Got display config");
-                    if (getUint32FromBytes(hexToBytes(data.substring(4)), 4) >= 14) {
-                        document.getElementById('secondColorCheckbox').checked = getUint8FromBytes(hexToBytes(data.substring(4)), 30) == 2;
-                        if (getUint8FromBytes(hexToBytes(data.substring(4)), 19) == 1) {
-                            document.getElementById('heightInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 24);
-                            document.getElementById('widthInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 22);
-                        }
-                        else {
-                            document.getElementById('heightInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 22);
-                            document.getElementById('widthInput').value = getUint16FromBytes(hexToBytes(data.substring(4)), 24);
-                        }
-                        doAll();
+                    updateUploadProgress(); // Update status based on ACK
+                    if (packetIndex < totalPackets) {
+                        // If more parts in this block, send next
+                        nextBlkPart();
                     } else {
-                        addLog("Config version not supported, please update FW to the latest release");
+                        // If last part of block was ACKed, wait for next 00C6 REQ
+                        addLog(`Block ${currentBlockId} fully ACKed. Waiting for next request...`);
+                        setStatus(`Block ${currentBlockId} Sent.`);
                     }
                     break;
-                case "00CA":
+                case "00C7": // Upload successful (Image/Generic Data)
+                    addLog("Upload OK. Device acknowledged completion.");
+                    setStatus("Upload Complete.");
+                    imgArray = ""; imgArrayLen = 0; packets = [];
+                    sendcmd("0003");
+                    break;
+                case "00C8": // Device reports data is already present (same version)
+                    addLog("Device: Data already present (same version).");
+                    setStatus("Data already present.");
+                    imgArray = ""; imgArrayLen = 0; packets = [];
+                    sendcmd("0003");
+                    break;
+                case "00C9": // Upload successful (Firmware Update specific ACK)
+                    addLog("Firmware update successful ACK received.");
+                    setStatus("FW Update OK.");
+                    imgArray = ""; imgArrayLen = 0; packets = [];
+                    break;
+                case "0005": // Device sends display info (Using Corrected Logic)
+                    addLog("Display Info (0005) received. Parsing...");
+                    try {
+                        const payloadBytes = hexToBytes(payloadHex);
+                        const minLen = 31; // Need up to byte 30 for color info
+                        // Check if config version is supported (using offset 4 for version, assuming 4 bytes LE)
+                        // This check was in the old code, might be useful
+                        const configVersion = getUint32FromBytes(payloadBytes, 4);
+                        addLog(`Device Config Version: ${configVersion}`);
+                        // if (configVersion < 14) { // Example check
+                        //    addLog("Warning: Config version might be old. Parsing best effort.");
+                        // }
+
+                        if (payloadBytes.length >= minLen) {
+                            const colors = getUint8FromBytes(payloadBytes, 30); // Byte 30 = Colors (1=BW, 2=BWR/Y)
+                            const isInvertedWH = getUint8FromBytes(payloadBytes, 19) === 1; // Byte 19 = Inversion flag
+                            let w, h;
+                            if (isInvertedWH) {
+                                h = getUint16FromBytes(payloadBytes, 24); // Offset 24 = Height if inverted
+                                w = getUint16FromBytes(payloadBytes, 22); // Offset 22 = Width if inverted
+                            } else {
+                                h = getUint16FromBytes(payloadBytes, 22); // Offset 22 = Height if normal
+                                w = getUint16FromBytes(payloadBytes, 24); // Offset 24 = Width if normal
+                            }
+
+                            addLog(`Parsed Display - W:${w}, H:${h}, Colors:${colors}, Inverted Flag:${isInvertedWH}`);
+                            if (w > 0 && h > 0 && w < 4000 && h < 4000) {
+                                document.getElementById('widthInput').value = w;
+                                document.getElementById('heightInput').value = h;
+                                document.getElementById('secondColorCheckbox').checked = (colors >= 2);
+                                // Update canvas and pixel data
+                                doAll();
+                                addLog("Canvas updated with display info.");
+                            } else {
+                                addLog("Parsed W/H seems invalid or zero.");
+                            }
+                        } else {
+                            addLog(`Display info payload too short (${payloadBytes.length} bytes). Need at least ${minLen}.`);
+                        }
+                    } catch (e) {
+                        addLog("Error parsing Display Info (0005): " + e); setStatus("Error: Bad Display Info");
+                    }
+                    break;
+                case "00CA": // LUT Read Start ACK
                     document.getElementById("lutData").value = "";
-                    sendcmd("000E");
+                    addLog("LUT Read Start acknowledged. Requesting first part.");
+                    setStatus("Reading LUT...");
+                    sendcmd("000E"); // Request first/next LUT part
                     break;
-                case "00CB":
-                    document.getElementById("lutData").value = document.getElementById("lutData").value + data.substring(4);
-                    sendcmd("000E");
+                case "00CB": // LUT Data Part received
+                    document.getElementById("lutData").value += payloadHex;
+                    setStatus("Reading LUT...");
+                    addLog(`LUT Part received (${payloadHex.length / 2} bytes). Requesting next.`);
+                    sendcmd("000E"); // Request next LUT part
                     break;
-                case "00CC":
-                    addLog("All LUT Data received");
+                case "00CC": // LUT Read Done
+                    addLog("LUT Read Done signaled by device.");
+                    setStatus("LUT Read complete.");
+                    // Optional final ACK (0003)
+                    // sendcmd("0003");
+                    break;
+                case "00CD": // Dynamic Config Data Received
+                    addLog("Dynamic Config received from device."); setStatus("Dyn. config received.");
+                    parseAndApplyDynamicConfig(payloadHex);
+                    break;
+                case "00CE": // Dynamic Config Operation OK ACK
+                    addLog("Dynamic Config operation successful ACK."); setStatus("Dynamic Config OK.");
+                    break;
+                case "00CF": // Dynamic Config Operation Error ACK
+                    addLog("ERROR: Device reported Dynamic Config Error."); setStatus("Dynamic Config Error.");
+                    break;
+                case "0063": // Generic Command ACK
+                    setStatus("Command ACK."); break; // Briefly show ACK status
+                case "0000": // General Error Response
+                    addLog("ERROR: Device reported General CMD Error (0000)."); setStatus("Command Error (0000).");
+                    break;
+                default:
+                    addLog("Unhandled CMD: " + cmdHex + " Payload: " + payloadHex.substring(0, 40) + "...");
                     break;
             }
+        }
+
+        function bleNotificationHandler(event) { // Renamed to avoid conflict with old code's handleNotify
+            const value = event.target.value;
+            if (!value || value.byteLength === 0) return;
+            const hexString = bytesToHex(value.buffer); // Use global helper
+            addLog("BLE< " + hexString);
+            img_state_handle(hexString); // Process the data
         }
 
         function disconnect() {
-            resetVariables();
-            addLog('Disconnected.');
-            document.getElementById("connectbutton").innerHTML = 'Connect';
-        }
-
-        function handleNotify(data) {
-            addLog("Got bytes: " + bytesToHex(data.buffer));
-            img_state_handle(bytesToHex(data.buffer));
-        }
-
-        function preConnect() {
-            if (gattServer != null && gattServer.connected) {
-                if (bleDevice != null && bleDevice.gatt.connected)
-                    bleDevice.gatt.disconnect();
+            addLog('Device disconnected.');
+            if (bleDevice && bleDevice.removeEventListener) { // Clean up listener
+                bleDevice.removeEventListener('gattserverdisconnected', disconnect);
             }
-            else {
-                connectTrys = 0;
-                var deviceoptions = {
+            resetVariables(); // Reset state, updates button text
+            // Don't clear bleDevice here, allows reconnect attempt
+        }
+
+        // --- Connection Initiation ---
+        function preConnect() {
+            if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
+                addLog("Disconnecting..."); setStatus("Disconnecting...");
+                bleDevice.removeEventListener('gattserverdisconnected', disconnect);
+                document.getElementById("connectbutton").innerHTML = 'Connect';
+                bleDevice.gatt.disconnect(); // disconnect() handles rest
+            } else {
+                reconnectTrys = 0;
+                const deviceoptions = {
                     optionalServices: [0x1337],
-                    acceptAllDevices: true,
+                    acceptAllDevices: false, // Use filters mandatory now
                 };
-                const namePrefix = document.getElementById('namePrefix').value;
-                if (namePrefix) {
-                    deviceoptions.acceptAllDevices = false;
-                    deviceoptions.filters = namePrefix.split(",")
-                        .map((x) => ({ namePrefix: x }));
+                const namePrefix = document.getElementById('namePrefix').value.trim();
+                if (!namePrefix) {
+                    addLog("Error: Prefix filter(s) needed."); setStatus("Error: No prefix"); return;
                 }
-                navigator.bluetooth.requestDevice(deviceoptions).then(device => {
-                    device.addEventListener('gattserverdisconnected', disconnect);
-                    bleDevice = device;
-                    connect();
-                }).catch(handleError);
+                deviceoptions.filters = namePrefix.split(",")
+                    .map(p => p.trim()).filter(p => p)
+                    .map(p => ({ namePrefix: p }));
+
+                if (deviceoptions.filters.length === 0) {
+                    addLog("Error: No valid filters provided."); setStatus("Error: Invalid filters"); return;
+                }
+
+                addLog("Requesting device with filters: " + JSON.stringify(deviceoptions.filters));
+                setStatus("Requesting device...");
+                document.getElementById("connectbutton").innerHTML = 'Scanning...';
+
+                navigator.bluetooth.requestDevice(deviceoptions)
+                    .then(device => {
+                        addLog(`Device found: ${device.name || 'Unknown'} (${device.id})`);
+                        setStatus(`Found ${device.name || 'device'}`);
+                        bleDevice = device;
+                        bleDevice.addEventListener('gattserverdisconnected', disconnect); // Add listener *before* connect
+                        connect();
+                    })
+                    .catch(error => {
+                        if (error.name === 'NotFoundError' || error.name === 'AbortError') {
+                            addLog("No device selected or found matching filters.");
+                            setStatus("No device selected");
+                            document.getElementById("connectbutton").innerHTML = 'Connect';
+                        } else { handleError(error); } // Use standard handler
+                    });
             }
         }
 
         function reConnect() {
-            connectTrys = 0;
-            if (bleDevice != null && bleDevice.gatt.connected)
+            if (!bleDevice) {
+                addLog("No previous device to reconnect to. Use Connect."); setStatus("No device selected"); return;
+            }
+            addLog("Attempting to reconnect to: " + (bleDevice.name || bleDevice.id));
+            if (bleDevice.gatt && bleDevice.gatt.connected) {
+                addLog("Already connected. Disconnecting first...");
+                bleDevice.removeEventListener('gattserverdisconnected', disconnect);
                 bleDevice.gatt.disconnect();
-            resetVariables();
-            addLog("Reconnect");
-            setTimeout(function () { connect(); }, 300);
+                setTimeout(() => { // Delay before reconnect attempt
+                    if (bleDevice) {
+                        bleDevice.addEventListener('gattserverdisconnected', disconnect);
+                        connect();
+                    }
+                }, 500);
+            } else {
+                resetVariables(); // Reset connection state vars
+                reconnectTrys = 0; // Reset retries for manual reconnect
+                connect(); // Attempt direct connection
+            }
         }
 
         function connect() {
-            if (writeCharacteristic == null) {
-                addLog("Connecting to: " + bleDevice.name);
-                addLog("please wait a moment...");
-                bleDevice.gatt.connect().then(server => {
-                    console.log('> Found GATT server');
-                    gattServer = server;
-                    return gattServer.getPrimaryService(0x1337);
-                }).then(service => {
-                    console.log('> Found service');
-                    Theservice = service;
-                    return Theservice.getCharacteristic(0x1337);
-                }).then(characteristic => {
-                    addLog('> Found write characteristic');
-                    document.getElementById("connectbutton").innerHTML = 'Disconnect';
-                    writeCharacteristic = characteristic;
-                    return writeCharacteristic.startNotifications().then(() => {
-                        writeCharacteristic.addEventListener('characteristicvaluechanged', event => {
-                            var value = event.target.value;
-                            handleNotify(value);
-                        });
-                    });
-                }).catch(handleError);
+            if (!bleDevice) { addLog("Connect called but no device selected."); return; }
+            if (bleDevice.gatt && bleDevice.gatt.connected) {
+                addLog("Already connected."); document.getElementById("connectbutton").innerHTML = 'Disconnect'; return;
             }
+
+            addLog("Connecting to GATT Server on: " + (bleDevice.name || bleDevice.id) + "...");
+            setStatus("Connecting...");
+            document.getElementById("connectbutton").innerHTML = 'Connecting...';
+
+            bleDevice.gatt.connect()
+                .then(server => {
+                    addLog('> GATT Server connected'); gattServer = server;
+                    return gattServer.getPrimaryService(0x1337);
+                })
+                .then(service => {
+                    addLog('> Service 0x1337 found'); Theservice = service;
+                    return Theservice.getCharacteristic(0x1337);
+                })
+                .then(characteristic => {
+                    addLog('> Characteristic 0x1337 found'); writeCharacteristic = characteristic;
+                    return writeCharacteristic.startNotifications();
+                })
+                .then(() => {
+                    addLog('> Notifications started');
+                    // Use the renamed handler here
+                    writeCharacteristic.addEventListener('characteristicvaluechanged', bleNotificationHandler);
+                    addLog('Connection successful!'); setStatus('Connected');
+                    document.getElementById("connectbutton").innerHTML = 'Disconnect';
+                    reconnectTrys = 0; // Reset retries on success
+                })
+                .catch(handleError); // Central error handling
         }
 
-        function setStatus(statusText) {
-            document.getElementById("status").innerHTML = statusText;
-        }
+        // --- UI Status & Logging ---
+        function setStatus(statusText) { document.getElementById("status").innerHTML = statusText; }
 
         function addLog(logTXT) {
-            var today = new Date();
-            var time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
-            document.getElementById("log").innerHTML += time + logTXT + '<br>';
-            console.log(time + logTXT);
-            while ((document.getElementById("log").innerHTML.match(/<br>/g) || []).length > 10) {
-                var logs_br_position = document.getElementById("log").innerHTML.search("<br>");
-                document.getElementById("log").innerHTML = document.getElementById("log").innerHTML.substring(logs_br_position + 4);
+            const logArea = document.getElementById("log");
+            const today = new Date();
+            const time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
+            logArea.innerHTML = time + logTXT + '<br>' + logArea.innerHTML; // Prepend new log
+            console.log(time + logTXT); // Log to console too
+
+            const maxLogLines = 150; // Keep log UI manageable
+            const lines = logArea.innerHTML.split('<br>');
+            if (lines.length > maxLogLines + 1) {
+                logArea.innerHTML = lines.slice(0, maxLogLines).join('<br>') + '<br>';
             }
         }
 
+        // --- Data Conversion Helpers (Consolidated from New/Old) ---
         function getUint8FromBytes(bytes, offset) {
-            return (bytes[offset]);
+            if (offset >= bytes.length) { console.warn(`getUint8 OOB: off ${offset}, len ${bytes.length}`); return 0; }
+            return bytes[offset];
         }
-        function getUint16FromBytes(bytes, offset) {
+        function getUint16FromBytes(bytes, offset) { // Assumes Little Endian
+            if (offset + 1 >= bytes.length) { console.warn(`getUint16 OOB: off ${offset}, len ${bytes.length}`); return 0; }
             return (bytes[offset] | (bytes[offset + 1] << 8));
         }
-        function getUint32FromBytes(bytes, offset) {
-            return (bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24));
+        function getUint32FromBytes(bytes, offset) { // Assumes Little Endian
+            if (offset + 3 >= bytes.length) { console.warn(`getUint32 OOB: off ${offset}, len ${bytes.length}`); return 0; }
+            return (bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)) >>> 0;
         }
+        function fromHexUint8(hex) { return parseInt(hex.substring(0, 2), 16); }
+        function fromHexUint16LE(hex) { return parseInt(hex.substring(2, 4) + hex.substring(0, 2), 16); }
+        function fromHexUint32LE(hex) { return parseInt(hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2), 16) >>> 0; }
+
         function hexToBytes(hex) {
-            for (var bytes = [], c = 0; c < hex.length; c += 2)
-                bytes.push(parseInt(hex.substr(c, 2), 16));
-            return new Uint8Array(bytes);
+            if (typeof hex !== 'string') hex = '';
+            if (hex.length % 2 !== 0) { console.warn("Odd hex string length:", hex); hex = '0' + hex; }
+            const bytes = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < bytes.length; i++) {
+                try { bytes[i] = parseInt(hex.substr(i * 2, 2), 16); }
+                catch (e) { console.error("Hex parse error", e); bytes[i] = 0; }
+            }
+            return bytes;
+        }
+        function bytesToHex(byteArray) {
+            if (!byteArray) return "";
+            // Handle ArrayBuffer directly if passed
+            if (byteArray instanceof ArrayBuffer) { byteArray = new Uint8Array(byteArray); }
+            return Array.from(byteArray).map(byte => byte.toString(16).padStart(2, '0').toUpperCase()).join('');
         }
 
-        function bytesToHex(data) {
-            return new Uint8Array(data).reduce(
-                function (memo, i) {
-                    return memo + ("0" + i.toString(16)).slice(-2);
-                }, "");
+        function toHexUint8(val) { return (Number(val) & 0xFF).toString(16).padStart(2, '0').toUpperCase(); }
+        function toHexUint16LE(val) {
+            const hex = (Number(val) & 0xFFFF).toString(16).padStart(4, '0').toUpperCase();
+            return hex.substring(2, 4) + hex.substring(0, 2);
+        }
+        function toHexUint32LE(val) {
+            const hex = (Number(val) >>> 0).toString(16).padStart(8, '0').toUpperCase();
+            return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
         }
 
-        function intToHex(intIn) {
-            var stringOut = "";
-            stringOut = ("00000000" + intIn.toString(16)).substr(-8)
-            return stringOut.substring(6, 8) + stringOut.substring(4, 6) + stringOut.substring(2, 4) + stringOut.substring(0, 2);
+        // --- Dynamic Config Functions ---
+        function getGpioName(value) {
+            for (const name in gpioPins) { if (gpioPins[name] === value) return name; }
+            return `Unknown (0x${value.toString(16).padStart(4, '0')})`;
         }
+        function populateGpioSelects() {
+            document.querySelectorAll('.gpio-select').forEach(select => {
+                select.innerHTML = '';
+                for (const name in gpioPins) {
+                    const option = document.createElement('option');
+                    option.value = gpioPins[name];
+                    option.textContent = `${name} (0x${gpioPins[name].toString(16).padStart(4, '0')})`;
+                    select.appendChild(option);
+                }
+                select.value = 0x0000; // Default to None
+            });
+        }
+        function togglePinoutSection(sectionId, isEnabled) {
+            const section = document.getElementById(sectionId);
+            if (section) { section.style.display = isEnabled ? 'block' : 'none'; }
+        }
+        function populateDeviceTypeSelects() {
+            const cmdTypeSelect = document.getElementById('cmdTYPE');
+            const confTypeSelect = document.getElementById('conf_screen_type');
+            cmdTypeSelect.innerHTML = ''; confTypeSelect.innerHTML = '';
+            deviceTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type.id; option.textContent = type.name;
+                cmdTypeSelect.appendChild(option.cloneNode(true));
+                confTypeSelect.appendChild(option);
+            });
+            cmdTypeSelect.value = 1; confTypeSelect.value = 1; // Set default
+        }
+        function populatePullTypeSelects() {
+            document.querySelectorAll('.pull-type-select').forEach(select => {
+                select.innerHTML = '';
+                for (const name in gpioPullTypes) {
+                    const option = document.createElement('option');
+                    option.value = gpioPullTypes[name]; option.textContent = name;
+                    select.appendChild(option);
+                }
+                select.value = 0; // Default to Float
+            });
+        }
+        function buildDynamicConfigPayload() {
+            let payload = ""; const zeroPad = (bytes) => "00".repeat(bytes);
+            try {
+                payload += toHexUint16LE(parseInt(document.getElementById('conf_screen_type').value) || 0);
+                let defaultSettingsHex = "";
+                const hwTypeHex = document.getElementById('conf_hw_type').value.trim().toUpperCase() || "0";
+                if (!/^[0-9A-F]{1,4}$/.test(hwTypeHex)) { throw new Error("Invalid HW Type Hex"); }
+                defaultSettingsHex += toHexUint16LE(parseInt(hwTypeHex, 16));
+                defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_screen_functions').value) || 0);
+                defaultSettingsHex += toHexUint8(document.getElementById('conf_screen_w_h_inversed_ble').checked ? 1 : 0); // 1 byte?
+                defaultSettingsHex += toHexUint16LE(document.getElementById('conf_screen_w_h_inversed').checked ? 1 : 0);
+                defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_screen_h').value) || 0);
+                defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_screen_w').value) || 0);
+                defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_screen_h_offset').value) || 0);
+                defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_screen_w_offset').value) || 0);
+                defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_screen_colors').value) || 0);
+                defaultSettingsHex += toHexUint16LE(document.getElementById('conf_screen_black_invert').checked ? 1 : 0);
+                defaultSettingsHex += toHexUint16LE(document.getElementById('conf_screen_second_color_invert').checked ? 1 : 0);
+                defaultSettingsHex += toHexUint32LE(document.getElementById('conf_epd_pinout_enabled').checked ? 1 : 0);
+                defaultSettingsHex += toHexUint32LE(document.getElementById('conf_led_pinout_enabled').checked ? 1 : 0);
+                defaultSettingsHex += toHexUint32LE(document.getElementById('conf_nfc_pinout_enabled').checked ? 1 : 0);
+                defaultSettingsHex += toHexUint32LE(document.getElementById('conf_flash_pinout_enabled').checked ? 1 : 0);
+                defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_ADC_pinout').value) || 0x0000);
+                defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_UART_pinout').value) || 0x0000);
+                if (defaultSettingsHex.length !== SIZEOF_DEFAULT_SETTINGS * 2) { throw new Error("Default settings length mismatch"); }
+                payload += defaultSettingsHex;
+
+                if (document.getElementById('conf_epd_pinout_enabled').checked) {
+                    let pinoutHex = "";
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_RESET').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_DC').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_BUSY').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_BUSYs').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_CS').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_CSs').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_CLK').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_MOSI').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_ENABLE').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_ENABLE1').value));
+                    pinoutHex += toHexUint8(document.getElementById('conf_epd_ENABLE_INVERT').checked ? 1 : 0);
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_FLASH_CS').value));
+                    pinoutHex += toHexUint8(parseInt(document.getElementById('conf_epd_PIN_CONFIG_SLEEP').value));
+                    pinoutHex += toHexUint8(parseInt(document.getElementById('conf_epd_PIN_ENABLE').value));
+                    pinoutHex += toHexUint8(parseInt(document.getElementById('conf_epd_PIN_ENABLE_SLEEP').value));
+                    if (pinoutHex.length !== SIZEOF_SCREEN_PINOUT * 2) { throw new Error("EPD pinout length mismatch"); }
+                    payload += pinoutHex;
+                } else { payload += zeroPad(SIZEOF_SCREEN_PINOUT); }
+
+                if (document.getElementById('conf_led_pinout_enabled').checked) {
+                    let pinoutHex = "";
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_R').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_G').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_B').value));
+                    if (pinoutHex.length !== SIZEOF_LED_PINOUT * 2) { throw new Error("LED pinout length mismatch"); }
+                    payload += pinoutHex;
+                } else { payload += zeroPad(SIZEOF_LED_PINOUT); }
+
+                if (document.getElementById('conf_nfc_pinout_enabled').checked) {
+                    let pinoutHex = "";
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_SDA').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_SCL').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_CS').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_IRQ').value));
+                    if (pinoutHex.length !== SIZEOF_NFC_PINOUT * 2) { throw new Error("NFC pinout length mismatch"); }
+                    payload += pinoutHex;
+                } else { payload += zeroPad(SIZEOF_NFC_PINOUT); }
+
+                if (document.getElementById('conf_flash_pinout_enabled').checked) {
+                    let pinoutHex = "";
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_CS').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_CLK').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_MISO').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_MOSI').value));
+                    if (pinoutHex.length !== SIZEOF_FLASH_PINOUT * 2) { throw new Error("Flash pinout length mismatch"); }
+                    payload += pinoutHex;
+                } else { payload += zeroPad(SIZEOF_FLASH_PINOUT); }
+
+                document.getElementById('dynamicConfigPayload').value = payload; return payload;
+            } catch (e) {
+                addLog("Error building dynamic config payload: " + e);
+                document.getElementById('dynamicConfigPayload').value = "ERROR: Build failed"; return null;
+            }
+        }
+        function parseAndApplyDynamicConfig(hexData) {
+            addLog("Parsing dynamic config: " + hexData.length / 2 + "B received");
+            let offset = 0; // Current position in hex string (chars)
+
+            // Helper functions to read from hexData at current offset
+            function readUint16LE_internal(len = 4) { // len in hex chars
+                if (offset + len > hexData.length) throw new Error(`Read OOB: offset ${offset}, len ${len}, total ${hexData.length}`);
+                const val = fromHexUint16LE(hexData.substring(offset, offset + len));
+                offset += len;
+                return val;
+            }
+            function readUint8_internal(len = 2) { // len in hex chars
+                if (offset + len > hexData.length) throw new Error(`Read OOB: offset ${offset}, len ${len}, total ${hexData.length}`);
+                const val = fromHexUint8(hexData.substring(offset, offset + len));
+                offset += len;
+                return val;
+            }
+            function readUint32LE_internal(len = 8) { // len in hex chars
+                if (offset + len > hexData.length) throw new Error(`Read OOB: offset ${offset}, len ${len}, total ${hexData.length}`);
+                const val = fromHexUint32LE(hexData.substring(offset, offset + len));
+                offset += len;
+                return val;
+            }
+            function skipBytes_internal(byteCount) {
+                if (offset + byteCount * 2 > hexData.length) throw new Error(`Skip OOB: offset ${offset}, skip ${byteCount * 2}, total ${hexData.length}`);
+                offset += byteCount * 2;
+            }
+
+            try {
+                // Minimum expected length: ScreenType (2B) + DefaultSettings (44B) = 46 Bytes = 92 hex chars
+                const minExpectedLength = (2 + SIZEOF_DEFAULT_SETTINGS) * 2;
+                if (hexData.length < minExpectedLength) {
+                    throw new Error(`Payload too short (${hexData.length / 2}B), expected at least ${minExpectedLength / 2}B for header.`);
+                }
+
+                // 1. Screen Type ID (Preset)
+                const screenTypeId = readUint16LE_internal();
+                document.getElementById('conf_screen_type').value = screenTypeId;
+
+                // 2. Default Settings Block (44 bytes)
+                const hwTypeNum = readUint16LE_internal(); // HW Type
+                document.getElementById('conf_hw_type').value = hwTypeNum.toString(16).padStart(4, '0').toUpperCase();
+                document.getElementById('conf_screen_functions').value = readUint16LE_internal(); // Controller
+                // Assuming 1 byte for ble invert flag, 2 bytes for display invert flag
+                document.getElementById('conf_screen_w_h_inversed_ble').checked = (readUint8_internal() !== 0);
+                document.getElementById('conf_screen_w_h_inversed').checked = (readUint16LE_internal() !== 0);
+                const h = readUint16LE_internal(); // Height
+                const w = readUint16LE_internal(); // Width
+                document.getElementById('conf_screen_h').value = h;
+                document.getElementById('conf_screen_w').value = w;
+                // Update main canvas dimensions if valid
+                if (w > 0 && h > 0 && w < 4000 && h < 4000) {
+                    document.getElementById('widthInput').value = w;
+                    document.getElementById('heightInput').value = h;
+                    // Note: Calling doAll() here might reset text, maybe just createCanvas + getPixelData?
+                    // Let's call them directly to avoid resetting text input.
+                    doAll();
+                } else {
+                    addLog("Warning: Parsed W/H from dynamic config seem invalid, not updating main canvas size.");
+                }
+                document.getElementById('conf_screen_h_offset').value = readUint16LE_internal(); // H Offset
+                document.getElementById('conf_screen_w_offset').value = readUint16LE_internal(); // W Offset
+                const colors = readUint16LE_internal(); // Colors
+                document.getElementById('conf_screen_colors').value = colors;
+                // Update main second color checkbox
+                document.getElementById('secondColorCheckbox').checked = (colors >= 2);
+                document.getElementById('conf_screen_black_invert').checked = (readUint16LE_internal() !== 0); // Black Invert
+                document.getElementById('conf_screen_second_color_invert').checked = (readUint16LE_internal() !== 0); // Color Invert
+
+                // Pinout Enabled Flags (4 bytes each)
+                const epdEnabled = (readUint32LE_internal() !== 0);
+                const ledEnabled = (readUint32LE_internal() !== 0);
+                const nfcEnabled = (readUint32LE_internal() !== 0);
+                const flashEnabled = (readUint32LE_internal() !== 0);
+
+                // Other Pins
+                document.getElementById('conf_ADC_pinout').value = readUint16LE_internal();
+                document.getElementById('conf_UART_pinout').value = readUint16LE_internal();
+
+                // Update UI checkboxes for enabled sections
+                document.getElementById('conf_epd_pinout_enabled').checked = epdEnabled;
+                togglePinoutSection('epd_pinout_details', epdEnabled);
+                document.getElementById('conf_led_pinout_enabled').checked = ledEnabled;
+                togglePinoutSection('led_pinout_details', ledEnabled);
+                document.getElementById('conf_nfc_pinout_enabled').checked = nfcEnabled;
+                togglePinoutSection('nfc_pinout_details', nfcEnabled);
+                document.getElementById('conf_flash_pinout_enabled').checked = flashEnabled;
+                togglePinoutSection('flash_pinout_details', flashEnabled);
+
+                // Check remaining length for enabled pinout sections
+                let remainingExpectedBytes = 0;
+                if (epdEnabled) remainingExpectedBytes += SIZEOF_SCREEN_PINOUT;
+                if (ledEnabled) remainingExpectedBytes += SIZEOF_LED_PINOUT;
+                if (nfcEnabled) remainingExpectedBytes += SIZEOF_NFC_PINOUT;
+                if (flashEnabled) remainingExpectedBytes += SIZEOF_FLASH_PINOUT;
+
+                if (offset + remainingExpectedBytes * 2 > hexData.length) {
+                    addLog(`Warn: Payload length (${hexData.length / 2}B) seems too short for enabled pinout sections (expected ${remainingExpectedBytes}B more). Parsing stopped.`);
+                    doAll(); // Update pixel data based on parsed header info
+                    return; // Stop parsing here
+                }
+
+                // 3. Parse Pinout Sections if Enabled
+                if (epdEnabled) {
+                    document.getElementById('conf_epd_RESET').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_DC').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_BUSY').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_BUSYs').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_CS').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_CSs').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_CLK').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_MOSI').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_ENABLE').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_ENABLE1').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_ENABLE_INVERT').checked = (readUint8_internal() !== 0);
+                    document.getElementById('conf_epd_FLASH_CS').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_PIN_CONFIG_SLEEP').value = readUint8_internal();
+                    document.getElementById('conf_epd_PIN_ENABLE').value = readUint8_internal();
+                    document.getElementById('conf_epd_PIN_ENABLE_SLEEP').value = readUint8_internal();
+                } else {
+                    // Skip EPD pinout section if not enabled
+                    // skipBytes_internal(SIZEOF_SCREEN_PINOUT); // Only skip if structure is fixed even when disabled
+                }
+
+                if (ledEnabled) {
+                    document.getElementById('conf_led_R').value = readUint16LE_internal();
+                    document.getElementById('conf_led_G').value = readUint16LE_internal();
+                    document.getElementById('conf_led_B').value = readUint16LE_internal();
+                } else {
+                    // skipBytes_internal(SIZEOF_LED_PINOUT);
+                }
+
+                if (nfcEnabled) {
+                    document.getElementById('conf_nfc_SDA').value = readUint16LE_internal();
+                    document.getElementById('conf_nfc_SCL').value = readUint16LE_internal();
+                    document.getElementById('conf_nfc_CS').value = readUint16LE_internal();
+                    document.getElementById('conf_nfc_IRQ').value = readUint16LE_internal();
+                } else {
+                    // skipBytes_internal(SIZEOF_NFC_PINOUT);
+                }
+
+                if (flashEnabled) {
+                    document.getElementById('conf_flash_CS').value = readUint16LE_internal();
+                    document.getElementById('conf_flash_CLK').value = readUint16LE_internal();
+                    document.getElementById('conf_flash_MISO').value = readUint16LE_internal();
+                    document.getElementById('conf_flash_MOSI').value = readUint16LE_internal();
+                } else {
+                    // skipBytes_internal(SIZEOF_FLASH_PINOUT);
+                }
+
+                if (offset !== hexData.length) {
+                    addLog(`Warn: Finished parsing dynamic config, ${(hexData.length - offset) / 2} GPIO bytes remain unparsed.`);
+                } else {
+                    addLog("Dynamic Config parsed successfully & UI updated.");
+                }
+                doAll();
+
+            } catch (e) {
+                addLog("Error parsing dynamic config: " + e);
+                console.error("Parsing error:", e, "Raw Hex:", hexData, "Offset:", offset);
+            }
+        }
+
+        function readDynamicConfig() { sendcmd("0011"); }
+        function sendDynamicConfigTest() { const p = buildDynamicConfigPayload(); if (p) sendcmd("000F" + p); }
+        function sendDynamicConfigSave() { const p = buildDynamicConfigPayload(); if (p) sendcmd("0010" + p); }
+
+        // --- UI View Toggle ---
+        function showView(viewToShow) {
+            document.getElementById('ble-upload').style.display = 'none';
+            document.getElementById('display-type-set').style.display = 'none';
+            document.getElementById('lut-upload').style.display = 'none';
+            document.getElementById('btn-show-ble').classList.remove('active');
+            document.getElementById('btn-show-config').classList.remove('active');
+            document.getElementById('btn-show-lut').classList.remove('active');
+
+            if (viewToShow === 'ble') {
+                document.getElementById('ble-upload').style.display = 'block';
+                document.getElementById('btn-show-ble').classList.add('active');
+            } else if (viewToShow === 'config') {
+                document.getElementById('display-type-set').style.display = 'block';
+                document.getElementById('btn-show-config').classList.add('active');
+            } else if (viewToShow === 'lut') {
+                document.getElementById('lut-upload').style.display = 'block';
+                document.getElementById('btn-show-lut').classList.add('active');
+            }
+        }
+
+        function doAll() {
+            createCanvas();
+            addText();
+            getPixelData();
+        }
+
+        window.onload = function () {
+            populateDeviceTypeSelects();
+            populateGpioSelects();
+            populatePullTypeSelects();
+            doAll();
+            togglePinoutSection('epd_pinout_details', document.getElementById('conf_epd_pinout_enabled').checked);
+            togglePinoutSection('led_pinout_details', document.getElementById('conf_led_pinout_enabled').checked);
+            togglePinoutSection('nfc_pinout_details', document.getElementById('conf_nfc_pinout_enabled').checked);
+            togglePinoutSection('flash_pinout_details', document.getElementById('conf_flash_pinout_enabled').checked);
+            showView('ble');
+            addLog("Page loaded. Ready."); setStatus("Ready");
+        };
+
     </script>
 </body>
 
