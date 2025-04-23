@@ -161,6 +161,20 @@
             /* Align labels in BLE section */
         }
 
+        /* Specific adjustment for remember device checkbox label */
+        #ble-upload input[type="checkbox"]+label {
+            color: #fff;
+            /* Make label white */
+            min-width: unset;
+            /* Remove min-width */
+            text-align: left;
+            /* Align left */
+            margin-left: 3px;
+            /* Small gap */
+            font-weight: normal;
+            /* Normal weight */
+        }
+
         #ble-upload input[type="text"],
         #ble-upload input[type="number"],
         #ble-upload input[type="file"],
@@ -391,13 +405,20 @@
                 <div>
                     <label for="namePrefix">E-Paper prefix filter(s):</label>
                     <input type="text" id="namePrefix" value="ATC_" placeholder="ATC_ (comma separated)" />
+                    <!-- Added Checkbox and Label -->
+                    <input type="checkbox" id="rememberDeviceCheckbox" onchange="saveRememberDeviceSetting()" />
+                    <label for="rememberDeviceCheckbox">Remember last device</label>
                 </div>
                 <div>
                     <button id="connectbutton" type="button" onclick="preConnect();">Connect</button>
                     <button type="button" onclick="reConnect();">Reconnect</button>
                     <button type="button" onclick="sendcmd('0005');"
                         title="Read basic info, updates canvas if possible">Read Screen infos</button>
+                    <br>
                     <button type="button" onclick="sendimg(document.getElementById('pixelData').value);">Upload
+                        Image</button>
+                    <button type="button"
+                        onclick="sendimgCompressed(document.getElementById('pixelData').value);">Upload Compressed
                         Image</button>
                 </div>
                 <div>
@@ -633,6 +654,7 @@
         </div>
     </div>
 
+    <script src="./pako.js"></script>
     <script>
         // --- Constants ---
         const deviceTypes = [
@@ -1089,7 +1111,7 @@
             if (isNaN(intervalInt)) {
                 addLog("Invalid ADV interval."); return;
             }
-            sendcmd("0008" +  Number(newAdvInt).toString(16).padStart(4, '0').toUpperCase());
+            sendcmd("0008" + Number(newAdvInt).toString(16).padStart(4, '0').toUpperCase());
         }
 
         function setCustomMac() {
@@ -1255,7 +1277,8 @@
             byteArray[3] = (theCrc >> 8) & 0xff;
             return byteArray;
         }
-        function crc32(input) {
+
+        const crc32Table = (() => {
             const table = [];
             const polynomial = 0xedb88320;
             for (let i = 0; i < 256; i++) {
@@ -1269,18 +1292,54 @@
                 }
                 table[i] = crc;
             }
+            return table;
+        })();
+
+        function crc32(byteArray) {
+            byteArray = Uint8Array.from(byteArray);
             let crc = 0xffffffff;
-            for (let i = 0; i < input.length; i++) {
-                const byte = input.charCodeAt(i);
+            for (let i = 0; i < byteArray.length; i++) {
+                const byte = byteArray[i];
                 const tableIndex = (crc ^ byte) & 0xff;
-                crc = (crc >>> 8) ^ table[tableIndex];
+                crc = (crc >>> 8) ^ crc32Table[tableIndex];
             }
             return (crc ^ 0xffffffff) >>> 0;
         }
+
         function computeCRC32(hexData) {
             const byteArray = hexToByteArray(hexData);
-            const crc32Value = crc32(String.fromCharCode(...byteArray));
+            const crc32Value = crc32(byteArray);
             return crc32Value;
+        }
+
+        function hexStringToUint8Array(hexString) {
+            if (hexString.length % 2 !== 0) {
+                throw new Error("Ungültiger Hex-String: Ungerade Länge.");
+            }
+            const byteArray = new Uint8Array(hexString.length / 2);
+            for (let i = 0; i < byteArray.length; i++) {
+                byteArray[i] = parseInt(hexString.substr(i * 2, 2), 16);
+                if (isNaN(byteArray[i])) {
+                    throw new Error(`Ungültiger Hex-String: Konnte '${hexString.substr(i * 2, 2)}' nicht parsen.`);
+                }
+            }
+            return byteArray;
+        }
+        function sendimgCompressed(cmdIMG) {
+            var width = parseInt(document.getElementById('widthInput').value);
+            var height = parseInt(document.getElementById('heightInput').value);
+            var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
+            imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var unCompressedSize = imgArray.length / 2;
+            imgArray = "06" + toHexUint16LE(width) + toHexUint16LE(height) + (secondColorEnabled ? "02" : "01") + imgArray;// len1. Height2. Width2. Colors1. Data.
+            const compressedBytes = pako.deflate(hexStringToUint8Array(imgArray), { level: 9, windowBits: 12 });
+            imgArray = bytesToHex(compressedBytes);
+            imgArray = toHexUint32LE(unCompressedSize) + imgArray;
+            imgArrayLen = imgArray.length;
+            uploadPart = 0;
+            addLog('Sending Compressed image size: ' + imgArrayLen / 2 + ' of raw size: ' + unCompressedSize);
+            const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, 0x30, 0, 0);
+            sendcmd("0064" + dataInfo.toHexString());
         }
 
         function sendimg(cmdIMG) {
@@ -1288,7 +1347,7 @@
             imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
             imgArrayLen = imgArray.length;
             uploadPart = 0;
-            console.log('Sending image ' + imgArrayLen / 2);
+            addLog('Sending image size: ' + imgArrayLen / 2);
             const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, secondColorEnabled ? 0x21 : 0x20, 0, 0);
             sendcmd("0064" + dataInfo.toHexString());
         }
@@ -1648,6 +1707,17 @@
                     addLog('Connection successful!'); setStatus('Connected');
                     document.getElementById("connectbutton").innerHTML = 'Disconnect';
                     reconnectTrys = 0; // Reset retries on success
+
+                    // --- Added: Store device name on successful connection ---
+                    if (bleDevice && bleDevice.name) {
+                        localStorage.setItem('lastDeviceName', bleDevice.name);
+                        addLog(`Stored last device name: ${bleDevice.name}`);
+                        // Update input field if checkbox is checked
+                        if (document.getElementById('rememberDeviceCheckbox').checked) {
+                            document.getElementById('namePrefix').value = bleDevice.name;
+                        }
+                    }
+                    // --- End Added ---
                 })
                 .catch(handleError); // Central error handling
         }
@@ -1685,6 +1755,34 @@
         function fromHexUint8(hex) { return parseInt(hex.substring(0, 2), 16); }
         function fromHexUint16LE(hex) { return parseInt(hex.substring(2, 4) + hex.substring(0, 2), 16); }
         function fromHexUint32LE(hex) { return parseInt(hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2), 16) >>> 0; }
+
+        // Converts a Hex string to a Uint8Array (Robust version)
+        function hexToUint8Array(hex) {
+            if (typeof hex !== 'string') {
+                console.error("hexToUint8Array expects a string input.");
+                return new Uint8Array(0);
+            }
+            // Remove any non-hex characters
+            const cleanHex = hex.replace(/[^0-9a-fA-F]/g, '');
+
+            if (cleanHex.length % 2 !== 0) {
+                console.warn("Odd hex string length detected in hexToUint8Array:", cleanHex.length, "String:", cleanHex.substring(0, 50) + "...");
+                // Decide handling: pad, error, or proceed carefully. Let's proceed.
+            }
+
+            const byteLength = Math.floor(cleanHex.length / 2);
+            const bytes = new Uint8Array(byteLength);
+
+            for (let i = 0; i < byteLength; i++) {
+                const byteHex = cleanHex.substr(i * 2, 2);
+                bytes[i] = parseInt(byteHex, 16);
+                if (isNaN(bytes[i])) {
+                    console.error(`Invalid hex byte "${byteHex}" at index ${i * 2} in string: ${cleanHex.substring(0, 50)}...`);
+                    bytes[i] = 0; // Default to 0 on error
+                }
+            }
+            return bytes;
+        }
 
         function hexToBytes(hex) {
             if (typeof hex !== 'string') hex = '';
@@ -2034,6 +2132,33 @@
             getPixelData();
         }
 
+        // --- Added: Function to save checkbox state and update prefix ---
+        function saveRememberDeviceSetting() {
+            const checkbox = document.getElementById('rememberDeviceCheckbox');
+            const namePrefixInput = document.getElementById('namePrefix');
+            const isEnabled = checkbox.checked;
+
+            localStorage.setItem('rememberDeviceEnabled', isEnabled);
+            addLog(`Remember device setting ${isEnabled ? 'enabled' : 'disabled'}`);
+
+            if (isEnabled) {
+                const lastDeviceName = localStorage.getItem('lastDeviceName');
+                if (lastDeviceName) {
+                    namePrefixInput.value = lastDeviceName;
+                    addLog(`Prefix filter set to remembered device: ${lastDeviceName}`);
+                } else {
+                    addLog(`Remember device enabled, but no device name stored yet.`);
+                    // Optional: Clear the input or leave it as is
+                    // namePrefixInput.value = '';
+                }
+            } else {
+                // Optional: Clear the input when disabling, or leave it for manual editing
+                // namePrefixInput.value = '';
+                addLog(`Remember device disabled. Prefix filter is now manual.`);
+            }
+        }
+
+        // --- Modified: Load saved settings on page load ---
         window.onload = function () {
             populateDeviceTypeSelects();
             populateGpioSelects();
@@ -2044,6 +2169,27 @@
             togglePinoutSection('nfc_pinout_details', document.getElementById('conf_nfc_pinout_enabled').checked);
             togglePinoutSection('flash_pinout_details', document.getElementById('conf_flash_pinout_enabled').checked);
             showView('ble');
+
+            // --- Added: Load settings from localStorage ---
+            const rememberEnabled = localStorage.getItem('rememberDeviceEnabled') === 'true';
+            const lastDeviceName = localStorage.getItem('lastDeviceName');
+            const rememberCheckbox = document.getElementById('rememberDeviceCheckbox');
+            const namePrefixInput = document.getElementById('namePrefix');
+
+            rememberCheckbox.checked = rememberEnabled;
+
+            if (rememberEnabled && lastDeviceName) {
+                namePrefixInput.value = lastDeviceName;
+                addLog(`Loaded remembered device: ${lastDeviceName}`);
+            } else if (rememberEnabled) {
+                addLog(`Remember device enabled, but no device name stored.`);
+            } else {
+                addLog(`Remember device disabled.`);
+                // Optional: Set a default prefix if not remembering
+                // if (!namePrefixInput.value) { namePrefixInput.value = 'ATC_'; }
+            }
+            // --- End Added ---
+
             addLog("Page loaded. Ready."); setStatus("Ready");
         };
 
