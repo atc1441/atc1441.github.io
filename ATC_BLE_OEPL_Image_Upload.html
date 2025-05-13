@@ -575,6 +575,10 @@
                         <div><label>R:</label><select class="gpio-select" id="conf_led_R"></select></div>
                         <div><label>G:</label><select class="gpio-select" id="conf_led_G"></select></div>
                         <div><label>B:</label><select class="gpio-select" id="conf_led_B"></select></div>
+                    <div>
+                        <input type="checkbox" id="conf_led_inverted" />
+                        <label for="conf_led_inverted">Invert LED GPIO</label>
+                    </div>
                     </div>
                 </fieldset>
                 <fieldset>
@@ -694,6 +698,7 @@
             { id: 33, name: "33: 266 HS BWR SSD Offset" },
             { id: 34, name: "34: 581 TI BWR UC" },
             { id: 35, name: "35: 346 HS BWY UC" },
+            { id: 36, name: "36: 290 WO BWRY JD" },
         ];
         const gpioPins = {
             "None": 0x0000, "PA0": 0x0001, "PA1": 0x0002, "PA2": 0x0004, "PA3": 0x0008, "PA4": 0x0010, "PA5 (DM)": 0x0020, "PA6 (DP)": 0x0040, "PA7 (SWS)": 0x0080,
@@ -704,7 +709,7 @@
         const gpioPullTypes = { "Float": 0, "Pullup 1M": 1, "Pulldown 100K": 2, "Pullup 10K": 3, };
         const SIZEOF_DEFAULT_SETTINGS = 41;
         const SIZEOF_SCREEN_PINOUT = 26;
-        const SIZEOF_LED_PINOUT = 6;
+        const SIZEOF_LED_PINOUT = 7;
         const SIZEOF_NFC_PINOUT = 8;
         const SIZEOF_FLASH_PINOUT = 8;
         const BLOCK_DATA_SIZE = 4096;
@@ -1013,8 +1018,8 @@
 
             if (canRetry && reconnectTrys < 5) {
                 reconnectTrys++;
-                const delay = 1000 * reconnectTrys;
-                addLog(`Connection failed/lost. Retrying connection attempt ${reconnectTrys}/5 in ${delay / 1000}s...`);
+                const delay = 200;
+                addLog(`Connection failed/lost. Retrying connection attempt ${reconnectTrys}/5 in ${delay}ms...`);
                 setStatus(`Connection Failed. Retrying ${reconnectTrys}/5...`);
                 document.getElementById("connectbutton").innerHTML = 'Retrying...';
                 bleDevice = deviceToRetry; // Restore device ref
@@ -1908,6 +1913,7 @@
                     pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_R').value));
                     pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_G').value));
                     pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_B').value));
+                    pinoutHex += toHexUint8(document.getElementById('conf_led_inverted').checked ? 1 : 0);
                     if (pinoutHex.length !== SIZEOF_LED_PINOUT * 2) { throw new Error("LED pinout length mismatch"); }
                     payload += pinoutHex;
                 } else { payload += zeroPad(SIZEOF_LED_PINOUT); }
@@ -2066,6 +2072,7 @@
                     document.getElementById('conf_led_R').value = readUint16LE_internal();
                     document.getElementById('conf_led_G').value = readUint16LE_internal();
                     document.getElementById('conf_led_B').value = readUint16LE_internal();
+                    document.getElementById('conf_led_inverted').checked = (readUint8_internal() !== 0);
                 } else {
                     // skipBytes_internal(SIZEOF_LED_PINOUT);
                 }
