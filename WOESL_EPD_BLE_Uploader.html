@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOESL EPD WebBLE Uploader</title>
+    <script src="crypto.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #1e1e1e;
+            color: #cccccc;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: #252526;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        h1,
+        h2 {
+            color: #ffffff;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: #007acc;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #005f99;
+        }
+
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        #reconnectButton {
+            background-color: #e6a23c;
+        }
+
+        #reconnectButton:hover:not(:disabled) {
+            background-color: #cf9034;
+        }
+
+        #startUncompressedImageUploadButton {
+            background-color: #4CAF50;
+        }
+
+        #startUncompressedImageUploadButton:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+
+        #startCompressedImageUploadButton {
+            background-color: #8BC34A;
+        }
+
+        #startCompressedImageUploadButton:hover:not(:disabled) {
+            background-color: #7CB342;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="color"],
+        textarea,
+        input[type="file"] {
+            padding: 8px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #3c3c3c;
+            color: #cccccc;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            /* Added for file input spacing */
+        }
+
+        textarea {
+            width: calc(100% - 12px);
+            /* Adjusted for padding */
+            min-height: 60px;
+            /* Reduced height as it's mainly for images now */
+            margin-bottom: 10px;
+        }
+
+        input[type="number"] {
+            width: 80px;
+        }
+
+        input[type="color"] {
+            padding: 4px;
+            height: 36px;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+
+        .status {
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        #statusDiv {
+            color: #ffcc00;
+        }
+
+        .connected #statusDiv {
+            color: #4CAF50;
+        }
+
+        .disconnected #statusDiv {
+            color: #f44336;
+        }
+
+        .log-container {
+            background-color: #1b1b1b;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #888;
+            height: calc(1.6em * 10);
+            line-height: 1.6em;
+        }
+
+        .log-container pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: inherit;
+        }
+
+        .characteristic-section,
+        .command-section {
+            border: 1px solid #555;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+
+        .characteristic-section h3,
+        .command-section h3 {
+            margin-top: 0;
+            color: #dddddd;
+        }
+
+        .value-display {
+            margin-top: 10px;
+            background-color: #3c3c3c;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        .property-tags {
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-top: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            /* Allow wrapping for smaller screens */
+        }
+
+        .input-group label {
+            margin-right: 5px;
+            color: #dddddd;
+            margin-bottom: 5px;
+            /* Spacing for wrapped items */
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="number"] {
+            padding: 8px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #3c3c3c;
+            color: #cccccc;
+            flex-grow: 1;
+            margin-right: 5px;
+        }
+
+        .input-group input[type="number"] {
+            flex-grow: 0;
+            width: 80px;
+        }
+
+        .input-group input[type="file"] {
+            flex-grow: 1;
+            /* Allow file input to take space */
+        }
+
+
+        #batteryStatusDisplay {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #3c3c3c;
+            color: #cccccc;
+            font-family: sans-serif;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        #batteryStatusDisplay .value-display {
+            margin-top: 5px;
+            background-color: transparent;
+            padding: 0;
+            font-family: monospace;
+            font-weight: normal;
+            word-break: break-all;
+        }
+
+        #otaProgress {
+            margin-top: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #bbbbbb;
+        }
+
+        .ota-options {
+            margin-bottom: 10px;
+            color: #dddddd;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .ota-options>div {
+            display: flex;
+            align-items: center;
+        }
+
+        .ota-options input[type="checkbox"] {
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .ota-options label {
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+        .firmware-file-selector-group {
+            border: 1px dashed #666;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .firmware-file-selector-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="appContainer">
+        <h1>WOESL EPD WebBLE Uploader</h1>
+        <div class="status">Status: <span id="statusDiv">Disconnected</span></div>
+        <button id="connectButton">Connect</button>
+        <button id="disconnectButton" disabled>Disconnect</button>
+        <button id="reconnectButton" disabled>Reconnect</button>
+
+        <div id="batteryStatusDisplay">
+            <b>Battery Voltage:</b> <span class="value-display" id="batteryVoltageValue">-</span>
+        </div>
+        <div class="command-section" id="otaUploadSection">
+            <h3>Uploads</h3>
+            <h4>Firmware Upload:</h4>
+            <label for="selectFirmwareFile">Select Firmware File Max 102.399 bytes! (Upload will start automatically):</label>
+            <div class="input-group">
+                <input type="file" id="selectFirmwareFile" accept=".bin"
+                    onclick="resetFirmwareFileSelectorInternalHelp()" onchange="handleFirmwareFileSelect()" />
+            </div>
+
+            <hr style="border-color: #555; margin: 15px 0;">
+
+            <h4>Image Upload (via Hex Data):</h4>
+            <textarea id="otaHexDataInput"
+                placeholder="Paste your UNCOMPRESSED or COMPRESSED IMAGE data as a continuous hex string here..."></textarea>
+            <button id="startUncompressedImageUploadButton" disabled>Upload Uncompressed Image (00A5/01A5)</button>
+            <button id="startCompressedImageUploadButton" disabled>Upload Compressed Image (00A5/02A5)</button>
+
+            <div id="otaProgress">Status: Idle</div>
+        </div>
+
+        <h2>Device Log</h2>
+        <div id="logContainer" class="log-container">
+            <pre id="logDivPre">Ready.</pre>
+        </div>
+
+        <h2>Custom Service</h2>
+
+        <div class="characteristic-section" id="char3132Section">
+            <h3>Characteristic: 31323032</h3>
+            <p class="property-tags">Properties: <span id="char3132Properties">-</span> (UI: READ, WRITE)</p>
+            <button id="read3132Button" disabled>Read Value</button>
+            <div class="value-display">Read Value: <span id="read3132Value">-</span></div>
+            <h4>Write Value (Hex):</h4>
+            <input type="text" id="write3132Input" placeholder="Hex String (e.g. AABBCCDD)" disabled>
+            <button id="write3132Button" disabled>Send</button>
+            <div class="value-display">Sent Value: <span id="written3132Value">-</span></div>
+        </div>
+
+    </div>
+    <script>
+        const SERVICE_UUID = '30323032-4c53-4545-4c42-4b4e494c4f57';
+        const BATTERY_CHAR_UUID = '35323032-4c53-4545-4c42-4b4e494c4f57';
+        const CHAR_3332_UUID = '33323032-4c53-4545-4c42-4b4e494c4f57';
+        const CHAR_3132_UUID = '31323032-4c53-4545-4c42-4b4e494c4f57';
+
+        const OTA_CMD_IMAGE_UPLOAD_HEADER = new Uint8Array([0x00, 0xA5]);
+        const OTA_CMD_IMAGE_REFRESH_HEADER = new Uint8Array([0x01, 0xA5]);
+        const OTA_CMD_COMPRESSED_IMAGE_REFRESH_HEADER = new Uint8Array([0x02, 0xA5]);
+
+        const OTA_CMD_PRE_FIRMWARE_UPLOAD_HEADER = new Uint8Array([0x07, 0xA5]);
+        const OTA_CMD_FIRMWARE_UPLOAD_HEADER = new Uint8Array([0x05, 0xA5]);
+        const OTA_CMD_FIRMWARE_FINALIZE_HEADER = new Uint8Array([0x06, 0xA5]);
+
+        const OTA_CHUNK_DATA_SIZE = 230;
+        const OTA_WRITE_DELAY_MS = 30;
+        const AES_KEY_HEX = '9b609f28bc49e25729bd7b8df22b4420';
+
+        const MAX_RETRIES = 5;
+        const RETRY_DELAY_MS = 50;
+
+        const MAX_LOG_LINES = 10;
+
+        let connectButton, disconnectButton, reconnectButton, statusDiv, logDivPre,
+            batteryVoltageValueSpan, char3132PropertiesSpan, read3132Button,
+            read3132ValueSpan, write3132Input, write3132Button, written3132ValueSpan,
+            otaHexDataInput, startUncompressedImageUploadButton, startCompressedImageUploadButton,
+            selectFirmwareFileInput,
+            otaProgressSpan;
+
+        let bleDevice = null;
+        let gattServer = null;
+        let batteryCharacteristic = null;
+        let char3332Characteristic = null;
+        let char3132Characteristic = null;
+
+        let otaImageData = null;
+        let otaTotalLength = 0;
+        let otaBytesSent = 0;
+        let isOtaInProgress = false;
+        let currentUploadFinalizationType = 'none';
+
+        let selectedFirmwareHex = null;
+        let selectedFirmwareFilename = "";
+
+
+        function log(message) {
+            if (!logDivPre) {
+                console.log(`[LOG PRE-DOM] ${message}`);
+                return;
+            }
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            const newMessage = `[${timeString}] ${message}`;
+            const currentText = logDivPre.textContent.trim();
+            const lines = currentText === 'Ready.' || !currentText ? [] : currentText.split('\n');
+            lines.push(newMessage);
+            while (lines.length > MAX_LOG_LINES) {
+                lines.shift();
+            }
+            logDivPre.textContent = lines.join('\n');
+            const logContainer = document.getElementById('logContainer'); // Assuming this ID exists and is fine
+            if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function updateStatus(message, isConnected = false) {
+            if (!statusDiv) { // Guard
+                console.log(`[STATUS PRE-DOM] ${message}`);
+                return;
+            }
+            statusDiv.textContent = message;
+            const container = document.getElementById('appContainer'); // Assuming this ID exists
+            if (container) {
+                if (isConnected) {
+                    container.classList.remove('disconnected');
+                    container.classList.add('connected');
+                } else {
+                    container.classList.remove('connected');
+                    container.classList.add('disconnected');
+                }
+            }
+            // log(`Status: ${message}`); // Avoid recursion if log also depends on DOM
+            console.log(`[Status Update] ${message}`); // Use console.log for status updates before DOM is fully ready if needed
+        }
+
+        function updateUIState() {
+            // Ensure elements are available before trying to update them
+            if (!connectButton) return; // If connectButton isn't ready, other UI elements likely aren't either
+
+            const isConnected = gattServer && gattServer.connected;
+            const canWriteTo3132 = isConnected && char3132Characteristic && (char3132Characteristic.properties.write || char3132Characteristic.properties.writeWithoutResponse || char3132Characteristic.properties.authenticatedSignedWrites);
+            const canRead3132 = isConnected && char3132Characteristic && char3132Characteristic.properties.read;
+
+            connectButton.disabled = isConnected;
+            disconnectButton.disabled = !isConnected;
+            reconnectButton.disabled = !bleDevice || isConnected;
+
+            updateStatus(isConnected ? 'Connected' : 'Disconnected', isConnected);
+
+            updateCharacteristicUI(batteryCharacteristic, null, null, null, null, null, null);
+            updateCharacteristicUI(char3132Characteristic, char3132PropertiesSpan, read3132Button, write3132Input, write3132Button, null, null);
+
+            const isChar3132ReadyForGeneralUpload = canWriteTo3132 && !isOtaInProgress;
+
+            otaHexDataInput.disabled = !isChar3132ReadyForGeneralUpload;
+            startUncompressedImageUploadButton.disabled = !isChar3132ReadyForGeneralUpload;
+            startCompressedImageUploadButton.disabled = !isChar3132ReadyForGeneralUpload;
+
+            selectFirmwareFileInput.disabled = !canWriteTo3132 || isOtaInProgress;
+
+            if (!otaProgressSpan) return; // Guard
+
+            if (!isConnected) {
+                otaProgressSpan.textContent = 'Status: Disconnected';
+            } else if (!char3132Characteristic) {
+                otaProgressSpan.textContent = `Status: Characteristic ${CHAR_3132_UUID.substring(0, 8)} Not Found (Required for OTA/Commands)`;
+            } else if (!canWriteTo3132) {
+                otaProgressSpan.textContent = `Status: Characteristic ${CHAR_3132_UUID.substring(0, 8)} Not Writable (Required for OTA/Commands)`;
+            } else if (isOtaInProgress) {
+                const percent = otaTotalLength > 0 ? ((otaBytesSent / otaTotalLength) * 100).toFixed(1) : 0;
+                let type = 'Data';
+                if (currentUploadFinalizationType.includes('image')) type = 'Image';
+                if (currentUploadFinalizationType.includes('firmware')) type = 'Firmware';
+                otaProgressSpan.textContent = `${type} Uploading: ${otaBytesSent}/${otaTotalLength} Bytes (${percent}%)`;
+            } else if (otaImageData && otaTotalLength > 0 && otaBytesSent === otaTotalLength && currentUploadFinalizationType === 'none') {
+                if (selectedFirmwareFilename && selectedFirmwareHex) {
+                    otaProgressSpan.textContent = `Status: FW "${selectedFirmwareFilename}" ready. Click "Start Firmware Upload".`;
+                } else {
+                    otaProgressSpan.textContent = `Upload & Finalization complete. Ready for new upload.`;
+                }
+            } else if (selectedFirmwareHex && selectedFirmwareFilename) {
+                otaProgressSpan.textContent = `Status: FW "${selectedFirmwareFilename}" ready. Click "Start Firmware Upload".`;
+            }
+            else if (otaImageData && otaTotalLength > 0 && otaBytesSent < otaTotalLength && currentUploadFinalizationType !== 'none') {
+                let type = 'Data';
+                if (currentUploadFinalizationType.includes('image')) type = 'Image';
+                if (currentUploadFinalizationType.includes('firmware')) type = 'Firmware';
+                otaProgressSpan.textContent = `${type} Upload incomplete: ${otaBytesSent}/${otaTotalLength} Bytes.`;
+            } else {
+                otaProgressSpan.textContent = 'Status: Ready to start upload (Select FW file or enter Image hex).';
+            }
+        }
+
+        function clearLogAndValues() {
+            if (logDivPre) logDivPre.textContent = 'Ready.'; // Guard
+            if (batteryVoltageValueSpan) batteryVoltageValueSpan.textContent = '-';
+            if (read3132ValueSpan) read3132ValueSpan.textContent = '-';
+            if (written3132ValueSpan) written3132ValueSpan.textContent = '-';
+            if (char3132PropertiesSpan) char3132PropertiesSpan.textContent = '-';
+
+            otaImageData = null;
+            otaTotalLength = 0;
+            otaBytesSent = 0;
+            isOtaInProgress = false;
+            currentUploadFinalizationType = 'none';
+            resetFirmwareFileSelectorInternal();
+        }
+
+        function updateCharacteristicUI(characteristic, propertySpan, readButton, writeInput, writeButton, startNotifyButton, stopNotifyButton) {
+            // Guard against elements not being ready, especially if called early
+            if (propertySpan && !document.getElementById(propertySpan.id)) return;
+
+
+            const isConnected = gattServer && gattServer.connected;
+            if (!characteristic || !isConnected) {
+                if (propertySpan) propertySpan.textContent = characteristic ? 'Disconnected' : 'Not Found';
+                if (readButton) readButton.disabled = true;
+                if (writeInput) writeInput.disabled = true;
+                if (writeButton) writeButton.disabled = true;
+                if (startNotifyButton) startNotifyButton.disabled = true;
+                if (stopNotifyButton) stopNotifyButton.disabled = true;
+                return;
+            }
+            const props = characteristic.properties;
+            const supportedProps = [];
+            if (props.read) supportedProps.push('READ');
+            if (props.write) supportedProps.push('WRITE');
+            if (props.writeWithoutResponse) supportedProps.push('WRITE WITHOUT RESPONSE');
+            if (props.notify) supportedProps.push('NOTIFY');
+            if (props.indicate) supportedProps.push('INDICATE');
+            if (props.authenticatedSignedWrites) supportedProps.push('SIGNED WRITE');
+            if (propertySpan) propertySpan.textContent = supportedProps.join(', ') || 'None';
+            if (readButton) readButton.disabled = !props.read;
+            const canDeviceWrite = props.write || props.writeWithoutResponse || props.authenticatedSignedWrites;
+            if (writeInput && writeButton) {
+                writeInput.disabled = !canDeviceWrite || isOtaInProgress;
+                writeButton.disabled = !canDeviceWrite || isOtaInProgress;
+            }
+            const canDeviceNotify = props.notify || props.indicate;
+            if (startNotifyButton && stopNotifyButton) {
+                if (canDeviceNotify) {
+                    characteristic.getDescriptor(0x2902)
+                        .then(cccdDescriptor => cccdDescriptor.readValue())
+                        .then(cccdValue => {
+                            const cccdUint16 = cccdValue.getUint16(0, true);
+                            const isNotifying = (cccdUint16 & 0x0001) || (cccdUint16 & 0x0002);
+                            startNotifyButton.disabled = isNotifying;
+                            stopNotifyButton.disabled = !isNotifying;
+                        })
+                        .catch(e => {
+                            log(`Warning: Could not read CCCD for ${characteristic.uuid.substring(0, 8)}: ${e.message}`);
+                            startNotifyButton.disabled = false;
+                            stopNotifyButton.disabled = true;
+                        });
+                } else {
+                    startNotifyButton.disabled = true;
+                    stopNotifyButton.disabled = true;
+                }
+            }
+        }
+
+        async function attemptGattConnectAndSetup(deviceToConnect) {
+            log('DEBUG: attemptGattConnectAndSetup called.');
+            if (!deviceToConnect) {
+                log('Error: attemptGattConnectAndSetup called with null device.');
+                updateStatus('Internal Error'); updateUIState(); return false;
+            }
+            if (deviceToConnect.gatt && deviceToConnect.gatt.connected) {
+                log('DEBUG: attemptGattConnectAndSetup on already connected device. Re-discovering services...');
+                try {
+                    if (!deviceToConnect.gatt) throw new Error("GATT server not available.");
+                    const foundService = await deviceToConnect.gatt.getPrimaryService(SERVICE_UUID);
+                    await setupDeviceAndCharacteristics(deviceToConnect, foundService);
+                    return true;
+                } catch (error) {
+                    log(`Error during setup on connected device ${deviceToConnect.name}: ${error}`);
+                    if (deviceToConnect.gatt && deviceToConnect.gatt.connected) {
+                        try { await deviceToConnect.gatt.disconnect(); } catch (e) { log("Error during cleanup disconnect: " + e); }
+                    }
+                    throw error;
+                }
+            }
+            let lastError = null; let connectedAndDiscoveredSuccessfully = false; const device = deviceToConnect;
+            for (let i = 0; i <= MAX_RETRIES; i++) {
+                if (device.gatt && device.gatt.connected) {
+                    log(`DEBUG: Already connected in retry loop attempt ${i + 1}.`);
+                } else {
+                    updateStatus(`Connecting (Attempt ${i + 1}/${MAX_RETRIES + 1})...`);
+                    log(`Attempt ${i + 1}: Connecting to GATT...`);
+                    try {
+                        gattServer = await device.gatt.connect();
+                        log(`Attempt ${i + 1}: Connected to GATT.`);
+                    } catch (connError) {
+                        lastError = connError; log(`Attempt ${i + 1}: GATT connection failed: ${connError.message}`);
+                        gattServer = null; batteryCharacteristic = null; char3332Characteristic = null; char3132Characteristic = null;
+                        otaImageData = null; otaTotalLength = 0; otaBytesSent = 0; isOtaInProgress = false; currentUploadFinalizationType = 'none';
+                        resetFirmwareFileSelectorInternal();
+                        updateUIState();
+                        if (i < MAX_RETRIES) {
+                            updateStatus(`Connection error (Attempt ${i + 1}/${MAX_RETRIES + 1}). Retrying...`);
+                            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+                        }
+                        continue;
+                    }
+                }
+                if (gattServer && gattServer.connected) {
+                    try {
+                        log(`Attempt ${i + 1}: Getting Service ${SERVICE_UUID}...`);
+                        const foundService = await gattServer.getPrimaryService(SERVICE_UUID);
+                        await setupDeviceAndCharacteristics(device, foundService);
+                        connectedAndDiscoveredSuccessfully = true; break;
+                    } catch (discoveryError) {
+                        lastError = discoveryError; log(`Attempt ${i + 1}: GATT discovery/setup failed: ${discoveryError.message}`);
+                        if (device.gatt && device.gatt.connected) {
+                            log(`Attempt ${i + 1}: Disconnecting due to discovery/setup error.`);
+                            try { await device.gatt.disconnect(); } catch (e) { log(`Attempt ${i + 1}: Error during cleanup disconnect: ${e}`); }
+                        } else {
+                            gattServer = null; batteryCharacteristic = null; char3332Characteristic = null; char3132Characteristic = null;
+                            otaImageData = null; otaTotalLength = 0; otaBytesSent = 0; isOtaInProgress = false; currentUploadFinalizationType = 'none';
+                            resetFirmwareFileSelectorInternal();
+                            updateUIState();
+                        }
+                        if (i < MAX_RETRIES) {
+                            updateStatus(`Discovery/Setup error (Attempt ${i + 1}/${MAX_RETRIES + 1}). Retrying...`);
+                            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+                        }
+                    }
+                }
+            }
+            if (!connectedAndDiscoveredSuccessfully) {
+                updateStatus('Connection Failed');
+                gattServer = null; batteryCharacteristic = null; char3332Characteristic = null; char3132Characteristic = null;
+                otaImageData = null; otaTotalLength = 0; otaBytesSent = 0; isOtaInProgress = false; currentUploadFinalizationType = 'none';
+                resetFirmwareFileSelectorInternal();
+                updateUIState();
+                if (lastError) throw lastError; else throw new Error("Connection/setup failed after retries.");
+            }
+            return true;
+        }
+
+        async function setupDeviceAndCharacteristics(device, foundService) {
+            log('DEBUG: setupDeviceAndCharacteristics called.');
+            batteryCharacteristic = null; char3332Characteristic = null; char3132Characteristic = null;
+            otaImageData = null; otaTotalLength = 0; otaBytesSent = 0; isOtaInProgress = false; currentUploadFinalizationType = 'none';
+            resetFirmwareFileSelectorInternal();
+            updateStatus('Getting characteristics...');
+            try { batteryCharacteristic = await foundService.getCharacteristic(BATTERY_CHAR_UUID); log(`Found Battery (3532)`); } catch (e) { log(`Error Battery (3532): ${e.message}`); }
+            try { char3332Characteristic = await foundService.getCharacteristic(CHAR_3332_UUID); log(`Found Char 3332`); } catch (e) { log(`Error Char 3332: ${e.message}`); }
+            try { char3132Characteristic = await foundService.getCharacteristic(CHAR_3132_UUID); log(`Found Char 3132`); } catch (e) { log(`Error Char 3132: ${e.message}`); }
+
+            if (!batteryCharacteristic) throw new Error(`Critical: Battery Char (${BATTERY_CHAR_UUID.substring(0, 8)}) not found.`);
+            if (!(batteryCharacteristic.properties.read && (batteryCharacteristic.properties.notify || batteryCharacteristic.properties.indicate))) throw new Error(`Critical: Battery Char properties insufficient.`);
+            if (!char3132Characteristic) log(`Warning: Char 3132 (${CHAR_3132_UUID.substring(0, 8)}) not found. OTA/Commands disabled.`);
+            else if (!(char3132Characteristic.properties.write || char3132Characteristic.properties.writeWithoutResponse)) log(`Warning: Char 3132 properties insufficient for OTA/Commands.`);
+
+            if (batteryCharacteristic && (batteryCharacteristic.properties.notify || batteryCharacteristic.properties.indicate)) {
+                batteryCharacteristic.removeEventListener('characteristicvaluechanged', handleBatteryNotification);
+                batteryCharacteristic.addEventListener('characteristicvaluechanged', handleBatteryNotification);
+            }
+            updateUIState();
+            if (char3332Characteristic && char3332Characteristic.properties.read && (char3332Characteristic.properties.write || char3332Characteristic.properties.writeWithoutResponse)) {
+                performChallengeResponse().catch(e => log("ERROR auto challenge: " + e.message));
+            }
+            if (batteryCharacteristic.properties.read) {
+                await readCharacteristic(batteryCharacteristic, batteryVoltageValueSpan).catch(e => { if (batteryVoltageValueSpan) batteryVoltageValueSpan.textContent = 'Read Error' });
+            } else if (batteryVoltageValueSpan) batteryVoltageValueSpan.textContent = 'N/A (No Read)';
+            if (batteryCharacteristic.properties.notify || batteryCharacteristic.properties.indicate) {
+                await startNotifications(batteryCharacteristic, null, null).catch(e => { if (batteryVoltageValueSpan) batteryVoltageValueSpan.textContent += ' (Notify Err)' });
+            } else if (batteryVoltageValueSpan) batteryVoltageValueSpan.textContent += ' (No Notify)';
+            updateUIState();
+        }
+
+        function onDisconnected(event) {
+            log(`Device disconnected: ${event.target.name}`);
+            if (batteryCharacteristic) batteryCharacteristic.removeEventListener('characteristicvaluechanged', handleBatteryNotification);
+            gattServer = null; batteryCharacteristic = null; char3332Characteristic = null; char3132Characteristic = null;
+            otaImageData = null; otaTotalLength = 0; otaBytesSent = 0; isOtaInProgress = false; currentUploadFinalizationType = 'none';
+            resetFirmwareFileSelectorInternal();
+            updateUIState();
+        }
+
+        async function handleConnectClick() {
+            if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) { log('Already connected.'); updateUIState(); return; }
+            bleDevice = null; clearLogAndValues(); updateUIState();
+            try {
+                bleDevice = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: 'WL' }], optionalServices: [SERVICE_UUID] });
+                log(`Device selected: ${bleDevice.name} (${bleDevice.id})`);
+                bleDevice.removeEventListener('gattserverdisconnected', onDisconnected);
+                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                await attemptGattConnectAndSetup(bleDevice);
+            } catch (error) {
+                const errorMsg = error.message || error;
+                if (errorMsg.includes('No devices found') || errorMsg.includes('User cancelled')) {
+                    log('Scan cancelled/No device found.'); updateStatus('Scan cancelled/No device found');
+                    bleDevice = null; clearLogAndValues();
+                } else {
+                    log(`CONNECTION/DISCOVERY FINAL FAILURE: ${error}`); updateStatus('Connection Error');
+                }
+                updateUIState();
+            }
+        }
+
+        async function handleReconnectClick() {
+            if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) { log('Already connected.'); updateUIState(); return; }
+            if (!bleDevice) { log('Error: No device to reconnect to.'); updateStatus('No device to reconnect'); updateUIState(); return; }
+            log(`Reconnecting to ${bleDevice.name}...`); clearLogAndValues(); updateUIState();
+            try {
+                await attemptGattConnectAndSetup(bleDevice);
+            } catch (error) {
+                log(`Reconnect failed: ${error}`);
+            }
+        }
+
+        async function disconnectDevice() {
+            if (gattServer && gattServer.connected) {
+                log('Disconnecting device...');
+                try {
+                    if (batteryCharacteristic && (batteryCharacteristic.properties.notify || batteryCharacteristic.properties.indicate)) await stopNotifications(batteryCharacteristic, null, null);
+                } catch (e) { log('Warning: Error stopping Notifications: ' + e.message); }
+                try {
+                    await gattServer.disconnect();
+                } catch (e) {
+                    log('Error calling disconnect: ' + e.message);
+                    if (bleDevice) onDisconnected({ target: bleDevice });
+                    else {
+                        gattServer = null; batteryCharacteristic = null; char3332Characteristic = null; char3132Characteristic = null;
+                        otaImageData = null; otaTotalLength = 0; otaBytesSent = 0; isOtaInProgress = false; currentUploadFinalizationType = 'none';
+                        resetFirmwareFileSelectorInternal();
+                        updateUIState(); updateStatus('Disconnect failed, state reset');
+                    }
+                }
+            } else if (bleDevice) {
+                onDisconnected({ target: bleDevice });
+            } else {
+                updateUIState();
+            }
+        }
+
+        function encryptWithAesEcbCryptoJS(dataUint8Array, keyHex) {
+            if (typeof CryptoJS?.AES?.encrypt !== 'function') throw new Error('CryptoJS not loaded.');
+            const keyHexClean = keyHex.replace(/[^0-9a-fA-F]/g, '');
+            if (keyHexClean.length !== 32 && keyHexClean.length !== 48 && keyHexClean.length !== 64) throw new Error('Invalid AES key length.');
+            if (dataUint8Array.length !== 16) throw new Error('Input for Challenge is not 16 Bytes.');
+            const keyWA = CryptoJS.enc.Hex.parse(keyHexClean);
+            const dataWA = CryptoJS.lib.WordArray.create(dataUint8Array);
+            const encrypted = CryptoJS.AES.encrypt(dataWA, keyWA, { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.NoPadding });
+            return encrypted.ciphertext.toString(CryptoJS.enc.Hex);
+        }
+
+        async function performChallengeResponse() {
+            if (!char3332Characteristic || !gattServer?.connected) { log('Challenge: 3332/connection not available.'); return; }
+            const props = char3332Characteristic.properties;
+            if (!props.read || !(props.write || props.writeWithoutResponse)) { log('Challenge: 3332 properties insufficient.'); return; }
+            try {
+                const challengeDataView = await readCharacteristic(char3332Characteristic, null);
+                if (!challengeDataView || challengeDataView.byteLength !== 16) {
+                    log(`Challenge: Read data not 16 Bytes. Actual length: ${challengeDataView ? challengeDataView.byteLength : 'null'}`);
+                    return;
+                }
+                const challengeBytes = new Uint8Array(challengeDataView.buffer);
+                const encryptedResponseHex = encryptWithAesEcbCryptoJS(challengeBytes, AES_KEY_HEX);
+                if (!encryptedResponseHex || encryptedResponseHex.length !== 32) { log(`Challenge: Encryption invalid result.`); return; }
+                await writeCharacteristic(char3332Characteristic, encryptedResponseHex, null);
+                log('Automatic Challenge: Response sent.');
+            } catch (error) {
+                log(`Automatic Challenge Error: ${error.message}`);
+            }
+        }
+
+        function handleBatteryNotification(event) {
+            const value = event.target.value;
+            const valueHex = dataViewToHexString(value);
+            log(`Notification Battery (3532, ${value.byteLength}B): ${valueHex}`);
+            if (value.byteLength === 2) {
+                try {
+                    const voltage_mV = value.getUint16(0, true);
+                    if (batteryVoltageValueSpan) batteryVoltageValueSpan.textContent = `${voltage_mV} mV`;
+                } catch (error) { if (batteryVoltageValueSpan) batteryVoltageValueSpan.textContent = 'Parse Error'; }
+            } else if (batteryVoltageValueSpan) batteryVoltageValueSpan.textContent = `Unexpected data (${value.byteLength}B): ${valueHex}`;
+        }
+
+        async function readCharacteristic(characteristic, valueSpan) {
+            if (!characteristic || !gattServer?.connected) {
+                if (valueSpan) valueSpan.textContent = 'N/A (Disconnected)'; return null;
+            }
+            if (!characteristic.properties.read) {
+                if (valueSpan) valueSpan.textContent = 'READ not supported'; return null;
+            }
+            try {
+                const value = await characteristic.readValue();
+                const valueHex = dataViewToHexString(value);
+                log(`Read ${characteristic.uuid.substring(0, 8)}: ${valueHex} (${value.byteLength}B)`);
+                if (valueSpan) {
+                    if (characteristic.uuid.toLowerCase() === BATTERY_CHAR_UUID.toLowerCase() && value.byteLength === 2) {
+                        try { valueSpan.textContent = `${value.getUint16(0, true)} mV`; } catch (e) { valueSpan.textContent = 'Read Parse Err'; }
+                    } else valueSpan.textContent = valueHex || '(Empty)';
+                }
+                return value;
+            } catch (error) {
+                log(`Error reading ${characteristic.uuid.substring(0, 8)}: ${error.message}`);
+                if (valueSpan) valueSpan.textContent = `Read Error`;
+                throw error;
+            }
+        }
+
+        async function writeCharacteristic(characteristic, dataToWrite, writtenValueSpan) {
+            if (!characteristic || !gattServer?.connected) {
+                if (writtenValueSpan) writtenValueSpan.textContent = 'N/A (Disconnected)'; return false;
+            }
+            const canWrite = characteristic.properties.write || characteristic.properties.writeWithoutResponse || characteristic.properties.authenticatedSignedWrites;
+            if (!canWrite) {
+                if (writtenValueSpan) writtenValueSpan.textContent = 'Write not supported'; return false;
+            }
+            let dataBytes, dataHexForLog;
+            if (typeof dataToWrite === 'string') {
+                const cleanHexString = dataToWrite.replace(/[^0-9a-fA-F]/g, '');
+                if (cleanHexString.length % 2 !== 0) throw new Error(`Invalid Hex (odd length): ${cleanHexString.length}`);
+                try { dataBytes = hexStringToUint8Array(cleanHexString); dataHexForLog = cleanHexString; }
+                catch (error) { if (writtenValueSpan) writtenValueSpan.textContent = `Conv Error`; throw error; }
+            } else if (dataToWrite instanceof Uint8Array) {
+                dataBytes = dataToWrite; dataHexForLog = uint8ArrayToHexString(dataBytes);
+            } else { if (writtenValueSpan) writtenValueSpan.textContent = 'Invalid data format'; throw new Error('Invalid data format for write.'); }
+
+            try {
+                const logHex = dataHexForLog.length > 40 ? dataHexForLog.substring(0, 30) + '...' + dataHexForLog.substring(dataHexForLog.length - 10) : dataHexForLog;
+                log(`Writing "${logHex}" (${dataBytes.length}B) to ${characteristic.uuid.substring(0, 8)}...`);
+                if (characteristic.properties.writeWithoutResponse) {
+                    await characteristic.writeValueWithoutResponse(dataBytes);
+                    if (writtenValueSpan) writtenValueSpan.textContent = dataHexForLog + ' (w/o Resp)';
+                } else if (characteristic.properties.write) {
+                    await characteristic.writeValueWithResponse(dataBytes);
+                    if (writtenValueSpan) writtenValueSpan.textContent = dataHexForLog;
+                } else if (characteristic.properties.authenticatedSignedWrites) {
+                    throw new Error('Signed Writes not implemented for this action.');
+                } else throw new Error('No suitable write property found (Unexpected).');
+                log(`Write to ${characteristic.uuid.substring(0, 8)} successful.`);
+                return true;
+            } catch (error) {
+                log(`Error writing to ${characteristic.uuid.substring(0, 8)}: ${error.message}`);
+                if (writtenValueSpan) writtenValueSpan.textContent = `Write Error`;
+                throw error;
+            }
+        }
+
+        async function startNotifications(characteristic, startButton, stopButton) {
+            if (!characteristic || !gattServer?.connected) {
+                if (startButton) startButton.disabled = true; if (stopButton) stopButton.disabled = true; return false;
+            }
+            if (!(characteristic.properties.notify || characteristic.properties.indicate)) {
+                if (startButton) startButton.disabled = true; if (stopButton) stopButton.disabled = true; return false;
+            }
+            try {
+                await characteristic.startNotifications();
+                log(`Notifications started for ${characteristic.uuid.substring(0, 8)}.`);
+                if (startButton) startButton.disabled = true; if (stopButton) stopButton.disabled = false;
+                return true;
+            } catch (error) {
+                log(`Error starting Notifications for ${characteristic.uuid.substring(0, 8)}: ${error.message}`);
+                if (startButton) startButton.disabled = false; if (stopButton) stopButton.disabled = true;
+                throw error;
+            }
+        }
+
+        async function stopNotifications(characteristic, startButton, stopButton) {
+            if (!characteristic || !gattServer?.connected) {
+                if (startButton) startButton.disabled = true; if (stopButton) stopButton.disabled = true; return false;
+            }
+            if (!(characteristic.properties.notify || characteristic.properties.indicate)) {
+                if (startButton) startButton.disabled = true; if (stopButton) stopButton.disabled = true; return false;
+            }
+            try {
+                await characteristic.stopNotifications();
+                log(`Notifications stopped for ${characteristic.uuid.substring(0, 8)}.`);
+                if (startButton) startButton.disabled = false; if (stopButton) stopButton.disabled = true;
+                return true;
+            } catch (error) {
+                log(`Error stopping Notifications for ${characteristic.uuid.substring(0, 8)}: ${error.message}`);
+                if (startButton) startButton.disabled = false; if (stopButton) stopButton.disabled = true;
+                throw error;
+            }
+        }
+
+        async function handleRead3132() { if (read3132Button) read3132Button.disabled = true; try { await readCharacteristic(char3132Characteristic, read3132ValueSpan); } finally { updateUIState(); } }
+        async function handleWrite3132() {
+            if (write3132Input) write3132Input.disabled = true;
+            if (write3132Button) write3132Button.disabled = true;
+            try { await writeCharacteristic(char3132Characteristic, write3132Input.value.trim(), written3132ValueSpan); } finally { updateUIState(); }
+        }
+
+        function numberToUint32LE(num) { const b = new ArrayBuffer(4); new DataView(b).setUint32(0, num, true); return new Uint8Array(b); }
+        function numberToUint16LE(num) { const b = new ArrayBuffer(2); new DataView(b).setUint16(0, Math.max(0, Math.min(65535, Math.round(num))), true); return new Uint8Array(b); }
+        function numberToUint16BE(num) { const b = new ArrayBuffer(2); new DataView(b).setUint16(0, Math.max(0, Math.min(65535, Math.round(num))), false); return new Uint8Array(b); }
+
+        function calculateCrc16(uint8Array) {
+            let crc = 0xFFFF; const polynomial = 0xA001;
+            for (let byte of uint8Array) {
+                crc ^= byte;
+                for (let i = 0; i < 8; i++) crc = (crc & 1) ? (crc >> 1) ^ polynomial : crc >> 1;
+            }
+            return crc;
+        }
+
+        function resetFirmwareFileSelectorInternalHelp() {
+            document.getElementById("selectFirmwareFile").value = '';
+        }
+
+        function resetFirmwareFileSelectorInternal() {
+            selectedFirmwareHex = null;
+            selectedFirmwareFilename = "";
+        }
+
+        async function handleFirmwareFileSelect() {
+            const fileInput = document.getElementById('selectFirmwareFile');
+            resetFirmwareFileSelectorInternal();
+
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                selectedFirmwareFilename = file.name;
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    try {
+                        const arrayBuffer = e.target.result;
+                        const byteArray = new Uint8Array(arrayBuffer);
+                        let hexString = uint8ArrayToHexString(byteArray);
+
+                        const imgArray = hexString;
+                        const imgArrayLen = imgArray.length;
+
+                        if (imgArrayLen < 56) {
+                            log(`ERROR: Firmware file "${selectedFirmwareFilename}" is too short (${imgArrayLen / 2} bytes) for header.`);
+                            if (otaProgressSpan) otaProgressSpan.textContent = `Status: Invalid FW "${selectedFirmwareFilename}" (too short).`;
+                            resetFirmwareFileSelectorInternal();
+                            updateUIState();
+                            return;
+                        }
+
+                        const magicNumber = imgArray.substring(16, 24).toUpperCase();
+                        const fw_header_img_len_hex = imgArray.substring(54, 56).toUpperCase() +
+                            imgArray.substring(52, 54).toUpperCase() +
+                            imgArray.substring(50, 52).toUpperCase() +
+                            imgArray.substring(48, 50).toUpperCase();
+                        const fw_header_img_len = parseInt(fw_header_img_len_hex, 16);
+
+                        log(`Selected FW: "${selectedFirmwareFilename}", Size: ${imgArrayLen / 2} bytes.`);
+                        log(`  Magic Number: ${magicNumber} (Expected: 4B4E4C54)`);
+                        log(`  Header Declared Length: ${fw_header_img_len} bytes`);
+
+                        if (magicNumber !== "4B4E4C54") {
+                            log(`ERROR: Firmware "${selectedFirmwareFilename}" - invalid magic number.`);
+                            if (otaProgressSpan) otaProgressSpan.textContent = `Status: Invalid FW "${selectedFirmwareFilename}" (magic).`;
+                            resetFirmwareFileSelectorInternal();
+                            updateUIState();
+                            return;
+                        }
+                        if ((imgArrayLen / 2) !== fw_header_img_len) {
+                            log(`ERROR: Firmware "${selectedFirmwareFilename}" - length mismatch. File: ${imgArrayLen / 2} bytes, Header: ${fw_header_img_len} bytes.`);
+                            if (otaProgressSpan) otaProgressSpan.textContent = `Status: Invalid FW "${selectedFirmwareFilename}" (length).`;
+                            resetFirmwareFileSelectorInternal();
+                            updateUIState();
+                            return;
+                        }
+
+                        selectedFirmwareHex = hexString;
+                        log(`Firmware "${selectedFirmwareFilename}" validated successfully.`);
+                        if (otaHexDataInput) {
+                            otaHexDataInput.value = "";
+                            otaHexDataInput.placeholder = `Firmware "${selectedFirmwareFilename}" selected. Textarea for image data.`;
+                        }
+                        handleStartFirmwareUpload();
+                    } catch (readError) {
+                        log(`Error processing firmware file "${selectedFirmwareFilename}": ${readError.message}`);
+                        if (otaProgressSpan) otaProgressSpan.textContent = `Status: Error processing FW "${selectedFirmwareFilename}".`;
+                        resetFirmwareFileSelectorInternal();
+                    } finally {
+                        updateUIState();
+                    }
+                };
+
+                reader.onerror = function (e_reader) {
+                    log(`Error reading firmware file "${selectedFirmwareFilename}": ${e_reader.target.error.name}`);
+                    if (otaProgressSpan) otaProgressSpan.textContent = `Status: Error reading FW file "${selectedFirmwareFilename}".`;
+                    resetFirmwareFileSelectorInternal();
+                    updateUIState();
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                resetFirmwareFileSelectorInternal();
+                updateUIState();
+            }
+        }
+
+        async function initiateOtaUpload(hexDataForUpload, uploadHeaderForChunks) {
+            const canWriteTo3132 = char3132Characteristic && (char3132Characteristic.properties.write || char3132Characteristic.properties.writeWithoutResponse);
+            if (!gattServer?.connected || !char3132Characteristic || !canWriteTo3132) {
+                log('Cannot start OTA data phase: Not connected or Char 3132 not writable.');
+                isOtaInProgress = false;
+                updateUIState();
+                return;
+            }
+            const hexString = hexDataForUpload;
+
+            if (!hexString) {
+                let errorMsg = 'OTA Error: Hex data is empty for data phase.';
+                if (currentUploadFinalizationType === 'firmware') {
+                    errorMsg = 'OTA Error: No valid firmware data to upload.';
+                }
+                log(errorMsg);
+                isOtaInProgress = false;
+                updateUIState();
+                return;
+            }
+
+            isOtaInProgress = true;
+
+            try {
+                otaImageData = hexStringToUint8Array(hexString);
+                otaTotalLength = otaImageData.byteLength;
+                otaBytesSent = 0;
+
+                log(`Starting OTA Upload (${currentUploadFinalizationType}) of ${otaTotalLength} bytes.`);
+                updateUIState();
+
+                handleSendNextChunk(uploadHeaderForChunks);
+            } catch (error) {
+                log(`OTA Error during data setup: ${error.message}`);
+                isOtaInProgress = false;
+                updateUIState();
+            }
+        }
+        async function handleStartUncompressedImageUpload() {
+            log('DEBUG: handleStartUncompressedImageUpload called.');
+            if (isOtaInProgress) { log('OTA Upload already in progress.'); updateUIState(); return; }
+            currentUploadFinalizationType = 'uncompressed-image';
+            const hexData = otaHexDataInput ? otaHexDataInput.value.trim() : "";
+            if (!hexData) { log('Image OTA: Hex data input is empty.'); updateUIState(); return; }
+            await initiateOtaUpload(hexData, OTA_CMD_IMAGE_UPLOAD_HEADER);
+        }
+
+        async function handleStartCompressedImageUpload() {
+            log('DEBUG: handleStartCompressedImageUpload called.');
+            if (isOtaInProgress) { log('OTA Upload already in progress.'); updateUIState(); return; }
+            currentUploadFinalizationType = 'compressed-image';
+            const hexData = otaHexDataInput ? otaHexDataInput.value.trim() : "";
+            if (!hexData) { log('Image OTA: Hex data input is empty.'); updateUIState(); return; }
+            await initiateOtaUpload(hexData, OTA_CMD_IMAGE_UPLOAD_HEADER);
+        }
+
+        async function handleStartFirmwareUpload() {
+            log('DEBUG: handleStartFirmwareUpload called (Firmware OTA).');
+            if (isOtaInProgress) { log('OTA Upload already in progress.'); updateUIState(); return; }
+
+            if (!selectedFirmwareHex) {
+                log('Firmware OTA Error: No valid firmware file selected and validated.');
+                alert("Please select and validate a firmware file first.");
+                resetFirmwareFileSelectorInternal(); updateUIState(); return;
+            }
+            const canWriteTo3132 = char3132Characteristic && (char3132Characteristic.properties.write || char3132Characteristic.properties.writeWithoutResponse);
+            if (!gattServer?.connected || !char3132Characteristic || !canWriteTo3132) {
+                log('Cannot start Firmware OTA: Not connected or Char 3132 not writable.');
+                updateUIState(); return;
+            }
+            isOtaInProgress = true; currentUploadFinalizationType = 'firmware'; updateUIState();
+            try {
+                log('Sending pre-firmware command 07A5...');
+                await writeCharacteristic(char3132Characteristic, OTA_CMD_PRE_FIRMWARE_UPLOAD_HEADER, null);
+                log('Waiting 2 second...');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                log('Proceeding with firmware data upload using selected file data...');
+                await initiateOtaUpload(selectedFirmwareHex, OTA_CMD_FIRMWARE_UPLOAD_HEADER);
+            } catch (error) {
+                log(`Firmware OTA Pre-Upload Error: ${error.message}`);
+                isOtaInProgress = false; updateUIState();
+            }
+        }
+
+        async function handleSendNextChunk(uploadHeaderForChunks) {
+            if (!isOtaInProgress) { log('DEBUG: handleSendNextChunk called but OTA not in progress.'); updateUIState(); return; }
+            updateUIState();
+            if (otaBytesSent >= otaTotalLength) {
+                log('DEBUG: All bytes sent. Proceeding to finalization.');
+                isOtaInProgress = false;
+                let finalizationSuccess = false;
+                try {
+                    if (currentUploadFinalizationType === 'uncompressed-image') {
+                        finalizationSuccess = await handleSendImageRefreshInternal(false);
+                    } else if (currentUploadFinalizationType === 'compressed-image') {
+                        finalizationSuccess = await handleSendImageRefreshInternal(true);
+                    } else if (currentUploadFinalizationType === 'firmware') {
+                        finalizationSuccess = await handleSendFirmwareFinalizeInternal();
+                    } else { log('ERROR: Upload finished but unknown finalization type. Cannot finalize.'); }
+
+                    if (otaProgressSpan) { // Guard otaProgressSpan
+                        if (finalizationSuccess) {
+                            otaProgressSpan.textContent = `Status: ${currentUploadFinalizationType} finalized successfully!`;
+                            if (currentUploadFinalizationType === 'firmware') resetFirmwareFileSelectorInternal();
+                        } else {
+                            otaProgressSpan.textContent = `Status: ${currentUploadFinalizationType} finalization failed.`;
+                        }
+                    }
+                } catch (e) {
+                    log(`Error during finalization (${currentUploadFinalizationType}): ${e.message}`);
+                    if (otaProgressSpan) otaProgressSpan.textContent = `Status: ${currentUploadFinalizationType} finalization error.`;
+                } finally { updateUIState(); }
+                return;
+            }
+            const canWriteTo3132 = char3132Characteristic && (char3132Characteristic.properties.write || char3132Characteristic.properties.writeWithoutResponse);
+            if (!gattServer?.connected || !char3132Characteristic || !canWriteTo3132) {
+                log('Cannot send chunk: Not connected/writable. Stopping upload.');
+                isOtaInProgress = false; updateUIState(); return;
+            }
+            const offsetBytes = numberToUint32LE(otaBytesSent);
+            const start = otaBytesSent;
+            const end = Math.min(otaBytesSent + OTA_CHUNK_DATA_SIZE, otaTotalLength);
+            const chunkData = otaImageData.slice(start, end);
+            const packet = new Uint8Array(uploadHeaderForChunks.length + offsetBytes.length + chunkData.length);
+            packet.set(uploadHeaderForChunks, 0);
+            packet.set(offsetBytes, uploadHeaderForChunks.length);
+            packet.set(chunkData, uploadHeaderForChunks.length + offsetBytes.length);
+            const packetHexPreview = uint8ArrayToHexString(packet.slice(0, Math.min(packet.length, uploadHeaderForChunks.length + offsetBytes.length + 4)));
+            log(`Sending chunk (offset ${otaBytesSent}) [${packetHexPreview}...] (${chunkData.length} data Bytes) for ${uint8ArrayToHexString(uploadHeaderForChunks)} command...`);
+            try {
+                const success = await writeCharacteristic(char3132Characteristic, packet, null);
+                if (success) {
+                    otaBytesSent += chunkData.length;
+                    if (isOtaInProgress) setTimeout(() => handleSendNextChunk(uploadHeaderForChunks), OTA_WRITE_DELAY_MS);
+                    else updateUIState();
+                } else {
+                    log('Chunk write failed. Stopping upload.');
+                    isOtaInProgress = false; updateUIState();
+                }
+            } catch (error) {
+                log(`OTA Error during chunk send: ${error.message}. Stopping upload.`);
+                isOtaInProgress = false; updateUIState();
+            }
+        }
+
+        async function handleSendImageRefreshInternal(isCompressed) {
+            log(`DEBUG: handleSendImageRefreshInternal called (compressed: ${isCompressed}).`);
+            const canWriteTo3132 = char3132Characteristic && (char3132Characteristic.properties.write || char3132Characteristic.properties.writeWithoutResponse);
+            if (!gattServer?.connected || !char3132Characteristic || !canWriteTo3132) {
+                log('Cannot send Image Refresh: Not connected or Char 3132 not writable.'); return false;
+            }
+            const refreshHeader = isCompressed ? OTA_CMD_COMPRESSED_IMAGE_REFRESH_HEADER : OTA_CMD_IMAGE_REFRESH_HEADER;
+            const commandString = isCompressed ? '02A5 Compressed Image Refresh' : '01A5 Uncompressed Image Refresh';
+            const refreshPacket = new Uint8Array(refreshHeader);
+            log(`Sending Image Refresh command (${commandString})...`); updateUIState();
+            try {
+                const success = await writeCharacteristic(char3132Characteristic, refreshPacket, null);
+                if (success) log(`${commandString} sent successfully.`); else log(`${commandString} failed.`);
+                return success;
+            } catch (error) { log(`Image OTA Error during Refresh (${commandString}): ${error.message}`); return false; }
+        }
+
+        async function handleSendFirmwareFinalizeInternal() {
+            log('DEBUG: handleSendFirmwareFinalizeInternal called.');
+            const canWriteTo3132 = char3132Characteristic && (char3132Characteristic.properties.write || char3132Characteristic.properties.writeWithoutResponse);
+            if (!gattServer?.connected || !char3132Characteristic || !canWriteTo3132) {
+                log('Cannot send Firmware Finalize: Not connected or Char 3132 not writable.'); return false;
+            }
+            if (!otaImageData) { log('Firmware Finalize: No firmware data available for CRC (otaImageData is null).'); return false; }
+            const totalLengthBytes = numberToUint32LE(otaTotalLength);
+            let crc16;
+            try {
+                crc16 = calculateCrc16(otaImageData);
+                log(`Calculated CRC16 of firmware (${otaTotalLength}B): 0x${crc16.toString(16).padStart(4, '0')}`);
+            } catch (error) { log(`Firmware OTA Error calculating CRC16: ${error.message}.`); return false; }
+            const crc16Bytes = numberToUint16LE(crc16);
+            const finalizePacket = new Uint8Array(OTA_CMD_FIRMWARE_FINALIZE_HEADER.length + totalLengthBytes.length + crc16Bytes.length);
+            finalizePacket.set(OTA_CMD_FIRMWARE_FINALIZE_HEADER, 0);
+            finalizePacket.set(totalLengthBytes, OTA_CMD_FIRMWARE_FINALIZE_HEADER.length);
+            finalizePacket.set(crc16Bytes, OTA_CMD_FIRMWARE_FINALIZE_HEADER.length + totalLengthBytes.length);
+            const packetHex = uint8ArrayToHexString(finalizePacket);
+            log(`Sending Firmware Finalize (06A5), Len=${otaTotalLength}, CRC=0x${crc16.toString(16).padStart(4, '0')} (Pkt: ${packetHex})...`);
+            updateUIState();
+            try {
+                const success = await writeCharacteristic(char3132Characteristic, finalizePacket, null);
+                if (success) log('Firmware Finalize (06A5) sent successfully.'); else log('Firmware Finalize (06A5) failed.');
+                return success;
+            } catch (error) { log(`Firmware OTA Error during Finalize (06A5): ${error.message}`); return false; }
+        }
+
+        function hexStringToUint8Array(hexString) {
+            hexString = hexString.replace(/[^0-9a-fA-F]/g, '');
+            if (hexString.length === 0) return new Uint8Array(0);
+            if (hexString.length % 2 !== 0) throw new Error(`Invalid Hex (odd length): ${hexString.length}`);
+            const bytes = new Uint8Array(hexString.length / 2);
+            for (let i = 0; i < hexString.length; i += 2) bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
+            return bytes;
+        }
+        function uint8ArrayToHexString(uint8Array) {
+            if (!uint8Array || uint8Array.length === 0) return '';
+            return Array.from(uint8Array).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        function dataViewToHexString(dataView) {
+            if (!dataView || dataView.buffer.byteLength === 0) return '';
+            return uint8ArrayToHexString(new Uint8Array(dataView.buffer));
+        }
+
+        // --- Wait for DOM to be fully loaded ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Assign DOM elements to global variables ---
+            connectButton = document.getElementById('connectButton');
+            disconnectButton = document.getElementById('disconnectButton');
+            reconnectButton = document.getElementById('reconnectButton');
+            statusDiv = document.getElementById('statusDiv');
+            logDivPre = document.getElementById('logDivPre');
+            batteryVoltageValueSpan = document.getElementById('batteryVoltageValue');
+            char3132PropertiesSpan = document.getElementById('char3132Properties');
+            read3132Button = document.getElementById('read3132Button');
+            read3132ValueSpan = document.getElementById('read3132Value');
+            write3132Input = document.getElementById('write3132Input');
+            write3132Button = document.getElementById('write3132Button');
+            written3132ValueSpan = document.getElementById('written3132Value');
+            otaHexDataInput = document.getElementById('otaHexDataInput');
+            startUncompressedImageUploadButton = document.getElementById('startUncompressedImageUploadButton');
+            startCompressedImageUploadButton = document.getElementById('startCompressedImageUploadButton');
+            selectFirmwareFileInput = document.getElementById('selectFirmwareFile');
+            otaProgressSpan = document.getElementById('otaProgress');
+
+            // --- Add Event Listeners (with null checks) ---
+            if (connectButton) connectButton.addEventListener('click', handleConnectClick);
+            else console.error("Element 'connectButton' not found.");
+
+            if (disconnectButton) disconnectButton.addEventListener('click', disconnectDevice);
+            else console.error("Element 'disconnectButton' not found.");
+
+            if (reconnectButton) reconnectButton.addEventListener('click', handleReconnectClick);
+            else console.error("Element 'reconnectButton' not found.");
+
+            if (read3132Button) read3132Button.addEventListener('click', handleRead3132);
+            else console.error("Element 'read3132Button' not found.");
+
+            if (write3132Button) write3132Button.addEventListener('click', handleWrite3132);
+            else console.error("Element 'write3132Button' not found.");
+
+            if (write3132Input) write3132Input.addEventListener('keypress', (e) => { if (e.key === 'Enter' && write3132Button && !write3132Button.disabled) handleWrite3132(); });
+            else console.error("Element 'write3132Input' not found.");
+
+            if (startUncompressedImageUploadButton) startUncompressedImageUploadButton.addEventListener('click', handleStartUncompressedImageUpload);
+            else console.error("Element 'startUncompressedImageUploadButton' not found.");
+
+            if (startCompressedImageUploadButton) startCompressedImageUploadButton.addEventListener('click', handleStartCompressedImageUpload);
+            else console.error("Element 'startCompressedImageUploadButton' not found.");
+
+            // --- Initial UI setup ---
+            if (batteryVoltageValueSpan) batteryVoltageValueSpan.textContent = '-';
+            if (read3132ValueSpan) read3132ValueSpan.textContent = '-';
+            if (written3132ValueSpan) written3132ValueSpan.textContent = '-';
+            if (char3132PropertiesSpan) char3132PropertiesSpan.textContent = '-';
+
+            otaImageData = null; otaTotalLength = 0; otaBytesSent = 0; isOtaInProgress = false; currentUploadFinalizationType = 'none';
+            resetFirmwareFileSelectorInternal();
+
+            if (navigator.bluetooth) {
+                log('Web Bluetooth API available.');
+                log('A timeout of 30 Seconds after full connection is running.');
+                log('The BLE Device will disconnect with no activity, so hurry up!');				
+            } else {
+                log('Web Bluetooth API NOT available.');
+                updateStatus('Web Bluetooth Not Supported');
+            }
+            updateUIState();
+        });
+    </script>
+</body>
+
+</html>
