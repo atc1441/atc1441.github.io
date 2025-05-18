@@ -371,6 +371,8 @@
                 <label for="ditherrin">Dithering</label>
                 <input onchange="getPixelData()" type="checkbox" id="secondColorCheckbox" />
                 <label for="secondColorCheckbox">Second Color</label>
+                <input onchange="getPixelData()" type="checkbox" id="thirdColorCheckbox" />
+                <label for="thirdColorCheckbox">Third Color</label>
                 <button onclick="getPixelData()" style="margin-left: 15px;">Get Pixel Data</button>
             </div>
         </div>
@@ -468,6 +470,7 @@
                 <div>
                     <button type="button" onclick="sendcmd('000A1234');">Reset Configs in Display</button>
                     <button type="button" onclick="sendcmd('0012');">Disable BLE until reboot</button>
+                    <button type="button" onclick="sendcmd('0014');">DeepSleep</button>
                 </div>
             </div>
 
@@ -575,10 +578,10 @@
                         <div><label>R:</label><select class="gpio-select" id="conf_led_R"></select></div>
                         <div><label>G:</label><select class="gpio-select" id="conf_led_G"></select></div>
                         <div><label>B:</label><select class="gpio-select" id="conf_led_B"></select></div>
-                    <div>
-                        <input type="checkbox" id="conf_led_inverted" />
-                        <label for="conf_led_inverted">Invert LED GPIO</label>
-                    </div>
+                        <div>
+                            <input type="checkbox" id="conf_led_inverted" />
+                            <label for="conf_led_inverted">Invert LED GPIO</label>
+                        </div>
                     </div>
                 </fieldset>
                 <fieldset>
@@ -699,6 +702,8 @@
             { id: 34, name: "34: 581 TI BWR UC" },
             { id: 35, name: "35: 346 HS BWY UC" },
             { id: 36, name: "36: 290 WO BWRY JD" },
+            { id: 37, name: "37: 750 HS BWRY JD" },
+            { id: 38, name: "38: 200 HS BWRY JD" },
         ];
         const gpioPins = {
             "None": 0x0000, "PA0": 0x0001, "PA1": 0x0002, "PA2": 0x0004, "PA3": 0x0008, "PA4": 0x0010, "PA5 (DM)": 0x0020, "PA6 (DP)": 0x0040, "PA7 (SWS)": 0x0080,
@@ -784,10 +789,16 @@
             if (secondColorEnabled) {
                 // Simple positioning below the first text line
                 let y2 = y + fontSize * 0.7; // Adjust multiplier as needed
-                if (y2 > canvas.height - fontSize / 2) y2 = y - fontSize * 0.7; // If below bottom, try above
-                if (y2 < fontSize / 2) y2 = canvas.height * 0.75; // Fallback position
-
                 ctx.fillStyle = 'red'; // Assume second color is red
+                ctx.fillText(text, x, y2);
+            }
+
+            // Draw third color text if enabled (adjust position slightly)
+            var thirdColorEnabled = document.getElementById('thirdColorCheckbox').checked;
+            if (thirdColorEnabled) {
+                // Simple positioning below the first text line
+                let y2 = y - fontSize * 0.7; // Adjust multiplier as needed
+                ctx.fillStyle = 'yellow'; // Assume third color is yellow
                 ctx.fillText(text, x, y2);
             }
             getPixelData(); // Update pixel data after drawing
@@ -800,11 +811,13 @@
                 document.getElementById('pixelData').value = ""; return;
             }
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            const secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
+            const isYellowEnabled = document.getElementById('thirdColorCheckbox').checked; // Angenommen: secondColorCheckbox ist für Gelb
+            const isRedEnabled = document.getElementById('secondColorCheckbox').checked;   // Angenommen: thirdColorCheckbox ist für Rot
             const useDithering = document.getElementById('ditherrin').checked;
 
             if (useDithering) {
-                applyDithering(ctx, canvas.width, canvas.height, secondColorEnabled); // Apply dithering to temp canvas
+                // Wichtig: (isRedEnabled, isYellowEnabled) an Dithering übergeben
+                applyDithering(ctx, canvas.width, canvas.height, isRedEnabled, isYellowEnabled);
             }
 
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -815,67 +828,66 @@
             let currentByteRed = 0;
             let bitPosition = 7;
 
-            // Correct iteration: y = rows (height), x = columns (width)
+            const colorPlaneActive = isYellowEnabled || isRedEnabled; // Farb-Ebene ist aktiv, wenn eine der Farben aktiv ist
+
             for (let y = 0; y < canvas.height; y++) {
                 for (let x = 0; x < canvas.width; x++) {
-                    const i = (y * canvas.width + x) * 4; // Pixel index
+                    const i = (y * canvas.width + x) * 4;
                     const r = pixels[i];
                     const g = pixels[i + 1];
                     const b = pixels[i + 2];
 
                     let isBlack = false;
-                    let isRed = false;
+                    let isRedFlag = false;
+                    let isYellowFlag = false;
 
-                    // Determine color based on pixel value (after potential dithering)
-                    if (r < 128 && g < 128 && b < 128) { // Closer to black
+                    if (r < 128 && g < 128 && b < 128) {
                         isBlack = true;
-                    } else if (secondColorEnabled && r > 128 && g < 128 && b < 128) { // Closer to red
-                        isRed = true;
-                    } // Else: Closer to white
-
-                    // Map to EPD bit planes (Common convention: 0=Black, 1=White for BW)
-                    // BWR/Y: Black Plane (0=Black, 1=White/Color), Color Plane (0=White/Black, 1=Color)
-                    // We'll map: White=(1,0), Black=(0,0), Red/Yellow=(1,1) before final inversion
-
-                    if (!isBlack && !isRed) { // White
-                        currentByte |= (1 << bitPosition); // Black plane bit = 1
-                        // currentByteRed bit = 0 (default) // Color plane bit = 0
+                    } else if (isYellowEnabled && r > 128 && g > 128 && b < 128) { // Gelb
+                        isYellowFlag = true;
+                    } else if (isRedEnabled && r > 128 && g < 128 && b < 128) { // Rot
+                        isRedFlag = true;
+                    }
+                    // Map to EPD bit planes: White=(1,0), Black=(0,0), Red/Yellow=(1,1) before final inversion
+                    if (!isBlack && !isRedFlag && !isYellowFlag) { // White
+                        currentByte |= (1 << bitPosition);
                     } else if (isBlack) { // Black
-                        // currentByte bit = 0 (default)    // Black plane bit = 0
-                        // currentByteRed bit = 0 (default) // Color plane bit = 0
-                    } else if (isRed) { // Red/Yellow
-                        currentByte |= (1 << bitPosition); // Black plane bit = 1
-                        currentByteRed |= (1 << bitPosition); // Color plane bit = 1
+                        // currentByte bit = 0 (default)
+                        // currentByteRed bit = 0 (default)
+                    } else if (isRedFlag) { // Red
+                        currentByte |= (1 << bitPosition);
+                        currentByteRed |= (1 << bitPosition);
+                    } else if (isYellowFlag) { // Yellow
+                        currentByteRed |= (1 << bitPosition);
                     }
 
                     bitPosition--;
                     if (bitPosition < 0) {
                         byteData.push(currentByte);
-                        if (secondColorEnabled) byteDataRed.push(currentByteRed);
+                        if (colorPlaneActive) byteDataRed.push(currentByteRed);
                         currentByte = 0;
                         currentByteRed = 0;
                         bitPosition = 7;
                     }
                 }
             }
-            // Push any remaining bits
+
             if (bitPosition !== 7) {
                 byteData.push(currentByte);
-                if (secondColorEnabled) byteDataRed.push(currentByteRed);
+                if (colorPlaneActive) byteDataRed.push(currentByteRed);
             }
 
-            // Combine planes: Invert black plane, append color plane (if used)
             let byteDataCombined = [];
             for (let b = 0; b < byteData.length; b++) {
-                byteDataCombined.push(~byteData[b] & 0xFF); // Invert black plane
+                byteDataCombined.push(~byteData[b] & 0xFF);
             }
-            if (secondColorEnabled) {
+            if (colorPlaneActive) {
                 for (let b = 0; b < byteDataRed.length; b++) {
-                    byteDataCombined.push(byteDataRed[b]); // Append color plane (not inverted)
+                    byteDataCombined.push(byteDataRed[b]);
                 }
             }
 
-            document.getElementById('pixelData').value = bytesToHex(byteDataCombined); // Use bytesToHex helper
+            document.getElementById('pixelData').value = bytesToHex(byteDataCombined);
         }
 
         function uploadImage() {
@@ -912,32 +924,43 @@
                 reader.readAsDataURL(fileInput.files[0]);
             }
         }
+        function findNearestColor(r, g, b, isRedEnabled, isYellowEnabled) { // Parameter umbenannt für Klarheit
+            const colorWhite = [255, 255, 255];
+            const colorBlack = [0, 0, 0];
+            const colorRed = [255, 0, 0];
+            const colorYellow = [255, 255, 0];
 
-        // --- Dithering Functions (Floyd-Steinberg from newer version) ---
-        function findNearestColor(r, g, b, secondColorEnabled) {
-            const distWhite = Math.sqrt((r - 255) ** 2 + (g - 255) ** 2 + (b - 255) ** 2);
-            const distBlack = Math.sqrt((r - 0) ** 2 + (g - 0) ** 2 + (b - 0) ** 2);
-            let distRed = Infinity;
-            if (secondColorEnabled) {
-                distRed = Math.sqrt((r - 255) ** 2 + (g - 0) ** 2 + (b - 0) ** 2); // Red = (255,0,0)
-            }
+            const distWhite = Math.sqrt((r - colorWhite[0]) ** 2 + (g - colorWhite[1]) ** 2 + (b - colorWhite[2]) ** 2);
+            const distBlack = Math.sqrt((r - colorBlack[0]) ** 2 + (g - colorBlack[1]) ** 2 + (b - colorBlack[2]) ** 2);
 
+            let distRedVal = Math.sqrt((r - colorRed[0]) ** 2 + (g - colorRed[1]) ** 2 + (b - colorRed[2]) ** 2);
+            let distYellowVal = Math.sqrt((r - colorYellow[0]) ** 2 + (g - colorYellow[1]) ** 2 + (b - colorYellow[2]) ** 2);
             let minDist = distWhite;
-            let nearestColor = [255, 255, 255]; // White
+            let nearestColor = colorWhite;
 
             if (distBlack < minDist) {
                 minDist = distBlack;
-                nearestColor = [0, 0, 0]; // Black
+                nearestColor = colorBlack;
             }
-            if (distRed < minDist) {
-                nearestColor = [255, 0, 0]; // Red
+
+            // Rot prüfen, falls aktiviert und näher
+            if (isRedEnabled && distRedVal < minDist) {
+                minDist = distRedVal;
+                nearestColor = colorRed;
+            }
+
+            // Gelb prüfen, falls aktiviert und näher (kann Rot überschreiben, falls Gelb noch näher ist)
+            if (isYellowEnabled && distYellowVal < minDist) {
+                minDist = distYellowVal;
+                nearestColor = colorYellow;
             }
             return nearestColor;
         }
 
-        function applyDithering(ctx, width, height, secondColorEnabled) {
+        function applyDithering(ctx, width, height, secondColorEnabled, thirdColorEnabled) {
             const imageData = ctx.getImageData(0, 0, width, height);
             const data = imageData.data;
+            // Fehler-Arrays für jeden Farbkanal separat, um die Präzision zu erhalten
             const errorsR = new Array(width * height).fill(0);
             const errorsG = new Array(width * height).fill(0);
             const errorsB = new Array(width * height).fill(0);
@@ -954,33 +977,41 @@
 
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
-                    const index = y * width + x;
-                    const dataIndex = index * 4;
+                    const index = y * width + x; // Pixel-Index (nicht Byte-Index im Array)
+                    const dataIndex = index * 4; // Start-Byte-Index für dieses Pixel in imageData.data
 
+                    // Aktuellen Pixelwert + akkumulierten Fehler holen
                     const oldR = clamp(data[dataIndex] + errorsR[index]);
                     const oldG = clamp(data[dataIndex + 1] + errorsG[index]);
                     const oldB = clamp(data[dataIndex + 2] + errorsB[index]);
 
-                    const [newR, newG, newB] = findNearestColor(oldR, oldG, oldB, secondColorEnabled);
+                    // Nächste Farbe in der Palette finden
+                    const [newR, newG, newB] = findNearestColor(oldR, oldG, oldB, secondColorEnabled, thirdColorEnabled);
 
+                    // Pixel im imageData auf die neue Farbe setzen
                     data[dataIndex] = newR;
                     data[dataIndex + 1] = newG;
                     data[dataIndex + 2] = newB;
+                    // Alpha-Kanal bleibt unberührt: data[dataIndex + 3]
 
+                    // Quantisierungsfehler berechnen
                     const errR = oldR - newR;
                     const errG = oldG - newG;
                     const errB = oldB - newB;
 
-                    // Floyd-Steinberg distribution
+                    // Fehler auf benachbarte Pixel verteilen (Floyd-Steinberg)
+                    // Pixel rechts
                     setPixelError(x + 1, y, errR, errG, errB, 7 / 16);
+                    // Pixel links unten
                     setPixelError(x - 1, y + 1, errR, errG, errB, 3 / 16);
+                    // Pixel direkt unten
                     setPixelError(x, y + 1, errR, errG, errB, 5 / 16);
+                    // Pixel rechts unten
                     setPixelError(x + 1, y + 1, errR, errG, errB, 1 / 16);
                 }
             }
             ctx.putImageData(imageData, 0, 0);
         }
-
         // --- BLE Logic ---
         function resetVariables() {
             // Don't nullify bleDevice if we are in a retry loop
@@ -1334,9 +1365,10 @@
             var width = parseInt(document.getElementById('widthInput').value);
             var height = parseInt(document.getElementById('heightInput').value);
             var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
+            var thirdColorEnabled = document.getElementById('thirdColorCheckbox').checked;
             imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
             var unCompressedSize = imgArray.length / 2;
-            imgArray = "06" + toHexUint16LE(width) + toHexUint16LE(height) + (secondColorEnabled ? "02" : "01") + imgArray;// len1. Height2. Width2. Colors1. Data.
+            imgArray = "06" + toHexUint16LE(width) + toHexUint16LE(height) + ((secondColorEnabled||thirdColorEnabled) ? "02" : "01") + imgArray;// len1. Height2. Width2. Colors1. Data.
             const compressedBytes = pako.deflate(hexStringToUint8Array(imgArray), { level: 9, windowBits: 12 });
             imgArray = bytesToHex(compressedBytes);
             imgArray = toHexUint32LE(unCompressedSize) + imgArray;
@@ -1349,11 +1381,12 @@
 
         function sendimg(cmdIMG) {
             var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
+            var thirdColorEnabled = document.getElementById('thirdColorCheckbox').checked;
             imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
             imgArrayLen = imgArray.length;
             uploadPart = 0;
             addLog('Sending image size: ' + imgArrayLen / 2);
-            const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, secondColorEnabled ? 0x21 : 0x20, 0, 0);
+            const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, (secondColorEnabled||thirdColorEnabled) ? 0x21 : 0x20, 0, 0);
             sendcmd("0064" + dataInfo.toHexString());
         }
 
@@ -1544,6 +1577,7 @@
                                 document.getElementById('widthInput').value = w;
                                 document.getElementById('heightInput').value = h;
                                 document.getElementById('secondColorCheckbox').checked = (colors >= 2);
+                                document.getElementById('thirdColorCheckbox').checked = (colors >= 3);
                                 // Update canvas and pixel data
                                 doAll();
                                 addLog("Canvas updated with display info.");
@@ -2010,6 +2044,7 @@
                 document.getElementById('conf_screen_colors').value = colors;
                 // Update main second color checkbox
                 document.getElementById('secondColorCheckbox').checked = (colors >= 2);
+                document.getElementById('thirdColorCheckbox').checked = (colors >= 3);
                 document.getElementById('conf_screen_black_invert').checked = (readUint16LE_internal() !== 0); // Black Invert
                 document.getElementById('conf_screen_second_color_invert').checked = (readUint16LE_internal() !== 0); // Color Invert
 
