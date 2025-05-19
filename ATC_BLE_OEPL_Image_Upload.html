@@ -373,6 +373,8 @@
                 <label for="secondColorCheckbox">Second Color</label>
                 <input onchange="getPixelData()" type="checkbox" id="thirdColorCheckbox" />
                 <label for="thirdColorCheckbox">Third Color</label>
+                <input onchange="getPixelData()" type="checkbox" id="flipVerticalCheckbox" />
+                <label for="flipVerticalCheckbox">Flip vertical</label>
                 <button onclick="getPixelData()" style="margin-left: 15px;">Get Pixel Data</button>
             </div>
         </div>
@@ -803,7 +805,98 @@
             }
             getPixelData(); // Update pixel data after drawing
         }
+        function rotateImageData(imageData, rotations) {
+            if (!imageData || !imageData.data || !imageData.width || !imageData.height) {
+                console.error("Ungültiges ImageData-Objekt übergeben.");
+                return null;
+            }
 
+            const originalWidth = imageData.width;
+            const originalHeight = imageData.height;
+            const originalData = imageData.data;
+
+            // Normalisiere die Anzahl der Rotationen auf 0, 1, 2 oder 3
+            const numRotations = (parseInt(rotations, 10) % 4 + 4) % 4;
+
+            let newWidth, newHeight;
+            let rotatedData = new Uint8ClampedArray(originalData.length);
+
+            console.log(`Rotiere um ${numRotations * 90} Grad. Original: ${originalWidth}x${originalHeight}`);
+
+            switch (numRotations) {
+                case 0: // 0 Grad Drehung (keine Änderung oder Kopie)
+                    newWidth = originalWidth;
+                    newHeight = originalHeight;
+                    // Erstellt eine direkte Kopie der Daten
+                    rotatedData.set(originalData);
+                    break;
+
+                case 1: // 90 Grad Drehung im Uhrzeigersinn
+                    // (x, y)_original -> (originalHeight - 1 - y, x)_neu
+                    newWidth = originalHeight;
+                    newHeight = originalWidth;
+                    for (let y = 0; y < originalHeight; y++) {
+                        for (let x = 0; x < originalWidth; x++) {
+                            const originalIndex = (y * originalWidth + x) * 4;
+                            const targetX = originalHeight - 1 - y;
+                            const targetY = x;
+                            const targetIndex = (targetY * newWidth + targetX) * 4;
+
+                            rotatedData[targetIndex] = originalData[originalIndex];
+                            rotatedData[targetIndex + 1] = originalData[originalIndex + 1];
+                            rotatedData[targetIndex + 2] = originalData[originalIndex + 2];
+                            rotatedData[targetIndex + 3] = originalData[originalIndex + 3];
+                        }
+                    }
+                    break;
+
+                case 2: // 180 Grad Drehung
+                    // (x, y)_original -> (originalWidth - 1 - x, originalHeight - 1 - y)_neu
+                    newWidth = originalWidth;
+                    newHeight = originalHeight;
+                    for (let y = 0; y < originalHeight; y++) {
+                        for (let x = 0; x < originalWidth; x++) {
+                            const originalIndex = (y * originalWidth + x) * 4;
+                            const targetX = originalWidth - 1 - x;
+                            const targetY = originalHeight - 1 - y;
+                            const targetIndex = (targetY * newWidth + targetX) * 4;
+
+                            rotatedData[targetIndex] = originalData[originalIndex];
+                            rotatedData[targetIndex + 1] = originalData[originalIndex + 1];
+                            rotatedData[targetIndex + 2] = originalData[originalIndex + 2];
+                            rotatedData[targetIndex + 3] = originalData[originalIndex + 3];
+                        }
+                    }
+                    break;
+
+                case 3: // 270 Grad Drehung im Uhrzeigersinn (oder 90 Grad gegen den Uhrzeigersinn)
+                    // (x, y)_original -> (y, originalWidth - 1 - x)_neu
+                    newWidth = originalHeight;
+                    newHeight = originalWidth;
+                    for (let y = 0; y < originalHeight; y++) {
+                        for (let x = 0; x < originalWidth; x++) {
+                            const originalIndex = (y * originalWidth + x) * 4;
+                            const targetX = y;
+                            const targetY = originalWidth - 1 - x;
+                            const targetIndex = (targetY * newWidth + targetX) * 4;
+
+                            rotatedData[targetIndex] = originalData[originalIndex];
+                            rotatedData[targetIndex + 1] = originalData[originalIndex + 1];
+                            rotatedData[targetIndex + 2] = originalData[originalIndex + 2];
+                            rotatedData[targetIndex + 3] = originalData[originalIndex + 3];
+                        }
+                    }
+                    break;
+
+                default:
+                    // Dieser Fall sollte durch die Normalisierung nicht eintreten
+                    console.error("Unerwarteter Rotationswert:", numRotations);
+                    return null;
+            }
+
+            console.log(`Neue Dimensionen: ${newWidth}x${newHeight}`);
+            return new ImageData(rotatedData, newWidth, newHeight);
+        }
         function getPixelData() {
             const canvas = document.getElementById('myCanvas');
             if (!canvas || canvas.width === 0 || canvas.height === 0) {
@@ -811,83 +904,91 @@
                 document.getElementById('pixelData').value = ""; return;
             }
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            const isYellowEnabled = document.getElementById('thirdColorCheckbox').checked; // Angenommen: secondColorCheckbox ist für Gelb
-            const isRedEnabled = document.getElementById('secondColorCheckbox').checked;   // Angenommen: thirdColorCheckbox ist für Rot
+            const isYellowEnabled = document.getElementById('thirdColorCheckbox').checked;
+            const isRedEnabled = document.getElementById('secondColorCheckbox').checked;
+            const flipVertical = document.getElementById('flipVerticalCheckbox').checked;
             const useDithering = document.getElementById('ditherrin').checked;
 
             if (useDithering) {
-                // Wichtig: (isRedEnabled, isYellowEnabled) an Dithering übergeben
                 applyDithering(ctx, canvas.width, canvas.height, isRedEnabled, isYellowEnabled);
             }
+            const rotatedImageData = rotateImageData(ctx.getImageData(0, 0, canvas.width, canvas.height), flipVertical?2:0);
 
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const pixels = imageData.data;
-            const byteData = []; // Black/White plane
-            const byteDataRed = []; // Red/Yellow plane
-            let currentByte = 0;
-            let currentByteRed = 0;
-            let bitPosition = 7;
+            if (rotatedImageData) {
+                const pixels = rotatedImageData.data;
+                const imageWidth = rotatedImageData.width;
+                const imageHeight = rotatedImageData.height;
 
-            const colorPlaneActive = isYellowEnabled || isRedEnabled; // Farb-Ebene ist aktiv, wenn eine der Farben aktiv ist
+                const byteData = [];
+                const byteDataRed = [];
+                let currentByte = 0;
+                let currentByteRed = 0;
+                let bitPosition = 7;
 
-            for (let y = 0; y < canvas.height; y++) {
-                for (let x = 0; x < canvas.width; x++) {
-                    const i = (y * canvas.width + x) * 4;
-                    const r = pixels[i];
-                    const g = pixels[i + 1];
-                    const b = pixels[i + 2];
+                const colorPlaneActive = isYellowEnabled || isRedEnabled;
 
-                    let isBlack = false;
-                    let isRedFlag = false;
-                    let isYellowFlag = false;
+                for (let y = 0; y < imageHeight; y++) {
+                    for (let x = 0; x < imageWidth; x++) {
+                        const i = (y * imageWidth + x) * 4;
+                        const r = pixels[i];
+                        const g = pixels[i + 1];
+                        const b = pixels[i + 2];
 
-                    if (r < 128 && g < 128 && b < 128) {
-                        isBlack = true;
-                    } else if (isYellowEnabled && r > 128 && g > 128 && b < 128) { // Gelb
-                        isYellowFlag = true;
-                    } else if (isRedEnabled && r > 128 && g < 128 && b < 128) { // Rot
-                        isRedFlag = true;
-                    }
-                    // Map to EPD bit planes: White=(1,0), Black=(0,0), Red/Yellow=(1,1) before final inversion
-                    if (!isBlack && !isRedFlag && !isYellowFlag) { // White
-                        currentByte |= (1 << bitPosition);
-                    } else if (isBlack) { // Black
-                        // currentByte bit = 0 (default)
-                        // currentByteRed bit = 0 (default)
-                    } else if (isRedFlag) { // Red
-                        currentByte |= (1 << bitPosition);
-                        currentByteRed |= (1 << bitPosition);
-                    } else if (isYellowFlag) { // Yellow
-                        currentByteRed |= (1 << bitPosition);
-                    }
+                        let isBlack = false;
+                        let isRedFlag = false;
+                        let isYellowFlag = false;
 
-                    bitPosition--;
-                    if (bitPosition < 0) {
-                        byteData.push(currentByte);
-                        if (colorPlaneActive) byteDataRed.push(currentByteRed);
-                        currentByte = 0;
-                        currentByteRed = 0;
-                        bitPosition = 7;
+                        if (r < 128 && g < 128 && b < 128) {
+                            isBlack = true;
+                        } else if (isYellowEnabled && r > 128 && g > 128 && b < 128) {
+                            isYellowFlag = true;
+                        } else if (isRedEnabled && r > 128 && g < 128 && b < 128) {
+                            isRedFlag = true;
+                        }
+
+                        if (!isBlack && !isRedFlag && !isYellowFlag) {
+                            currentByte |= (1 << bitPosition);
+                        } else if (isBlack) {
+                            // No change to currentByte, currentByteRed
+                        } else if (isRedFlag) {
+                            currentByte |= (1 << bitPosition);
+                            currentByteRed |= (1 << bitPosition);
+                        } else if (isYellowFlag) { // Assuming Yellow also affects the color plane like Red
+                            currentByteRed |= (1 << bitPosition);
+                        }
+
+                        bitPosition--;
+                        if (bitPosition < 0) {
+                            byteData.push(currentByte);
+                            if (colorPlaneActive) byteDataRed.push(currentByteRed);
+                            currentByte = 0;
+                            currentByteRed = 0;
+                            bitPosition = 7;
+                        }
                     }
                 }
-            }
 
-            if (bitPosition !== 7) {
-                byteData.push(currentByte);
-                if (colorPlaneActive) byteDataRed.push(currentByteRed);
-            }
-
-            let byteDataCombined = [];
-            for (let b = 0; b < byteData.length; b++) {
-                byteDataCombined.push(~byteData[b] & 0xFF);
-            }
-            if (colorPlaneActive) {
-                for (let b = 0; b < byteDataRed.length; b++) {
-                    byteDataCombined.push(byteDataRed[b]);
+                if (bitPosition !== 7) {
+                    byteData.push(currentByte);
+                    if (colorPlaneActive) byteDataRed.push(currentByteRed);
                 }
-            }
 
-            document.getElementById('pixelData').value = bytesToHex(byteDataCombined);
+                let byteDataCombined = [];
+                for (let b = 0; b < byteData.length; b++) {
+                    byteDataCombined.push(~byteData[b] & 0xFF);
+                }
+                if (colorPlaneActive) {
+                    for (let b = 0; b < byteDataRed.length; b++) {
+                        // Hier ist es wichtig zu wissen, ob byteDataRed auch invertiert werden soll oder nicht.
+                        // Deine ursprüngliche Logik hat es nicht invertiert.
+                        byteDataCombined.push(byteDataRed[b]);
+                    }
+                }
+
+                document.getElementById('pixelData').value = bytesToHex(byteDataCombined); // bytesToHex Funktion muss existieren
+            } else {
+                console.error("rotateImageData hat null zurückgegeben.");
+            }
         }
 
         function uploadImage() {
@@ -1368,7 +1469,7 @@
             var thirdColorEnabled = document.getElementById('thirdColorCheckbox').checked;
             imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
             var unCompressedSize = imgArray.length / 2;
-            imgArray = "06" + toHexUint16LE(width) + toHexUint16LE(height) + ((secondColorEnabled||thirdColorEnabled) ? "02" : "01") + imgArray;// len1. Height2. Width2. Colors1. Data.
+            imgArray = "06" + toHexUint16LE(width) + toHexUint16LE(height) + ((secondColorEnabled || thirdColorEnabled) ? "02" : "01") + imgArray;// len1. Height2. Width2. Colors1. Data.
             const compressedBytes = pako.deflate(hexStringToUint8Array(imgArray), { level: 9, windowBits: 12 });
             imgArray = bytesToHex(compressedBytes);
             imgArray = toHexUint32LE(unCompressedSize) + imgArray;
@@ -1386,7 +1487,7 @@
             imgArrayLen = imgArray.length;
             uploadPart = 0;
             addLog('Sending image size: ' + imgArrayLen / 2);
-            const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, (secondColorEnabled||thirdColorEnabled) ? 0x21 : 0x20, 0, 0);
+            const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, (secondColorEnabled || thirdColorEnabled) ? 0x21 : 0x20, 0, 0);
             sendcmd("0064" + dataInfo.toHexString());
         }
 
