@@ -1857,7 +1857,9 @@
                             document.getElementById('namePrefix').value = bleDevice.name;
                         }
                     }
+                setTimeout(() => {
                     readDynamicConfig();
+                }, 75);
                     // --- End Added ---
                 })
                 .catch(handleError); // Central error handling
