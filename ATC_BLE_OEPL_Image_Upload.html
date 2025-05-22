@@ -1155,12 +1155,50 @@
             { id: 38, name: "38: 200 HS BWRY JD" },
         ];
         const gpioPins = {
-            "None": 0x0000, "PA0": 0x0001, "PA1": 0x0002, "PA2": 0x0004, "PA3": 0x0008, "PA4": 0x0010, "PA5 (DM)": 0x0020, "PA6 (DP)": 0x0040, "PA7 (SWS)": 0x0080,
-            "PB0": 0x0101, "PB1": 0x0102, "PB2": 0x0104, "PB3": 0x0108, "PB4": 0x0110, "PB5": 0x0120, "PB6": 0x0140, "PB7": 0x0180, "PC0": 0x0201, "PC1": 0x0202,
-            "PC2": 0x0204, "PC3": 0x0208, "PC4": 0x0210, "PC5": 0x0220, "PC6": 0x0240, "PC7": 0x0280, "PD0": 0x0301, "PD1": 0x0302, "PD2": 0x0304, "PD3": 0x0308,
-            "PD4": 0x0310, "PD5": 0x0320, "PD6": 0x0340, "PD7": 0x0380, "PE0": 0x0401, "PE1": 0x0402, "PE2": 0x0404, "PE3": 0x0408,
+            "None": 0x0000,
+            "PA0": 0x0001,
+            "PA1": 0x0002,
+            "PA2": 0x0004,
+            "PA3": 0x0008,
+            "PA4": 0x0010,
+            "PA5 (DM)": 0x0020,
+            "PA6 (DP)": 0x0040,
+            "PA7 (SWS)": 0x0080,
+            "PB0": 0x0101,
+            "PB1": 0x0102,
+            "PB2": 0x0104,
+            "PB3": 0x0108,
+            "PB4": 0x0110,
+            "PB5": 0x0120,
+            "PB6": 0x0140,
+            "PB7": 0x0180,
+            "PC0": 0x0201,
+            "PC1": 0x0202,
+            "PC2": 0x0204,
+            "PC3": 0x0208,
+            "PC4": 0x0210,
+            "PC5": 0x0220,
+            "PC6": 0x0240,
+            "PC7": 0x0280,
+            "PD0": 0x0301,
+            "PD1": 0x0302,
+            "PD2": 0x0304,
+            "PD3": 0x0308,
+            "PD4": 0x0310,
+            "PD5": 0x0320,
+            "PD6": 0x0340,
+            "PD7": 0x0380,
+            "PE0": 0x0401,
+            "PE1": 0x0402,
+            "PE2": 0x0404,
+            "PE3": 0x0408,
         };
-        const gpioPullTypes = { "Float": 0, "Pullup 1M": 1, "Pulldown 100K": 2, "Pullup 10K": 3, };
+        const gpioPullTypes = {
+            "Float": 0,
+            "Pullup 1M": 1,
+            "Pulldown 100K": 2,
+            "Pullup 10K": 3,
+        };
         const SIZEOF_DEFAULT_SETTINGS = 41;
         const SIZEOF_SCREEN_PINOUT = 26;
         const SIZEOF_LED_PINOUT = 7;
@@ -1188,14 +1226,18 @@
             var height = parseInt(document.getElementById('heightInput').value);
             var canvas = document.getElementById('myCanvas');
             if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0) {
-                addLog("Invalid canvas dimensions."); return;
+                addLog("Invalid canvas dimensions.");
+                return;
             }
             if (width > 4000 || height > 4000) {
-                addLog("Canvas dimensions too large."); return;
+                addLog("Canvas dimensions too large.");
+                return;
             }
             canvas.width = width;
             canvas.height = height;
-            var ctx = canvas.getContext('2d', { willReadFrequently: true });
+            var ctx = canvas.getContext('2d', {
+                willReadFrequently: true
+            });
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, width, height);
             addLog(`Canvas created/cleared: ${width}x${height}`);
@@ -1204,9 +1246,12 @@
         function addText() {
             var canvas = document.getElementById('myCanvas');
             if (!canvas || canvas.width === 0 || canvas.height === 0) {
-                addLog("Cannot add text: Canvas not ready."); return;
+                addLog("Cannot add text: Canvas not ready.");
+                return;
             }
-            var ctx = canvas.getContext('2d', { willReadFrequently: true });
+            var ctx = canvas.getContext('2d', {
+                willReadFrequently: true
+            });
             var text = document.getElementById('textInput').value;
             var fontSize = 72;
             var maxWidth = canvas.width - 20;
@@ -1244,6 +1289,7 @@
             }
             getPixelData();
         }
+
         function rotateImageData(imageData, rotations) {
             if (!imageData || !imageData.data || !imageData.width || !imageData.height) {
                 console.error("Invalid ImageData object passed.");
@@ -1317,13 +1363,17 @@
             }
             return new ImageData(rotatedData, newWidth, newHeight);
         }
+
         function getPixelData() {
             const canvas = document.getElementById('myCanvas');
             if (!canvas || canvas.width === 0 || canvas.height === 0) {
                 addLog("Cannot get pixel data: Canvas not ready.");
-                document.getElementById('pixelData').value = ""; return;
+                document.getElementById('pixelData').value = "";
+                return;
             }
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const ctx = canvas.getContext('2d', {
+                willReadFrequently: true
+            });
             const isYellowEnabled = document.getElementById('thirdColorCheckbox').checked;
             const isRedEnabled = document.getElementById('secondColorCheckbox').checked;
             const flipVertical = document.getElementById('flipVerticalCheckbox').checked;
@@ -1355,20 +1405,30 @@
                         let isRedFlag = false;
                         let isYellowFlag = false;
 
-                        if (r < 128 && g < 128 && b < 128) { isBlack = true; }
-                        else if (isYellowEnabled && r > 128 && g > 128 && b < 128) { isYellowFlag = true; }
-                        else if (isRedEnabled && r > 128 && g < 128 && b < 128) { isRedFlag = true; }
+                        if (r < 128 && g < 128 && b < 128) {
+                            isBlack = true;
+                        } else if (isYellowEnabled && r > 128 && g > 128 && b < 128) {
+                            isYellowFlag = true;
+                        } else if (isRedEnabled && r > 128 && g < 128 && b < 128) {
+                            isRedFlag = true;
+                        }
 
-                        if (!isBlack && !isRedFlag && !isYellowFlag) { currentByte |= (1 << bitPosition); }
-                        else if (isBlack) { }
-                        else if (isRedFlag) { currentByte |= (1 << bitPosition); currentByteRed |= (1 << bitPosition); }
-                        else if (isYellowFlag) { currentByteRed |= (1 << bitPosition); }
+                        if (!isBlack && !isRedFlag && !isYellowFlag) {
+                            currentByte |= (1 << bitPosition);
+                        } else if (isBlack) { } else if (isRedFlag) {
+                            currentByte |= (1 << bitPosition);
+                            currentByteRed |= (1 << bitPosition);
+                        } else if (isYellowFlag) {
+                            currentByteRed |= (1 << bitPosition);
+                        }
 
                         bitPosition--;
                         if (bitPosition < 0) {
                             byteData.push(currentByte);
                             if (colorPlaneActive) byteDataRed.push(currentByteRed);
-                            currentByte = 0; currentByteRed = 0; bitPosition = 7;
+                            currentByte = 0;
+                            currentByteRed = 0;
+                            bitPosition = 7;
                         }
                     }
                 }
@@ -1377,20 +1437,26 @@
                     if (colorPlaneActive) byteDataRed.push(currentByteRed);
                 }
                 let byteDataCombined = [];
-                for (let b = 0; b < byteData.length; b++) { byteDataCombined.push(~byteData[b] & 0xFF); }
+                for (let b = 0; b < byteData.length; b++) {
+                    byteDataCombined.push(~byteData[b] & 0xFF);
+                }
                 if (colorPlaneActive) {
-                    for (let b = 0; b < byteDataRed.length; b++) { byteDataCombined.push(byteDataRed[b]); }
+                    for (let b = 0; b < byteDataRed.length; b++) {
+                        byteDataCombined.push(byteDataRed[b]);
+                    }
                 }
                 document.getElementById('pixelData').value = bytesToHex(byteDataCombined);
             } else {
                 console.error("rotateImageData returned null.");
             }
         }
+
         function uploadImage() {
             const fileInput = document.getElementById('imageUpload');
             const canvas = document.getElementById('myCanvas');
             if (!canvas || canvas.width === 0 || canvas.height === 0) {
-                addLog("Cannot upload image: Canvas not ready."); return;
+                addLog("Cannot upload image: Canvas not ready.");
+                return;
             }
             const ctx = canvas.getContext('2d');
             if (fileInput.files && fileInput.files[0]) {
@@ -1398,55 +1464,91 @@
                 reader.onload = function (e) {
                     const img = new Image();
                     img.onload = function () {
-                        const canvasWidth = canvas.width; const canvasHeight = canvas.height;
-                        const imgWidth = img.width; const imgHeight = img.height;
+                        const canvasWidth = canvas.width;
+                        const canvasHeight = canvas.height;
+                        const imgWidth = img.width;
+                        const imgHeight = img.height;
                         const scale = Math.max(canvasWidth / imgWidth, canvasHeight / imgHeight);
-                        const newWidth = imgWidth * scale; const newHeight = imgHeight * scale;
-                        const offsetX = (canvasWidth - newWidth) / 2; const offsetY = (canvasHeight - newHeight) / 2;
+                        const newWidth = imgWidth * scale;
+                        const newHeight = imgHeight * scale;
+                        const offsetX = (canvasWidth - newWidth) / 2;
+                        const offsetY = (canvasHeight - newHeight) / 2;
                         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-                        ctx.fillStyle = 'white'; ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
                         ctx.drawImage(img, offsetX, offsetY, newWidth, newHeight);
                         getPixelData();
                     };
-                    img.onerror = function () { addLog("Error loading image file."); }
+                    img.onerror = function () {
+                        addLog("Error loading image file.");
+                    }
                     img.src = e.target.result;
                 };
-                reader.onerror = function (e) { addLog("Error reading file: " + e); };
+                reader.onerror = function (e) {
+                    addLog("Error reading file: " + e);
+                };
                 reader.readAsDataURL(fileInput.files[0]);
             }
         }
+
         function findNearestColor(r, g, b, isRedEnabled, isYellowEnabled) {
-            const colorWhite = [255, 255, 255]; const colorBlack = [0, 0, 0];
-            const colorRed = [255, 0, 0]; const colorYellow = [255, 255, 0];
+            const colorWhite = [255, 255, 255];
+            const colorBlack = [0, 0, 0];
+            const colorRed = [255, 0, 0];
+            const colorYellow = [255, 255, 0];
             const distWhite = Math.sqrt((r - colorWhite[0]) ** 2 + (g - colorWhite[1]) ** 2 + (b - colorWhite[2]) ** 2);
             const distBlack = Math.sqrt((r - colorBlack[0]) ** 2 + (g - colorBlack[1]) ** 2 + (b - colorBlack[2]) ** 2);
             let distRedVal = Math.sqrt((r - colorRed[0]) ** 2 + (g - colorRed[1]) ** 2 + (b - colorRed[2]) ** 2);
             let distYellowVal = Math.sqrt((r - colorYellow[0]) ** 2 + (g - colorYellow[1]) ** 2 + (b - colorYellow[2]) ** 2);
-            let minDist = distWhite; let nearestColor = colorWhite;
-            if (distBlack < minDist) { minDist = distBlack; nearestColor = colorBlack; }
-            if (isRedEnabled && distRedVal < minDist) { minDist = distRedVal; nearestColor = colorRed; }
-            if (isYellowEnabled && distYellowVal < minDist) { minDist = distYellowVal; nearestColor = colorYellow; }
+            let minDist = distWhite;
+            let nearestColor = colorWhite;
+            if (distBlack < minDist) {
+                minDist = distBlack;
+                nearestColor = colorBlack;
+            }
+            if (isRedEnabled && distRedVal < minDist) {
+                minDist = distRedVal;
+                nearestColor = colorRed;
+            }
+            if (isYellowEnabled && distYellowVal < minDist) {
+                minDist = distYellowVal;
+                nearestColor = colorYellow;
+            }
             return nearestColor;
         }
+
         function applyDithering(ctx, width, height, secondColorEnabled, thirdColorEnabled) {
-            const imageData = ctx.getImageData(0, 0, width, height); const data = imageData.data;
-            const errorsR = new Array(width * height).fill(0); const errorsG = new Array(width * height).fill(0);
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            const errorsR = new Array(width * height).fill(0);
+            const errorsG = new Array(width * height).fill(0);
             const errorsB = new Array(width * height).fill(0);
-            function clamp(value) { return Math.max(0, Math.min(255, value)); }
+
+            function clamp(value) {
+                return Math.max(0, Math.min(255, value));
+            }
+
             function setPixelError(x, y, errR, errG, errB, factor) {
                 if (x < 0 || x >= width || y < 0 || y >= height) return;
                 const index = y * width + x;
-                errorsR[index] += errR * factor; errorsG[index] += errG * factor; errorsB[index] += errB * factor;
+                errorsR[index] += errR * factor;
+                errorsG[index] += errG * factor;
+                errorsB[index] += errB * factor;
             }
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
-                    const index = y * width + x; const dataIndex = index * 4;
+                    const index = y * width + x;
+                    const dataIndex = index * 4;
                     const oldR = clamp(data[dataIndex] + errorsR[index]);
                     const oldG = clamp(data[dataIndex + 1] + errorsG[index]);
                     const oldB = clamp(data[dataIndex + 2] + errorsB[index]);
                     const [newR, newG, newB] = findNearestColor(oldR, oldG, oldB, secondColorEnabled, thirdColorEnabled);
-                    data[dataIndex] = newR; data[dataIndex + 1] = newG; data[dataIndex + 2] = newB;
-                    const errR = oldR - newR; const errG = oldG - newG; const errB = oldB - newB;
+                    data[dataIndex] = newR;
+                    data[dataIndex + 1] = newG;
+                    data[dataIndex + 2] = newB;
+                    const errR = oldR - newR;
+                    const errG = oldG - newG;
+                    const errB = oldB - newB;
                     setPixelError(x + 1, y, errR, errG, errB, 7 / 16);
                     setPixelError(x - 1, y + 1, errR, errG, errB, 3 / 16);
                     setPixelError(x, y + 1, errR, errG, errB, 5 / 16);
@@ -1455,94 +1557,174 @@
             }
             ctx.putImageData(imageData, 0, 0);
         }
+
         function resetVariables() {
-            gattServer = null; Theservice = null; writeCharacteristic = null;
-            packets = []; totalPackets = 0; packetIndex = 0; currentBlockId = 0;
-            imgArray = ""; imgArrayLen = 0;
+            gattServer = null;
+            Theservice = null;
+            writeCharacteristic = null;
+            packets = [];
+            totalPackets = 0;
+            packetIndex = 0;
+            currentBlockId = 0;
+            imgArray = "";
+            imgArrayLen = 0;
             setStatus("Disconnected");
             document.getElementById("connectbutton").innerHTML = 'Connect';
         }
+
         function handleError(error) {
-            console.error("BLE Error:", error); addLog("BLE Error: " + error.message);
+            console.error("BLE Error:", error);
+            addLog("BLE Error: " + error.message);
             if (error.name === 'NotFoundError' || error.name === 'AbortError') {
-                addLog("Connection cancelled or device not found."); resetVariables(); bleDevice = null; reconnectTrys = 0; return;
+                addLog("Connection cancelled or device not found.");
+                resetVariables();
+                bleDevice = null;
+                reconnectTrys = 0;
+                return;
             }
-            const canRetry = !!bleDevice; const deviceToRetry = bleDevice;
+            const canRetry = !!bleDevice;
+            const deviceToRetry = bleDevice;
             resetVariables();
             if (canRetry && reconnectTrys < 5) {
-                reconnectTrys++; const delay = 200;
+                reconnectTrys++;
+                const delay = 200;
                 addLog(`Connection failed/lost. Retrying connection attempt ${reconnectTrys}/5 in ${delay}ms...`);
                 setStatus(`Connection Failed. Retrying ${reconnectTrys}/5...`);
                 document.getElementById("connectbutton").innerHTML = 'Retrying...';
-                bleDevice = deviceToRetry; setTimeout(connect, delay);
+                bleDevice = deviceToRetry;
+                setTimeout(connect, delay);
             } else if (canRetry) {
-                addLog("Connection failed after retries."); setStatus("Connection Failed.");
+                addLog("Connection failed after retries.");
+                setStatus("Connection Failed.");
                 document.getElementById("connectbutton").innerHTML = 'Connect';
-                reconnectTrys = 0; bleDevice = null;
+                reconnectTrys = 0;
+                bleDevice = null;
             } else {
-                addLog("Connection failed (no device?)."); setStatus("Connection Failed.");
+                addLog("Connection failed (no device?).");
+                setStatus("Connection Failed.");
                 document.getElementById("connectbutton").innerHTML = 'Connect';
                 reconnectTrys = 0;
             }
         }
-        function delayPromise(delay) { return new Promise(resolve => { setTimeout(resolve, delay); }); }
+
+        function delayPromise(delay) {
+            return new Promise(resolve => {
+                setTimeout(resolve, delay);
+            });
+        }
         async function sendCommand(cmd) {
             if (writeCharacteristic) {
-                try { await writeCharacteristic.writeValueWithoutResponse(cmd); }
-                catch (error) {
+                try {
+                    await writeCharacteristic.writeValueWithoutResponse(cmd);
+                } catch (error) {
                     if (error.name === 'NetworkError' && error.message.includes('GATT operation')) {
-                        addLog("GATT busy, retrying send..."); await delayPromise(150);
-                        try { await writeCharacteristic.writeValueWithoutResponse(cmd); }
-                        catch (retryError) { addLog("GATT Retry Error: " + retryError); handleError(retryError); }
-                    } else { addLog("Send Error: " + error); handleError(error); }
+                        addLog("GATT busy, retrying send...");
+                        await delayPromise(150);
+                        try {
+                            await writeCharacteristic.writeValueWithoutResponse(cmd);
+                        } catch (retryError) {
+                            addLog("GATT Retry Error: " + retryError);
+                            handleError(retryError);
+                        }
+                    } else {
+                        addLog("Send Error: " + error);
+                        handleError(error);
+                    }
                 }
-            } else { addLog("Cannot send command: Not connected."); setStatus("Not Connected"); }
+            } else {
+                addLog("Cannot send command: Not connected.");
+                setStatus("Not Connected");
+            }
         }
         async function sendcmd(cmdTXT) {
-            if (cmdTXT.length % 2 !== 0 || cmdTXT.length < 2) { addLog(`Invalid debug cmd format (must be hex): ${cmdTXT}`); return; }
-            if (cmdTXT.length == 2) { cmdTXT = "00" + cmdTXT; }
-            else if (cmdTXT.length >= 4 && cmdTXT.substring(0, 2) !== "00") { }
-            if (cmdTXT.length < 4 || cmdTXT.length % 2 !== 0) { addLog(`Invalid cmd format: ${cmdTXT}`); return; }
-            const commandIdHex = cmdTXT.substring(0, 4); const payloadHex = cmdTXT.substring(4);
+            if (cmdTXT.length % 2 !== 0 || cmdTXT.length < 2) {
+                addLog(`Invalid debug cmd format (must be hex): ${cmdTXT}`);
+                return;
+            }
+            if (cmdTXT.length == 2) {
+                cmdTXT = "00" + cmdTXT;
+            } else if (cmdTXT.length >= 4 && cmdTXT.substring(0, 2) !== "00") { }
+            if (cmdTXT.length < 4 || cmdTXT.length % 2 !== 0) {
+                addLog(`Invalid cmd format: ${cmdTXT}`);
+                return;
+            }
+            const commandIdHex = cmdTXT.substring(0, 4);
+            const payloadHex = cmdTXT.substring(4);
             const logPayload = payloadHex.length > 40 ? payloadHex.substring(0, 40) + '...' : payloadHex;
             addLog(`CMD> ${commandIdHex} Payload: ${logPayload} (${payloadHex.length / 2}B)`);
-            let cmd = hexToBytes(cmdTXT); await sendCommand(cmd);
+            let cmd = hexToBytes(cmdTXT);
+            await sendCommand(cmd);
         }
+
         function sendClockMode() {
             var timeHexString = (Math.floor((Date.now() / 1000) + (-(new Date().getTimezoneOffset() * 60)))).toString(16);
             timeHexString = timeHexString.padStart(8, '0');
             sendcmd('000B' + timeHexString.substring(6, 8) + timeHexString.substring(4, 6) + timeHexString.substring(2, 4) + timeHexString.substring(0, 2));
         }
+
         function setDisplayType(newType) {
             const typeInt = parseInt(newType);
-            if (typeInt === 65535) { addLog("Selected Dynamic Type. Use Config Tab."); return; }
-            if (isNaN(typeInt)) { addLog("Invalid display type selected."); return; }
+            if (typeInt === 65535) {
+                addLog("Selected Dynamic Type. Use Config Tab.");
+                return;
+            }
+            if (isNaN(typeInt)) {
+                addLog("Invalid display type selected.");
+                return;
+            }
             sendcmd("0004" + Number(newType).toString(16).padStart(4, '0').toUpperCase());
         }
+
         function setBleAdvInterval(newAdvInt) {
             const intervalInt = parseInt(newAdvInt);
-            if (isNaN(intervalInt)) { addLog("Invalid ADV interval."); return; }
+            if (isNaN(intervalInt)) {
+                addLog("Invalid ADV interval.");
+                return;
+            }
             sendcmd("0008" + Number(newAdvInt).toString(16).padStart(4, '0').toUpperCase());
         }
+
         function setCustomMac() {
-            const macInput = document.getElementById('cmdCustomMac'); const macHex = macInput.value.trim().toUpperCase();
-            if (macHex.length !== 16) { addLog("Error: Custom MAC must be 16 hex chars (8 bytes)."); macInput.focus(); return; }
-            if (!/^[0-9A-F]{16}$/.test(macHex)) { addLog("Error: Invalid hex chars in MAC."); macInput.focus(); return; }
+            const macInput = document.getElementById('cmdCustomMac');
+            const macHex = macInput.value.trim().toUpperCase();
+            if (macHex.length !== 16) {
+                addLog("Error: Custom MAC must be 16 hex chars (8 bytes).");
+                macInput.focus();
+                return;
+            }
+            if (!/^[0-9A-F]{16}$/.test(macHex)) {
+                addLog("Error: Invalid hex chars in MAC.");
+                macInput.focus();
+                return;
+            }
             sendcmd('0009' + macHex);
         }
-        function reverseEndian(hex) { const bytes = hex.match(/.{2}/g); return bytes.reverse().join(''); }
+
+        function reverseEndian(hex) {
+            const bytes = hex.match(/.{2}/g);
+            return bytes.reverse().join('');
+        }
         class AvailDataInfo {
             constructor(checksum, dataVer, dataSize, dataType, dataTypeArgument, nextCheckIn) {
-                this.checksum = checksum; this.dataVer = dataVer; this.dataSize = dataSize;
-                this.dataType = dataType; this.dataTypeArgument = dataTypeArgument; this.nextCheckIn = nextCheckIn;
+                this.checksum = checksum;
+                this.dataVer = dataVer;
+                this.dataSize = dataSize;
+                this.dataType = dataType;
+                this.dataTypeArgument = dataTypeArgument;
+                this.nextCheckIn = nextCheckIn;
             }
             toHexString() {
-                const hexChecksum = this.toHex(this.checksum, 1); const hexDataVer = reverseEndian(this.toHex(this.dataVer, 8));
-                const hexDataSize = reverseEndian(this.toHex(this.dataSize, 4)); const hexDataType = this.toHex(this.dataType, 1);
-                const hexDataTypeArgument = this.toHex(this.dataTypeArgument, 1); const hexNextCheckIn = reverseEndian(this.toHex(this.nextCheckIn, 2));
+                const hexChecksum = this.toHex(this.checksum, 1);
+                const hexDataVer = reverseEndian(this.toHex(this.dataVer, 8));
+                const hexDataSize = reverseEndian(this.toHex(this.dataSize, 4));
+                const hexDataType = this.toHex(this.dataType, 1);
+                const hexDataTypeArgument = this.toHex(this.dataTypeArgument, 1);
+                const hexNextCheckIn = reverseEndian(this.toHex(this.nextCheckIn, 2));
                 return hexChecksum + hexDataVer + hexDataSize + hexDataType + hexDataTypeArgument + hexNextCheckIn;
             }
-            toHex(value, bytes) { return value.toString(16).padStart(bytes * 2, '0').toUpperCase(); }
+            toHex(value, bytes) {
+                return value.toString(16).padStart(bytes * 2, '0').toUpperCase();
+            }
         }
         class BlockRequest {
             constructor(hexString) {
@@ -1553,13 +1735,18 @@
                 const requestedPartsHex = hexString.substring(22, 22 + BLOCK_REQ_PARTS_BYTES * 2);
                 this.requestedParts = this.hexToBitField(requestedPartsHex);
             }
-            fromHex(hexStr) { return parseInt(hexStr, 16); }
+            fromHex(hexStr) {
+                return parseInt(hexStr, 16);
+            }
             hexToBitField(hexStr) {
                 const bitField = [];
                 for (let i = 0; i < hexStr.length; i += 2) {
                     const byte = parseInt(hexStr.substring(i, i + 2), 16);
-                    for (let bit = 7; bit >= 0; bit--) { bitField.push((byte >> bit) & 1); }
-                } return bitField;
+                    for (let bit = 7; bit >= 0; bit--) {
+                        bitField.push((byte >> bit) & 1);
+                    }
+                }
+                return bitField;
             }
             display() {
                 console.log(`Checksum: ${this.checksum}, Version: ${this.ver.toString(16).toUpperCase()}, Block ID: ${this.blockId}, Type: ${this.type}, Requested Parts: ${this.requestedParts.join('')}`);
@@ -1568,68 +1755,115 @@
         const BLOCK_XFER_BUFFER_SIZE = BLOCK_DATA_SIZE + 3;
         class BlockPart {
             constructor(blockId, blockPart, dataSlice) {
-                this.blockId = blockId; this.blockPart = blockPart; this.data = dataSlice;
+                this.blockId = blockId;
+                this.blockPart = blockPart;
+                this.data = dataSlice;
                 this.buffer = new Uint8Array(3 + BLOCK_PART_DATA_SIZE);
-                this.buffer[1] = blockId; this.buffer[2] = blockPart;
-                for (let i = 0; i < BLOCK_PART_DATA_SIZE; i++) { this.buffer[3 + i] = dataSlice[i] || 0; }
+                this.buffer[1] = blockId;
+                this.buffer[2] = blockPart;
+                for (let i = 0; i < BLOCK_PART_DATA_SIZE; i++) {
+                    this.buffer[3 + i] = dataSlice[i] || 0;
+                }
                 this.addCRC();
             }
             addCRC() {
-                let total = 0; for (let i = 1; i < this.buffer.length; i++) { total += this.buffer[i]; }
+                let total = 0;
+                for (let i = 1; i < this.buffer.length; i++) {
+                    total += this.buffer[i];
+                }
                 this.buffer[0] = total & 0xFF;
             }
-            toHexString() { return Array.from(this.buffer).map(byte => byte.toString(16).padStart(2, '0').toUpperCase()).join(''); }
+            toHexString() {
+                return Array.from(this.buffer).map(byte => byte.toString(16).padStart(2, '0').toUpperCase()).join('');
+            }
         }
-        function nextBlkPart() { addLog(`Sending packet: ${packets[packetIndex]}`); sendCommand(hexToBytes("0065" + packets[packetIndex])); }
+
+        function nextBlkPart() {
+            addLog(`Sending packet: ${packets[packetIndex]}`);
+            sendCommand(hexToBytes("0065" + packets[packetIndex]));
+        }
         async function sendBlockData(blockId, largeHexData) {
             const blockSizeHex = (BLOCK_DATA_SIZE * 2);
             const totalBlocks = Math.ceil(largeHexData.length / blockSizeHex);
-            if (blockId >= totalBlocks) { addLog(`Block ID ${blockId} exceeds total blocks (${totalBlocks}).`); return; }
-            const start = blockId * blockSizeHex; const end = start + blockSizeHex;
+            if (blockId >= totalBlocks) {
+                addLog(`Block ID ${blockId} exceeds total blocks (${totalBlocks}).`);
+                return;
+            }
+            const start = blockId * blockSizeHex;
+            const end = start + blockSizeHex;
             const blockHexData = largeHexData.substring(start, end);
             addLog(`Processing block ${blockId + 1}/${totalBlocks}...`);
-            const dataBytes = hexToByteArray(blockHexData); packets = [];
+            const dataBytes = hexToByteArray(blockHexData);
+            packets = [];
             totalPackets = Math.ceil(dataBytes.length / BLOCK_PART_DATA_SIZE);
             for (let i = 0; i < totalPackets; i++) {
                 const startIdx = i * BLOCK_PART_DATA_SIZE;
                 const slice = dataBytes.slice(startIdx, startIdx + BLOCK_PART_DATA_SIZE);
-                const packet = new BlockPart(blockId, i, slice); packets.push(packet.toHexString());
+                const packet = new BlockPart(blockId, i, slice);
+                packets.push(packet.toHexString());
             }
-            packetIndex = 0; updateUploadProgress(); nextBlkPart();
+            packetIndex = 0;
+            updateUploadProgress();
+            nextBlkPart();
         }
+
         function hexToByteArray(hexStr) {
-            const byteArray = []; byteArray.push((hexStr.length / 2) & 0xff);
-            byteArray.push(((hexStr.length / 2) >> 8) & 0xff); byteArray.push(0x00); byteArray.push(0x00);
+            const byteArray = [];
+            byteArray.push((hexStr.length / 2) & 0xff);
+            byteArray.push(((hexStr.length / 2) >> 8) & 0xff);
+            byteArray.push(0x00);
+            byteArray.push(0x00);
             let theCrc = 0;
             for (let i = 0; i < hexStr.length; i += 2) {
                 theCrc += parseInt(hexStr.substring(i, i + 2), 16);
                 byteArray.push(parseInt(hexStr.substring(i, i + 2), 16));
             }
-            byteArray[2] = theCrc & 0xff; byteArray[3] = (theCrc >> 8) & 0xff; return byteArray;
+            byteArray[2] = theCrc & 0xff;
+            byteArray[3] = (theCrc >> 8) & 0xff;
+            return byteArray;
         }
         const crc32Table = (() => {
-            const table = []; const polynomial = 0xedb88320;
+            const table = [];
+            const polynomial = 0xedb88320;
             for (let i = 0; i < 256; i++) {
-                let crc = i; for (let j = 8; j > 0; j--) { crc = (crc & 1) ? (crc >>> 1) ^ polynomial : crc >>>= 1; }
+                let crc = i;
+                for (let j = 8; j > 0; j--) {
+                    crc = (crc & 1) ? (crc >>> 1) ^ polynomial : crc >>>= 1;
+                }
                 table[i] = crc;
-            } return table;
+            }
+            return table;
         })();
+
         function crc32(byteArray) {
-            byteArray = Uint8Array.from(byteArray); let crc = 0xffffffff;
+            byteArray = Uint8Array.from(byteArray);
+            let crc = 0xffffffff;
             for (let i = 0; i < byteArray.length; i++) {
-                const byte = byteArray[i]; const tableIndex = (crc ^ byte) & 0xff;
+                const byte = byteArray[i];
+                const tableIndex = (crc ^ byte) & 0xff;
                 crc = (crc >>> 8) ^ crc32Table[tableIndex];
-            } return (crc ^ 0xffffffff) >>> 0;
+            }
+            return (crc ^ 0xffffffff) >>> 0;
         }
-        function computeCRC32(hexData) { return crc32(hexToByteArray(hexData)); }
+
+        function computeCRC32(hexData) {
+            return crc32(hexToByteArray(hexData));
+        }
+
         function hexStringToUint8Array(hexString) {
-            if (hexString.length % 2 !== 0) { throw new Error("Invalid Hex String: Odd length."); }
+            if (hexString.length % 2 !== 0) {
+                throw new Error("Invalid Hex String: Odd length.");
+            }
             const byteArray = new Uint8Array(hexString.length / 2);
             for (let i = 0; i < byteArray.length; i++) {
                 byteArray[i] = parseInt(hexString.substr(i * 2, 2), 16);
-                if (isNaN(byteArray[i])) { throw new Error(`Invalid Hex String: '${hexString.substr(i * 2, 2)}' not parsable.`); }
-            } return byteArray;
+                if (isNaN(byteArray[i])) {
+                    throw new Error(`Invalid Hex String: '${hexString.substr(i * 2, 2)}' not parsable.`);
+                }
+            }
+            return byteArray;
         }
+
         function sendimgCompressed(cmdIMG) {
             var width = parseInt(document.getElementById('widthInput').value);
             var height = parseInt(document.getElementById('heightInput').value);
@@ -1638,68 +1872,120 @@
             imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
             var unCompressedSize = imgArray.length / 2;
             imgArray = "06" + toHexUint16LE(width) + toHexUint16LE(height) + ((secondColorEnabled || thirdColorEnabled) ? "02" : "01") + imgArray;
-            const compressedBytes = pako.deflate(hexStringToUint8Array(imgArray), { level: 9, windowBits: 12 });
-            imgArray = bytesToHex(compressedBytes); imgArray = toHexUint32LE(unCompressedSize) + imgArray;
-            imgArrayLen = imgArray.length; uploadPart = 0;
+            const compressedBytes = pako.deflate(hexStringToUint8Array(imgArray), {
+                level: 9,
+                windowBits: 12
+            });
+            imgArray = bytesToHex(compressedBytes);
+            imgArray = toHexUint32LE(unCompressedSize) + imgArray;
+            imgArrayLen = imgArray.length;
+            uploadPart = 0;
             addLog('Sending Compressed image size: ' + imgArrayLen / 2 + ' of raw size: ' + unCompressedSize);
             const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, 0x30, 0, 0);
             sendcmd("0064" + dataInfo.toHexString());
         }
+
         function sendimg(cmdIMG) {
             var secondColorEnabled = document.getElementById('secondColorCheckbox').checked;
             var thirdColorEnabled = document.getElementById('thirdColorCheckbox').checked;
-            imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, ''); imgArrayLen = imgArray.length; uploadPart = 0;
+            imgArray = cmdIMG.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            imgArrayLen = imgArray.length;
+            uploadPart = 0;
             addLog('Sending image size: ' + imgArrayLen / 2);
             const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, (secondColorEnabled || thirdColorEnabled) ? 0x21 : 0x20, 0, 0);
             sendcmd("0064" + dataInfo.toHexString());
         }
+
         function sendFw(cmdFW) {
-            imgArray = cmdFW.replace(/(?:\r\n|\r|\n|,|0x| )/g, ''); imgArrayLen = imgArray.length;
+            imgArray = cmdFW.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            imgArrayLen = imgArray.length;
             fw_header_img_len = parseInt(imgArray.substring(54, 56).toUpperCase() + imgArray.substring(52, 54).toUpperCase() + imgArray.substring(50, 52).toUpperCase() + imgArray.substring(48, 50).toUpperCase(), 16);
             addLog(fw_header_img_len);
             if (imgArray.substring(16, 24).toUpperCase() != "4B4E4C54" || (imgArrayLen / 2) != fw_header_img_len) {
-                addLog("ERROR: Firmware integrity check failed."); return;
+                addLog("ERROR: Firmware integrity check failed.");
+                return;
             }
-            uploadPart = 0; addLog('Sending Firmware size: ' + imgArrayLen / 2);
+            uploadPart = 0;
+            addLog('Sending Firmware size: ' + imgArrayLen / 2);
             const dataInfo = new AvailDataInfo(255, 123, imgArrayLen / 2, 0x03, 0, 0);
             sendcmd("0064" + dataInfo.toHexString());
         }
+
         function sendCustomUCLUT(curLUT20, curLUT21, curLUT22, curLUT23, curLUT24, curLUT25) {
             var ourUC_LUT = "";
-            curLUT20 = curLUT20.replace(/(?:\r\n|\r|\n|,|0x| )/g, ''); var curLUT20len = ((curLUT20.length / 2) + 4).toString(16).padStart(4, '0'); ourUC_LUT += curLUT20len + "0120" + curLUT20;
-            curLUT21 = curLUT21.replace(/(?:\r\n|\r|\n|,|0x| )/g, ''); var curLUT21len = ((curLUT21.length / 2) + 4).toString(16).padStart(4, '0'); ourUC_LUT += curLUT21len + "0121" + curLUT21;
-            curLUT22 = curLUT22.replace(/(?:\r\n|\r|\n|,|0x| )/g, ''); var curLUT22len = ((curLUT22.length / 2) + 4).toString(16).padStart(4, '0'); ourUC_LUT += curLUT22len + "0122" + curLUT22;
-            curLUT23 = curLUT23.replace(/(?:\r\n|\r|\n|,|0x| )/g, ''); var curLUT23len = ((curLUT23.length / 2) + 4).toString(16).padStart(4, '0'); ourUC_LUT += curLUT23len + "0123" + curLUT23;
-            curLUT24 = curLUT24.replace(/(?:\r\n|\r|\n|,|0x| )/g, ''); var curLUT24len = ((curLUT24.length / 2) + 4).toString(16).padStart(4, '0'); ourUC_LUT += curLUT24len + "0124" + curLUT24;
-            if (curLUT25.length != 0) { curLUT25 = curLUT25.replace(/(?:\r\n|\r|\n|,|0x| )/g, ''); var curLUT25len = ((curLUT25.length / 2) + 4).toString(16).padStart(4, '0'); ourUC_LUT += curLUT25len + "0125" + curLUT25; }
-            var allLength = (ourUC_LUT.length / 2).toString(16).padStart(4, '0'); ourUC_LUT = allLength + ourUC_LUT;
-            addLog('Sending UC LUT size: ' + ourUC_LUT.length / 2); document.getElementById("lutData").value = ourUC_LUT; sendCustomLUT(ourUC_LUT);
+            curLUT20 = curLUT20.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT20len = ((curLUT20.length / 2) + 4).toString(16).padStart(4, '0');
+            ourUC_LUT += curLUT20len + "0120" + curLUT20;
+            curLUT21 = curLUT21.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT21len = ((curLUT21.length / 2) + 4).toString(16).padStart(4, '0');
+            ourUC_LUT += curLUT21len + "0121" + curLUT21;
+            curLUT22 = curLUT22.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT22len = ((curLUT22.length / 2) + 4).toString(16).padStart(4, '0');
+            ourUC_LUT += curLUT22len + "0122" + curLUT22;
+            curLUT23 = curLUT23.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT23len = ((curLUT23.length / 2) + 4).toString(16).padStart(4, '0');
+            ourUC_LUT += curLUT23len + "0123" + curLUT23;
+            curLUT24 = curLUT24.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT24len = ((curLUT24.length / 2) + 4).toString(16).padStart(4, '0');
+            ourUC_LUT += curLUT24len + "0124" + curLUT24;
+            if (curLUT25.length != 0) {
+                curLUT25 = curLUT25.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+                var curLUT25len = ((curLUT25.length / 2) + 4).toString(16).padStart(4, '0');
+                ourUC_LUT += curLUT25len + "0125" + curLUT25;
+            }
+            var allLength = (ourUC_LUT.length / 2).toString(16).padStart(4, '0');
+            ourUC_LUT = allLength + ourUC_LUT;
+            addLog('Sending UC LUT size: ' + ourUC_LUT.length / 2);
+            document.getElementById("lutData").value = ourUC_LUT;
+            sendCustomLUT(ourUC_LUT);
         }
+
         function sendCustomSSDLUT(curLUT32) {
-            var ourSSD_LUT = ""; curLUT32 = curLUT32.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
-            var curLUT32len = ((curLUT32.length / 2) + 4).toString(16).padStart(4, '0'); ourSSD_LUT += curLUT32len + "0132" + curLUT32;
-            var allLength = (ourSSD_LUT.length / 2).toString(16).padStart(4, '0'); ourSSD_LUT = allLength + ourSSD_LUT;
-            addLog('Sending SSD LUT size: ' + ourSSD_LUT.length / 2); document.getElementById("lutData").value = ourSSD_LUT; sendCustomLUT(ourSSD_LUT);
+            var ourSSD_LUT = "";
+            curLUT32 = curLUT32.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            var curLUT32len = ((curLUT32.length / 2) + 4).toString(16).padStart(4, '0');
+            ourSSD_LUT += curLUT32len + "0132" + curLUT32;
+            var allLength = (ourSSD_LUT.length / 2).toString(16).padStart(4, '0');
+            ourSSD_LUT = allLength + ourSSD_LUT;
+            addLog('Sending SSD LUT size: ' + ourSSD_LUT.length / 2);
+            document.getElementById("lutData").value = ourSSD_LUT;
+            sendCustomLUT(ourSSD_LUT);
         }
+
         function sendCustomLUT(curLUT) {
-            imgArray = curLUT.replace(/(?:\r\n|\r|\n|,|0x| )/g, ''); imgArrayLen = imgArray.length; uploadPart = 0;
+            imgArray = curLUT.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            imgArrayLen = imgArray.length;
+            uploadPart = 0;
             addLog('Sending Custom LUT size: ' + imgArrayLen / 2);
             const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, 0xB0, 0, 0);
             sendcmd("0064" + dataInfo.toHexString());
         }
-        function resetFileSelector() { document.getElementById("selectFirmware").value = ''; };
-        function resetImageSelector() { document.getElementById("imageUpload").value = ''; };
+
+        function resetFileSelector() {
+            document.getElementById("selectFirmware").value = '';
+        };
+
+        function resetImageSelector() {
+            document.getElementById("imageUpload").value = '';
+        };
+
         function selectFirmwareVoid() {
             const fileInput = document.getElementById('selectFirmware');
             if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0]; const reader = new FileReader();
+                const file = fileInput.files[0];
+                const reader = new FileReader();
                 reader.onload = function (e) {
-                    const byteArray = new Uint8Array(e.target.result); sendFw(bytesToHex(byteArray));
+                    const byteArray = new Uint8Array(e.target.result);
+                    sendFw(bytesToHex(byteArray));
                 };
-                reader.onerror = function (e) { addLog("Error reading firmware file: " + e); setStatus("Error reading FW file"); };
+                reader.onerror = function (e) {
+                    addLog("Error reading firmware file: " + e);
+                    setStatus("Error reading FW file");
+                };
                 reader.readAsArrayBuffer(file);
             }
         }
+
         function updateUploadProgress() {
             if (imgArrayLen > 0) {
                 let bytesSent = currentBlockId * BLOCK_DATA_SIZE + packetIndex * BLOCK_PART_DATA_SIZE;
@@ -1708,130 +1994,425 @@
                 setStatus(`Uploading... ${percentage}% (${bytesSent}/${imgArrayLen / 2} bytes)`);
             }
         }
+
         function img_state_handle(data) {
-            const cmdHex = data.substring(0, 4).toUpperCase(); const payloadHex = data.substring(4);
+            const cmdHex = data.substring(0, 4).toUpperCase();
+            const payloadHex = data.substring(4);
             switch (cmdHex) {
-                case "00C6": try { const blockRequest = new BlockRequest(payloadHex); blockRequest.display(); setStatus(`Device requests Block ${blockRequest.blockId}`); currentBlockId = blockRequest.blockId; sendcmd("0002"); setTimeout(() => { sendBlockData(blockRequest.blockId, imgArray); }, 50); } catch (e) { addLog("Error parsing Block Request (00C6): " + e.message); setStatus("Error: Bad Block Req"); } break;
-                case "00C4": addLog(`Part Error Block ${currentBlockId} Part ${packetIndex}. Retrying...`); setStatus(`Part Error Retry ${packetIndex}...`); setTimeout(nextBlkPart, 100); break;
-                case "00C5": packetIndex++; updateUploadProgress(); if (packetIndex < totalPackets) { nextBlkPart(); } else { addLog(`Block ${currentBlockId} ACKed. Waiting for next request...`); setStatus(`Block ${currentBlockId} Sent.`); } break;
-                case "00C7": addLog("Upload OK."); setStatus("Upload Complete."); imgArray = ""; imgArrayLen = 0; packets = []; sendcmd("0003"); break;
-                case "00C8": addLog("Device: Data already present."); setStatus("Data already present."); imgArray = ""; imgArrayLen = 0; packets = []; sendcmd("0003"); break;
-                case "00C9": addLog("Firmware update successful ACK."); setStatus("FW Update OK."); imgArray = ""; imgArrayLen = 0; packets = []; break;
-                case "0005": addLog("Display Info (0005) received. Parsing..."); try { const payloadBytes = hexToBytes(payloadHex); const minLen = 31; const configVersion = getUint32FromBytes(payloadBytes, 4); addLog(`Device Config Version: ${configVersion}`); if (payloadBytes.length >= minLen) { const colors = getUint8FromBytes(payloadBytes, 30); const isInvertedWH = getUint8FromBytes(payloadBytes, 19) === 1; let w, h; if (isInvertedWH) { h = getUint16FromBytes(payloadBytes, 24); w = getUint16FromBytes(payloadBytes, 22); } else { h = getUint16FromBytes(payloadBytes, 22); w = getUint16FromBytes(payloadBytes, 24); } addLog(`Parsed Display - W:${w}, H:${h}, Colors:${colors}, Inverted Flag:${isInvertedWH}`); if (w > 0 && h > 0 && w < 4000 && h < 4000) { document.getElementById('widthInput').value = w; document.getElementById('heightInput').value = h; document.getElementById('secondColorCheckbox').checked = (colors >= 2); document.getElementById('thirdColorCheckbox').checked = (colors >= 3); doAll(); addLog("Canvas updated with display info."); } else { addLog("Parsed W/H seems invalid or zero."); } } else { addLog(`Display info payload too short (${payloadBytes.length} bytes). Minimum expected ${minLen}.`); } } catch (e) { addLog("Error parsing Display Info (0005): " + e); setStatus("Error: Bad Display Info"); } break;
-                case "00CA": document.getElementById("lutData").value = ""; addLog("LUT Read Start ACK. Requesting part."); setStatus("Reading LUT..."); sendcmd("000E"); break;
-                case "00CB": document.getElementById("lutData").value += payloadHex; setStatus("Reading LUT..."); addLog(`LUT Part (${payloadHex.length / 2}B received). Requesting next.`); sendcmd("000E"); break;
-                case "00CC": addLog("LUT Read Done by device."); setStatus("LUT Read complete."); break;
-                case "00CD": addLog("Dynamic Config received."); setStatus("Dynamic config received."); parseAndApplyDynamicConfig(payloadHex); break;
-                case "00CE": addLog("Dynamic Config OK ACK."); setStatus("Dynamic Config OK."); break;
-                case "00CF": addLog("ERROR: Device Dynamic Config Error."); setStatus("Dynamic Config Error."); break;
-                case "0063": setStatus("Command ACK."); break;
-                case "FFFF": addLog("ERROR: General CMD Error (FFFF)."); setStatus("Command Error (FFFF)."); break;
-                default: addLog("Unhandled CMD: " + cmdHex + " Payload: " + payloadHex.substring(0, 40) + "..."); break;
+                case "00C6":
+                    try {
+                        const blockRequest = new BlockRequest(payloadHex);
+                        blockRequest.display();
+                        setStatus(`Device requests Block ${blockRequest.blockId}`);
+                        currentBlockId = blockRequest.blockId;
+                        sendcmd("0002");
+                        setTimeout(() => {
+                            sendBlockData(blockRequest.blockId, imgArray);
+                        }, 50);
+                    } catch (e) {
+                        addLog("Error parsing Block Request (00C6): " + e.message);
+                        setStatus("Error: Bad Block Req");
+                    }
+                    break;
+                case "00C4":
+                    addLog(`Part Error Block ${currentBlockId} Part ${packetIndex}. Retrying...`);
+                    setStatus(`Part Error Retry ${packetIndex}...`);
+                    setTimeout(nextBlkPart, 100);
+                    break;
+                case "00C5":
+                    packetIndex++;
+                    updateUploadProgress();
+                    if (packetIndex < totalPackets) {
+                        nextBlkPart();
+                    } else {
+                        addLog(`Block ${currentBlockId} ACKed. Waiting for next request...`);
+                        setStatus(`Block ${currentBlockId} Sent.`);
+                    }
+                    break;
+                case "00C7":
+                    addLog("Upload OK.");
+                    setStatus("Upload Complete.");
+                    imgArray = "";
+                    imgArrayLen = 0;
+                    packets = [];
+                    sendcmd("0003");
+                    break;
+                case "00C8":
+                    addLog("Device: Data already present.");
+                    setStatus("Data already present.");
+                    imgArray = "";
+                    imgArrayLen = 0;
+                    packets = [];
+                    sendcmd("0003");
+                    break;
+                case "00C9":
+                    addLog("Firmware update successful ACK.");
+                    setStatus("FW Update OK.");
+                    imgArray = "";
+                    imgArrayLen = 0;
+                    packets = [];
+                    break;
+                case "0005":
+                    addLog("Display Info (0005) received. Parsing...");
+                    try {
+                        const payloadBytes = hexToBytes(payloadHex);
+                        const minLen = 31;
+                        const configVersion = getUint32FromBytes(payloadBytes, 4);
+                        addLog(`Device Config Version: ${configVersion}`);
+                        if (payloadBytes.length >= minLen) {
+                            const colors = getUint8FromBytes(payloadBytes, 30);
+                            const isInvertedWH = getUint8FromBytes(payloadBytes, 19) === 1;
+                            let w, h;
+                            if (isInvertedWH) {
+                                h = getUint16FromBytes(payloadBytes, 24);
+                                w = getUint16FromBytes(payloadBytes, 22);
+                            } else {
+                                h = getUint16FromBytes(payloadBytes, 22);
+                                w = getUint16FromBytes(payloadBytes, 24);
+                            }
+                            addLog(`Parsed Display - W:${w}, H:${h}, Colors:${colors}, Inverted Flag:${isInvertedWH}`);
+                            if (w > 0 && h > 0 && w < 4000 && h < 4000) {
+                                document.getElementById('widthInput').value = w;
+                                document.getElementById('heightInput').value = h;
+                                document.getElementById('secondColorCheckbox').checked = (colors >= 2);
+                                document.getElementById('thirdColorCheckbox').checked = (colors >= 3);
+                                doAll();
+                                addLog("Canvas updated with display info.");
+                            } else {
+                                addLog("Parsed W/H seems invalid or zero.");
+                            }
+                        } else {
+                            addLog(`Display info payload too short (${payloadBytes.length} bytes). Minimum expected ${minLen}.`);
+                        }
+                    } catch (e) {
+                        addLog("Error parsing Display Info (0005): " + e);
+                        setStatus("Error: Bad Display Info");
+                    }
+                    break;
+                case "00CA":
+                    document.getElementById("lutData").value = "";
+                    addLog("LUT Read Start ACK. Requesting part.");
+                    setStatus("Reading LUT...");
+                    sendcmd("000E");
+                    break;
+                case "00CB":
+                    document.getElementById("lutData").value += payloadHex;
+                    setStatus("Reading LUT...");
+                    addLog(`LUT Part (${payloadHex.length / 2}B received). Requesting next.`);
+                    sendcmd("000E");
+                    break;
+                case "00CC":
+                    addLog("LUT Read Done by device.");
+                    setStatus("LUT Read complete.");
+                    break;
+                case "00CD":
+                    addLog("Dynamic Config received.");
+                    setStatus("Dynamic config received.");
+                    parseAndApplyDynamicConfig(payloadHex);
+                    break;
+                case "00CE":
+                    addLog("Dynamic Config OK ACK.");
+                    setStatus("Dynamic Config OK.");
+                    break;
+                case "00CF":
+                    addLog("ERROR: Device Dynamic Config Error.");
+                    setStatus("Dynamic Config Error.");
+                    break;
+                case "0063":
+                    setStatus("Command ACK.");
+                    break;
+                case "FFFF":
+                    addLog("ERROR: General CMD Error (FFFF).");
+                    setStatus("Command Error (FFFF).");
+                    break;
+                default:
+                    addLog("Unhandled CMD: " + cmdHex + " Payload: " + payloadHex.substring(0, 40) + "...");
+                    break;
             }
         }
+
         function bleNotificationHandler(event) {
-            const value = event.target.value; if (!value || value.byteLength === 0) return;
-            const hexString = bytesToHex(value.buffer); addLog("BLE< " + hexString); img_state_handle(hexString);
+            const value = event.target.value;
+            if (!value || value.byteLength === 0) return;
+            const hexString = bytesToHex(value.buffer);
+            addLog("BLE< " + hexString);
+            img_state_handle(hexString);
         }
+
         function disconnect() {
             addLog('Device disconnected.');
-            if (bleDevice && bleDevice.removeEventListener) { bleDevice.removeEventListener('gattserverdisconnected', disconnect); }
+            if (bleDevice && bleDevice.removeEventListener) {
+                bleDevice.removeEventListener('gattserverdisconnected', disconnect);
+            }
             resetVariables();
         }
+
         function preConnect() {
             if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
-                addLog("Disconnecting..."); setStatus("Disconnecting...");
+                addLog("Disconnecting...");
+                setStatus("Disconnecting...");
                 bleDevice.removeEventListener('gattserverdisconnected', disconnect);
                 document.getElementById("connectbutton").innerHTML = 'Connect';
                 bleDevice.gatt.disconnect();
             } else {
-                reconnectTrys = 0; const namePrefix = document.getElementById('namePrefix').value.trim();
-                if (!namePrefix) { addLog("Error: Prefix filter(s) needed."); setStatus("Error: No prefix"); return; }
-                const deviceoptions = { optionalServices: [0x1337], acceptAllDevices: false, filters: namePrefix.split(",").map(p => p.trim()).filter(p => p).map(p => ({ namePrefix: p })) };
-                if (deviceoptions.filters.length === 0) { addLog("Error: No valid filters."); setStatus("Error: Invalid filters"); return; }
-                addLog("Requesting device with filters: " + JSON.stringify(deviceoptions.filters)); setStatus("Requesting device...");
+                reconnectTrys = 0;
+                const namePrefix = document.getElementById('namePrefix').value.trim();
+                if (!namePrefix) {
+                    addLog("Error: Prefix filter(s) needed.");
+                    setStatus("Error: No prefix");
+                    return;
+                }
+                const deviceoptions = {
+                    optionalServices: [0x1337],
+                    acceptAllDevices: false,
+                    filters: namePrefix.split(",").map(p => p.trim()).filter(p => p).map(p => ({
+                        namePrefix: p
+                    }))
+                };
+                if (deviceoptions.filters.length === 0) {
+                    addLog("Error: No valid filters.");
+                    setStatus("Error: Invalid filters");
+                    return;
+                }
+                addLog("Requesting device with filters: " + JSON.stringify(deviceoptions.filters));
+                setStatus("Requesting device...");
                 document.getElementById("connectbutton").innerHTML = 'Scanning...';
                 navigator.bluetooth.requestDevice(deviceoptions)
                     .then(device => {
-                        addLog(`Found: ${device.name || 'Unknown device'} (${device.id})`); setStatus(`Found ${device.name || 'device'}`);
-                        bleDevice = device; bleDevice.addEventListener('gattserverdisconnected', disconnect); connect();
+                        addLog(`Found: ${device.name || 'Unknown device'} (${device.id})`);
+                        setStatus(`Found ${device.name || 'device'}`);
+                        bleDevice = device;
+                        bleDevice.addEventListener('gattserverdisconnected', disconnect);
+                        connect();
                     })
                     .catch(error => {
-                        if (error.name === 'NotFoundError' || error.name === 'AbortError') { addLog("No device selected/found."); setStatus("No device selected"); document.getElementById("connectbutton").innerHTML = 'Connect'; }
-                        else { handleError(error); }
+                        if (error.name === 'NotFoundError' || error.name === 'AbortError') {
+                            addLog("No device selected/found.");
+                            setStatus("No device selected");
+                            document.getElementById("connectbutton").innerHTML = 'Connect';
+                        } else {
+                            handleError(error);
+                        }
                     });
             }
         }
+
         function reConnect() {
-            if (!bleDevice) { addLog("No previous device to reconnect. Use Connect."); setStatus("No device selected"); return; }
+            if (!bleDevice) {
+                addLog("No previous device to reconnect. Use Connect.");
+                setStatus("No device selected");
+                return;
+            }
             addLog("Reconnecting to: " + (bleDevice.name || bleDevice.id));
             if (bleDevice.gatt && bleDevice.gatt.connected) {
                 addLog("Already connected. Disconnecting first...");
-                bleDevice.removeEventListener('gattserverdisconnected', disconnect); bleDevice.gatt.disconnect();
-                setTimeout(() => { if (bleDevice) { bleDevice.addEventListener('gattserverdisconnected', disconnect); connect(); } }, 500);
-            } else { resetVariables(); reconnectTrys = 0; connect(); }
+                bleDevice.removeEventListener('gattserverdisconnected', disconnect);
+                bleDevice.gatt.disconnect();
+                setTimeout(() => {
+                    if (bleDevice) {
+                        bleDevice.addEventListener('gattserverdisconnected', disconnect);
+                        connect();
+                    }
+                }, 500);
+            } else {
+                resetVariables();
+                reconnectTrys = 0;
+                connect();
+            }
         }
+
         function connect() {
-            if (!bleDevice) { addLog("Connect called, but no device selected."); return; }
-            if (bleDevice.gatt && bleDevice.gatt.connected) { addLog("Already connected."); document.getElementById("connectbutton").innerHTML = 'Disconnect'; return; }
-            addLog("Connecting to GATT Server on: " + (bleDevice.name || bleDevice.id) + "..."); setStatus("Connecting...");
+            if (!bleDevice) {
+                addLog("Connect called, but no device selected.");
+                return;
+            }
+            if (bleDevice.gatt && bleDevice.gatt.connected) {
+                addLog("Already connected.");
+                document.getElementById("connectbutton").innerHTML = 'Disconnect';
+                return;
+            }
+            addLog("Connecting to GATT Server on: " + (bleDevice.name || bleDevice.id) + "...");
+            setStatus("Connecting...");
             document.getElementById("connectbutton").innerHTML = 'Connecting...';
             bleDevice.gatt.connect()
-                .then(server => { addLog('> GATT Server connected'); gattServer = server; return gattServer.getPrimaryService(0x1337); })
-                .then(service => { addLog('> Service 0x1337 found'); Theservice = service; return Theservice.getCharacteristic(0x1337); })
-                .then(characteristic => { addLog('> Characteristic 0x1337 found'); writeCharacteristic = characteristic; return writeCharacteristic.startNotifications(); })
+                .then(server => {
+                    addLog('> GATT Server connected');
+                    gattServer = server;
+                    return gattServer.getPrimaryService(0x1337);
+                })
+                .then(service => {
+                    addLog('> Service 0x1337 found');
+                    Theservice = service;
+                    return Theservice.getCharacteristic(0x1337);
+                })
+                .then(characteristic => {
+                    addLog('> Characteristic 0x1337 found');
+                    writeCharacteristic = characteristic;
+                    return writeCharacteristic.startNotifications();
+                })
                 .then(() => {
-                    addLog('> Notifications started'); writeCharacteristic.addEventListener('characteristicvaluechanged', bleNotificationHandler);
-                    addLog('Connection successful!'); setStatus('Connected'); document.getElementById("connectbutton").innerHTML = 'Disconnect';
+                    addLog('> Notifications started');
+                    writeCharacteristic.addEventListener('characteristicvaluechanged', bleNotificationHandler);
+                    addLog('Connection successful!');
+                    setStatus('Connected');
+                    document.getElementById("connectbutton").innerHTML = 'Disconnect';
                     reconnectTrys = 0;
                     if (bleDevice && bleDevice.name) {
-                        localStorage.setItem('lastDeviceName', bleDevice.name); addLog(`Stored last device name: ${bleDevice.name}`);
-                        if (document.getElementById('rememberDeviceCheckbox').checked) { document.getElementById('namePrefix').value = bleDevice.name; }
+                        localStorage.setItem('lastDeviceName', bleDevice.name);
+                        addLog(`Stored last device name: ${bleDevice.name}`);
+                        if (document.getElementById('rememberDeviceCheckbox').checked) {
+                            document.getElementById('namePrefix').value = bleDevice.name;
+                        }
                     }
-                    setTimeout(() => { readDynamicConfig(); }, 450);
+                    setTimeout(() => {
+                        readDynamicConfig();
+                    }, 450);
                 })
                 .catch(handleError);
         }
-        function setStatus(statusText) { document.getElementById("status").innerHTML = statusText; }
+
+        function setStatus(statusText) {
+            document.getElementById("status").innerHTML = statusText;
+        }
+
         function addLog(logTXT) {
-            const logArea = document.getElementById("log"); const today = new Date();
+            const logArea = document.getElementById("log");
+            const today = new Date();
             const time = ("0" + today.getHours()).slice(-2) + ":" + ("0" + today.getMinutes()).slice(-2) + ":" + ("0" + today.getSeconds()).slice(-2) + " : ";
-            logArea.innerHTML = time + logTXT + '<br>' + logArea.innerHTML; console.log("BLE Log: " + time + logTXT);
-            const maxLogLines = 150; const lines = logArea.innerHTML.split('<br>');
-            if (lines.length > maxLogLines + 1) { logArea.innerHTML = lines.slice(0, maxLogLines).join('<br>') + '<br>'; }
+            logArea.innerHTML = time + logTXT + '<br>' + logArea.innerHTML;
+            console.log("BLE Log: " + time + logTXT);
+            const maxLogLines = 150;
+            const lines = logArea.innerHTML.split('<br>');
+            if (lines.length > maxLogLines + 1) {
+                logArea.innerHTML = lines.slice(0, maxLogLines).join('<br>') + '<br>';
+            }
         }
-        function getUint8FromBytes(bytes, offset) { if (offset >= bytes.length) { console.warn(`getUint8 OOB: offset ${offset}, length ${bytes.length}`); return 0; } return bytes[offset]; }
-        function getUint16FromBytes(bytes, offset) { if (offset + 1 >= bytes.length) { console.warn(`getUint16 OOB: offset ${offset}, length ${bytes.length}`); return 0; } return (bytes[offset] | (bytes[offset + 1] << 8)); }
-        function getUint32FromBytes(bytes, offset) { if (offset + 3 >= bytes.length) { console.warn(`getUint32 OOB: offset ${offset}, length ${bytes.length}`); return 0; } return (bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)) >>> 0; }
-        function fromHexUint8(hex) { return parseInt(hex.substring(0, 2), 16); }
-        function fromHexUint16LE(hex) { return parseInt(hex.substring(2, 4) + hex.substring(0, 2), 16); }
-        function fromHexUint32LE(hex) { return parseInt(hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2), 16) >>> 0; }
+
+        function getUint8FromBytes(bytes, offset) {
+            if (offset >= bytes.length) {
+                console.warn(`getUint8 OOB: offset ${offset}, length ${bytes.length}`);
+                return 0;
+            }
+            return bytes[offset];
+        }
+
+        function getUint16FromBytes(bytes, offset) {
+            if (offset + 1 >= bytes.length) {
+                console.warn(`getUint16 OOB: offset ${offset}, length ${bytes.length}`);
+                return 0;
+            }
+            return (bytes[offset] | (bytes[offset + 1] << 8));
+        }
+
+        function getUint32FromBytes(bytes, offset) {
+            if (offset + 3 >= bytes.length) {
+                console.warn(`getUint32 OOB: offset ${offset}, length ${bytes.length}`);
+                return 0;
+            }
+            return (bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)) >>> 0;
+        }
+
+        function fromHexUint8(hex) {
+            return parseInt(hex.substring(0, 2), 16);
+        }
+
+        function fromHexUint16LE(hex) {
+            return parseInt(hex.substring(2, 4) + hex.substring(0, 2), 16);
+        }
+
+        function fromHexUint32LE(hex) {
+            return parseInt(hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2), 16) >>> 0;
+        }
+
         function hexToUint8Array(hex) {
-            if (typeof hex !== 'string') { console.error("hexToUint8Array expects a string."); return new Uint8Array(0); }
+            if (typeof hex !== 'string') {
+                console.error("hexToUint8Array expects a string.");
+                return new Uint8Array(0);
+            }
             const cleanHex = hex.replace(/[^0-9a-fA-F]/g, '');
-            if (cleanHex.length % 2 !== 0) { console.warn("Odd hex string length:", cleanHex.length, "String (first 50 chars):", cleanHex.substring(0, 50) + "..."); }
-            const byteLength = Math.floor(cleanHex.length / 2); const bytes = new Uint8Array(byteLength);
+            if (cleanHex.length % 2 !== 0) {
+                console.warn("Odd hex string length:", cleanHex.length, "String (first 50 chars):", cleanHex.substring(0, 50) + "...");
+            }
+            const byteLength = Math.floor(cleanHex.length / 2);
+            const bytes = new Uint8Array(byteLength);
             for (let i = 0; i < byteLength; i++) {
-                const byteHex = cleanHex.substr(i * 2, 2); bytes[i] = parseInt(byteHex, 16);
-                if (isNaN(bytes[i])) { console.error(`Invalid hex byte "${byteHex}" at position ${i * 2}`); bytes[i] = 0; }
-            } return bytes;
-        }
-        function hexToBytes(hex) {
-            if (typeof hex !== 'string') hex = ''; if (hex.length % 2 !== 0) { console.warn("Odd hex string provided:", hex); hex = '0' + hex; }
-            const bytes = new Uint8Array(hex.length / 2);
-            for (let i = 0; i < bytes.length; i++) { try { bytes[i] = parseInt(hex.substr(i * 2, 2), 16); } catch (e) { console.error("Hex parse error", e); bytes[i] = 0; } }
+                const byteHex = cleanHex.substr(i * 2, 2);
+                bytes[i] = parseInt(byteHex, 16);
+                if (isNaN(bytes[i])) {
+                    console.error(`Invalid hex byte "${byteHex}" at position ${i * 2}`);
+                    bytes[i] = 0;
+                }
+            }
             return bytes;
         }
+
+        function hexToBytes(hex) {
+            if (typeof hex !== 'string') hex = '';
+            if (hex.length % 2 !== 0) {
+                console.warn("Odd hex string provided:", hex);
+                hex = '0' + hex;
+            }
+            const bytes = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < bytes.length; i++) {
+                try {
+                    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+                } catch (e) {
+                    console.error("Hex parse error", e);
+                    bytes[i] = 0;
+                }
+            }
+            return bytes;
+        }
+
         function bytesToHex(byteArray) {
-            if (!byteArray) return ""; if (byteArray instanceof ArrayBuffer) { byteArray = new Uint8Array(byteArray); }
+            if (!byteArray) return "";
+            if (byteArray instanceof ArrayBuffer) {
+                byteArray = new Uint8Array(byteArray);
+            }
             return Array.from(byteArray).map(byte => byte.toString(16).padStart(2, '0').toUpperCase()).join('');
         }
-        function toHexUint8(val) { return (Number(val) & 0xFF).toString(16).padStart(2, '0').toUpperCase(); }
-        function toHexUint16LE(val) { const hex = (Number(val) & 0xFFFF).toString(16).padStart(4, '0').toUpperCase(); return hex.substring(2, 4) + hex.substring(0, 2); }
-        function toHexUint32LE(val) { const hex = (Number(val) >>> 0).toString(16).padStart(8, '0').toUpperCase(); return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2); }
-        function getGpioName(value) { for (const name in gpioPins) { if (gpioPins[name] === value) return name; } return `Unknown (0x${value.toString(16).padStart(4, '0')})`; }
-        function populateGpioSelects() { document.querySelectorAll('.gpio-select').forEach(select => { select.innerHTML = ''; for (const name in gpioPins) { const option = document.createElement('option'); option.value = gpioPins[name]; option.textContent = `${name} (0x${gpioPins[name].toString(16).padStart(4, '0')})`; select.appendChild(option); } select.value = 0x0000; }); }
-        function togglePinoutSection(sectionId, isEnabled) { const section = document.getElementById(sectionId); if (section) { section.style.display = isEnabled ? 'block' : 'none'; } }
+
+        function toHexUint8(val) {
+            return (Number(val) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+        }
+
+        function toHexUint16LE(val) {
+            const hex = (Number(val) & 0xFFFF).toString(16).padStart(4, '0').toUpperCase();
+            return hex.substring(2, 4) + hex.substring(0, 2);
+        }
+
+        function toHexUint32LE(val) {
+            const hex = (Number(val) >>> 0).toString(16).padStart(8, '0').toUpperCase();
+            return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
+        }
+
+        function getGpioName(value) {
+            for (const name in gpioPins) {
+                if (gpioPins[name] === value) return name;
+            }
+            return `Unknown (0x${value.toString(16).padStart(4, '0')})`;
+        }
+
+        function populateGpioSelects() {
+            document.querySelectorAll('.gpio-select').forEach(select => {
+                select.innerHTML = '';
+                for (const name in gpioPins) {
+                    const option = document.createElement('option');
+                    option.value = gpioPins[name];
+                    option.textContent = `${name} (0x${gpioPins[name].toString(16).padStart(4, '0')})`;
+                    select.appendChild(option);
+                }
+                select.value = 0x0000;
+            });
+        }
+
+        function togglePinoutSection(sectionId, isEnabled) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.style.display = isEnabled ? 'block' : 'none';
+            }
+        }
+
         function populateDeviceTypeSelects() {
             const cmdTypeSelect = document.getElementById('cmdTYPE');
             const confTypeSelect = document.getElementById('conf_screen_type');
@@ -1855,13 +2436,30 @@
             confTypeSelect.value = 1;
             if (uartTypeSelect.options.length > 0) uartTypeSelect.value = uartTypeSelect.options[0].value;
         }
-        function populatePullTypeSelects() { document.querySelectorAll('.pull-type-select').forEach(select => { select.innerHTML = ''; for (const name in gpioPullTypes) { const option = document.createElement('option'); option.value = gpioPullTypes[name]; option.textContent = name; select.appendChild(option); } select.value = 0; }); }
+
+        function populatePullTypeSelects() {
+            document.querySelectorAll('.pull-type-select').forEach(select => {
+                select.innerHTML = '';
+                for (const name in gpioPullTypes) {
+                    const option = document.createElement('option');
+                    option.value = gpioPullTypes[name];
+                    option.textContent = name;
+                    select.appendChild(option);
+                }
+                select.value = 0;
+            });
+        }
+
         function buildDynamicConfigPayload() {
-            let payload = ""; const zeroPad = (bytes) => "00".repeat(bytes);
+            let payload = "";
+            const zeroPad = (bytes) => "00".repeat(bytes);
             try {
                 payload += toHexUint16LE(parseInt(document.getElementById('conf_screen_type').value) || 0);
-                let defaultSettingsHex = ""; const hwTypeHex = document.getElementById('conf_hw_type').value.trim().toUpperCase() || "0";
-                if (!/^[0-9A-F]{1,4}$/.test(hwTypeHex)) { throw new Error("Invalid HW Type Hex value"); }
+                let defaultSettingsHex = "";
+                const hwTypeHex = document.getElementById('conf_hw_type').value.trim().toUpperCase() || "0";
+                if (!/^[0-9A-F]{1,4}$/.test(hwTypeHex)) {
+                    throw new Error("Invalid HW Type Hex value");
+                }
                 defaultSettingsHex += toHexUint16LE(parseInt(hwTypeHex, 16));
                 defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_screen_functions').value) || 0);
                 defaultSettingsHex += toHexUint8(document.getElementById('conf_screen_w_h_inversed_ble').checked ? 1 : 0);
@@ -1879,56 +2477,224 @@
                 defaultSettingsHex += toHexUint32LE(document.getElementById('conf_flash_pinout_enabled').checked ? 1 : 0);
                 defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_ADC_pinout').value) || 0x0000);
                 defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_UART_pinout').value) || 0x0000);
-                if (defaultSettingsHex.length !== SIZEOF_DEFAULT_SETTINGS * 2) { throw new Error("Default settings constructed length mismatch"); }
+                if (defaultSettingsHex.length !== SIZEOF_DEFAULT_SETTINGS * 2) {
+                    throw new Error("Default settings constructed length mismatch");
+                }
                 payload += defaultSettingsHex;
-                if (document.getElementById('conf_epd_pinout_enabled').checked) { let pinoutHex = ""; pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_RESET').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_DC').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_BUSY').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_BUSYs').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_CS').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_CSs').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_CLK').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_MOSI').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_ENABLE').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_ENABLE1').value)); pinoutHex += toHexUint8(document.getElementById('conf_epd_ENABLE_INVERT').checked ? 1 : 0); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_FLASH_CS').value)); pinoutHex += toHexUint8(parseInt(document.getElementById('conf_epd_PIN_CONFIG_SLEEP').value)); pinoutHex += toHexUint8(parseInt(document.getElementById('conf_epd_PIN_ENABLE').value)); pinoutHex += toHexUint8(parseInt(document.getElementById('conf_epd_PIN_ENABLE_SLEEP').value)); if (pinoutHex.length !== SIZEOF_SCREEN_PINOUT * 2) { throw new Error("EPD pinout constructed length mismatch"); } payload += pinoutHex; } else { payload += zeroPad(SIZEOF_SCREEN_PINOUT); }
-                if (document.getElementById('conf_led_pinout_enabled').checked) { let pinoutHex = ""; pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_R').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_G').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_B').value)); pinoutHex += toHexUint8(document.getElementById('conf_led_inverted').checked ? 1 : 0); if (pinoutHex.length !== SIZEOF_LED_PINOUT * 2) { throw new Error("LED pinout constructed length mismatch"); } payload += pinoutHex; } else { payload += zeroPad(SIZEOF_LED_PINOUT); }
-                if (document.getElementById('conf_nfc_pinout_enabled').checked) { let pinoutHex = ""; pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_SDA').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_SCL').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_CS').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_IRQ').value)); if (pinoutHex.length !== SIZEOF_NFC_PINOUT * 2) { throw new Error("NFC pinout constructed length mismatch"); } payload += pinoutHex; } else { payload += zeroPad(SIZEOF_NFC_PINOUT); }
-                if (document.getElementById('conf_flash_pinout_enabled').checked) { let pinoutHex = ""; pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_CS').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_CLK').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_MISO').value)); pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_MOSI').value)); if (pinoutHex.length !== SIZEOF_FLASH_PINOUT * 2) { throw new Error("Flash pinout constructed length mismatch"); } payload += pinoutHex; } else { payload += zeroPad(SIZEOF_FLASH_PINOUT); }
-                document.getElementById('dynamicConfigPayload').value = payload; return payload;
-            } catch (e) { addLog("Error building dynamic config: " + e.message); document.getElementById('dynamicConfigPayload').value = "ERROR: Build failed"; return null; }
+                if (document.getElementById('conf_epd_pinout_enabled').checked) {
+                    let pinoutHex = "";
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_RESET').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_DC').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_BUSY').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_BUSYs').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_CS').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_CSs').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_CLK').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_MOSI').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_ENABLE').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_ENABLE1').value));
+                    pinoutHex += toHexUint8(document.getElementById('conf_epd_ENABLE_INVERT').checked ? 1 : 0);
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_epd_FLASH_CS').value));
+                    pinoutHex += toHexUint8(parseInt(document.getElementById('conf_epd_PIN_CONFIG_SLEEP').value));
+                    pinoutHex += toHexUint8(parseInt(document.getElementById('conf_epd_PIN_ENABLE').value));
+                    pinoutHex += toHexUint8(parseInt(document.getElementById('conf_epd_PIN_ENABLE_SLEEP').value));
+                    if (pinoutHex.length !== SIZEOF_SCREEN_PINOUT * 2) {
+                        throw new Error("EPD pinout constructed length mismatch");
+                    }
+                    payload += pinoutHex;
+                } else {
+                    payload += zeroPad(SIZEOF_SCREEN_PINOUT);
+                }
+                if (document.getElementById('conf_led_pinout_enabled').checked) {
+                    let pinoutHex = "";
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_R').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_G').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_led_B').value));
+                    pinoutHex += toHexUint8(document.getElementById('conf_led_inverted').checked ? 1 : 0);
+                    if (pinoutHex.length !== SIZEOF_LED_PINOUT * 2) {
+                        throw new Error("LED pinout constructed length mismatch");
+                    }
+                    payload += pinoutHex;
+                } else {
+                    payload += zeroPad(SIZEOF_LED_PINOUT);
+                }
+                if (document.getElementById('conf_nfc_pinout_enabled').checked) {
+                    let pinoutHex = "";
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_SDA').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_SCL').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_CS').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_nfc_IRQ').value));
+                    if (pinoutHex.length !== SIZEOF_NFC_PINOUT * 2) {
+                        throw new Error("NFC pinout constructed length mismatch");
+                    }
+                    payload += pinoutHex;
+                } else {
+                    payload += zeroPad(SIZEOF_NFC_PINOUT);
+                }
+                if (document.getElementById('conf_flash_pinout_enabled').checked) {
+                    let pinoutHex = "";
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_CS').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_CLK').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_MISO').value));
+                    pinoutHex += toHexUint16LE(parseInt(document.getElementById('conf_flash_MOSI').value));
+                    if (pinoutHex.length !== SIZEOF_FLASH_PINOUT * 2) {
+                        throw new Error("Flash pinout constructed length mismatch");
+                    }
+                    payload += pinoutHex;
+                } else {
+                    payload += zeroPad(SIZEOF_FLASH_PINOUT);
+                }
+                document.getElementById('dynamicConfigPayload').value = payload;
+                return payload;
+            } catch (e) {
+                addLog("Error building dynamic config: " + e.message);
+                document.getElementById('dynamicConfigPayload').value = "ERROR: Build failed";
+                return null;
+            }
         }
+
         function parseAndApplyDynamicConfig(hexData) {
-            addLog("Parsing dynamic config data: " + hexData.length / 2 + " bytes received."); let offset = 0;
-            function readUint16LE_internal(len = 4) { if (offset + len > hexData.length) throw new Error(`Read out of bounds (Uint16LE)`); const val = fromHexUint16LE(hexData.substring(offset, offset + len)); offset += len; return val; }
-            function readUint8_internal(len = 2) { if (offset + len > hexData.length) throw new Error(`Read out of bounds (Uint8)`); const val = fromHexUint8(hexData.substring(offset, offset + len)); offset += len; return val; }
-            function readUint32LE_internal(len = 8) { if (offset + len > hexData.length) throw new Error(`Read out of bounds (Uint32LE)`); const val = fromHexUint32LE(hexData.substring(offset, offset + len)); offset += len; return val; }
+            addLog("Parsing dynamic config data: " + hexData.length / 2 + " bytes received.");
+            let offset = 0;
+
+            function readUint16LE_internal(len = 4) {
+                if (offset + len > hexData.length) throw new Error(`Read out of bounds (Uint16LE)`);
+                const val = fromHexUint16LE(hexData.substring(offset, offset + len));
+                offset += len;
+                return val;
+            }
+
+            function readUint8_internal(len = 2) {
+                if (offset + len > hexData.length) throw new Error(`Read out of bounds (Uint8)`);
+                const val = fromHexUint8(hexData.substring(offset, offset + len));
+                offset += len;
+                return val;
+            }
+
+            function readUint32LE_internal(len = 8) {
+                if (offset + len > hexData.length) throw new Error(`Read out of bounds (Uint32LE)`);
+                const val = fromHexUint32LE(hexData.substring(offset, offset + len));
+                offset += len;
+                return val;
+            }
             try {
-                const minExpectedLength = (2 + SIZEOF_DEFAULT_SETTINGS) * 2; if (hexData.length < minExpectedLength) { throw new Error(`Payload too short (${hexData.length / 2}B), expected at least ${minExpectedLength / 2}B for base config.`); }
+                const minExpectedLength = (2 + SIZEOF_DEFAULT_SETTINGS) * 2;
+                if (hexData.length < minExpectedLength) {
+                    throw new Error(`Payload too short (${hexData.length / 2}B), expected at least ${minExpectedLength / 2}B for base config.`);
+                }
                 document.getElementById('conf_screen_type').value = readUint16LE_internal();
                 document.getElementById('conf_hw_type').value = readUint16LE_internal().toString(16).padStart(4, '0').toUpperCase();
                 document.getElementById('conf_screen_functions').value = readUint16LE_internal();
                 document.getElementById('conf_screen_w_h_inversed_ble').checked = (readUint8_internal() !== 0);
                 document.getElementById('conf_screen_w_h_inversed').checked = (readUint16LE_internal() !== 0);
-                const h = readUint16LE_internal(); const w = readUint16LE_internal();
-                document.getElementById('conf_screen_h').value = h; document.getElementById('conf_screen_w').value = w;
-                if (w > 0 && h > 0 && w < 4000 && h < 4000) { document.getElementById('widthInput').value = w; document.getElementById('heightInput').value = h; } else { addLog("Warning: Parsed Width/Height from dynamic config seems invalid, not updating main canvas values yet."); }
+                const h = readUint16LE_internal();
+                const w = readUint16LE_internal();
+                document.getElementById('conf_screen_h').value = h;
+                document.getElementById('conf_screen_w').value = w;
+                if (w > 0 && h > 0 && w < 4000 && h < 4000) {
+                    const isInvertedWH = document.getElementById('conf_screen_w_h_inversed_ble').checked;
+                    if (isInvertedWH) {
+                        document.getElementById('widthInput').value = h;
+                        document.getElementById('heightInput').value = w;
+                    } else {
+                        document.getElementById('widthInput').value = w;
+                        document.getElementById('heightInput').value = h;
+                    }
+                } else {
+                    addLog("Warning: Parsed Width/Height from dynamic config seems invalid, not updating main canvas values yet.");
+                }
                 document.getElementById('conf_screen_h_offset').value = readUint16LE_internal();
                 document.getElementById('conf_screen_w_offset').value = readUint16LE_internal();
-                const colors = readUint16LE_internal(); document.getElementById('conf_screen_colors').value = colors;
-                document.getElementById('secondColorCheckbox').checked = (colors >= 2); document.getElementById('thirdColorCheckbox').checked = (colors >= 3);
+                const colors = readUint16LE_internal();
+                document.getElementById('conf_screen_colors').value = colors;
+                document.getElementById('secondColorCheckbox').checked = (colors >= 2);
+                document.getElementById('thirdColorCheckbox').checked = (colors >= 3);
                 document.getElementById('conf_screen_black_invert').checked = (readUint16LE_internal() !== 0);
                 document.getElementById('conf_screen_second_color_invert').checked = (readUint16LE_internal() !== 0);
-                const epdEnabled = (readUint32LE_internal() !== 0); const ledEnabled = (readUint32LE_internal() !== 0);
-                const nfcEnabled = (readUint32LE_internal() !== 0); const flashEnabled = (readUint32LE_internal() !== 0);
-                document.getElementById('conf_ADC_pinout').value = readUint16LE_internal(); document.getElementById('conf_UART_pinout').value = readUint16LE_internal();
-                document.getElementById('conf_epd_pinout_enabled').checked = epdEnabled; togglePinoutSection('epd_pinout_details', epdEnabled);
-                document.getElementById('conf_led_pinout_enabled').checked = ledEnabled; togglePinoutSection('led_pinout_details', ledEnabled);
-                document.getElementById('conf_nfc_pinout_enabled').checked = nfcEnabled; togglePinoutSection('nfc_pinout_details', nfcEnabled);
-                document.getElementById('conf_flash_pinout_enabled').checked = flashEnabled; togglePinoutSection('flash_pinout_details', flashEnabled);
-                let remainingExpectedBytes = 0; if (epdEnabled) remainingExpectedBytes += SIZEOF_SCREEN_PINOUT; if (ledEnabled) remainingExpectedBytes += SIZEOF_LED_PINOUT; if (nfcEnabled) remainingExpectedBytes += SIZEOF_NFC_PINOUT; if (flashEnabled) remainingExpectedBytes += SIZEOF_FLASH_PINOUT;
-                if (offset + remainingExpectedBytes * 2 > hexData.length) { addLog(`Warning: Payload too short for all enabled pinout sections. Parsing what's available.`); return; }
-                if (epdEnabled) { document.getElementById('conf_epd_RESET').value = readUint16LE_internal(); document.getElementById('conf_epd_DC').value = readUint16LE_internal(); document.getElementById('conf_epd_BUSY').value = readUint16LE_internal(); document.getElementById('conf_epd_BUSYs').value = readUint16LE_internal(); document.getElementById('conf_epd_CS').value = readUint16LE_internal(); document.getElementById('conf_epd_CSs').value = readUint16LE_internal(); document.getElementById('conf_epd_CLK').value = readUint16LE_internal(); document.getElementById('conf_epd_MOSI').value = readUint16LE_internal(); document.getElementById('conf_epd_ENABLE').value = readUint16LE_internal(); document.getElementById('conf_epd_ENABLE1').value = readUint16LE_internal(); document.getElementById('conf_epd_ENABLE_INVERT').checked = (readUint8_internal() !== 0); document.getElementById('conf_epd_FLASH_CS').value = readUint16LE_internal(); document.getElementById('conf_epd_PIN_CONFIG_SLEEP').value = readUint8_internal(); document.getElementById('conf_epd_PIN_ENABLE').value = readUint8_internal(); document.getElementById('conf_epd_PIN_ENABLE_SLEEP').value = readUint8_internal(); }
-                if (ledEnabled) { document.getElementById('conf_led_R').value = readUint16LE_internal(); document.getElementById('conf_led_G').value = readUint16LE_internal(); document.getElementById('conf_led_B').value = readUint16LE_internal(); document.getElementById('conf_led_inverted').checked = (readUint8_internal() !== 0); }
-                if (nfcEnabled) { document.getElementById('conf_nfc_SDA').value = readUint16LE_internal(); document.getElementById('conf_nfc_SCL').value = readUint16LE_internal(); document.getElementById('conf_nfc_CS').value = readUint16LE_internal(); document.getElementById('conf_nfc_IRQ').value = readUint16LE_internal(); }
-                if (flashEnabled) { document.getElementById('conf_flash_CS').value = readUint16LE_internal(); document.getElementById('conf_flash_CLK').value = readUint16LE_internal(); document.getElementById('conf_flash_MISO').value = readUint16LE_internal(); document.getElementById('conf_flash_MOSI').value = readUint16LE_internal(); }
-                if (offset !== hexData.length) { addLog(`Warning: Dynamic config parsed, but ${(hexData.length - offset) / 2} bytes remain unparsed.`); } else { addLog("Dynamic Config parsed & UI updated successfully."); }
-            } catch (e) { addLog("Error parsing dynamic config: " + e.message); console.error("Parsing error:", e, "Raw Hex:", hexData, "Current Offset:", offset); }
-            finally { doAll(); }
+                const epdEnabled = (readUint32LE_internal() !== 0);
+                const ledEnabled = (readUint32LE_internal() !== 0);
+                const nfcEnabled = (readUint32LE_internal() !== 0);
+                const flashEnabled = (readUint32LE_internal() !== 0);
+                document.getElementById('conf_ADC_pinout').value = readUint16LE_internal();
+                document.getElementById('conf_UART_pinout').value = readUint16LE_internal();
+                document.getElementById('conf_epd_pinout_enabled').checked = epdEnabled;
+                togglePinoutSection('epd_pinout_details', epdEnabled);
+                document.getElementById('conf_led_pinout_enabled').checked = ledEnabled;
+                togglePinoutSection('led_pinout_details', ledEnabled);
+                document.getElementById('conf_nfc_pinout_enabled').checked = nfcEnabled;
+                togglePinoutSection('nfc_pinout_details', nfcEnabled);
+                document.getElementById('conf_flash_pinout_enabled').checked = flashEnabled;
+                togglePinoutSection('flash_pinout_details', flashEnabled);
+                let remainingExpectedBytes = 0;
+                if (epdEnabled) remainingExpectedBytes += SIZEOF_SCREEN_PINOUT;
+                if (ledEnabled) remainingExpectedBytes += SIZEOF_LED_PINOUT;
+                if (nfcEnabled) remainingExpectedBytes += SIZEOF_NFC_PINOUT;
+                if (flashEnabled) remainingExpectedBytes += SIZEOF_FLASH_PINOUT;
+                if (offset + remainingExpectedBytes * 2 > hexData.length) {
+                    addLog(`Warning: Payload too short for all enabled pinout sections. Parsing what's available.`);
+                    return;
+                }
+                if (epdEnabled) {
+                    document.getElementById('conf_epd_RESET').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_DC').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_BUSY').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_BUSYs').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_CS').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_CSs').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_CLK').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_MOSI').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_ENABLE').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_ENABLE1').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_ENABLE_INVERT').checked = (readUint8_internal() !== 0);
+                    document.getElementById('conf_epd_FLASH_CS').value = readUint16LE_internal();
+                    document.getElementById('conf_epd_PIN_CONFIG_SLEEP').value = readUint8_internal();
+                    document.getElementById('conf_epd_PIN_ENABLE').value = readUint8_internal();
+                    document.getElementById('conf_epd_PIN_ENABLE_SLEEP').value = readUint8_internal();
+                }
+                if (ledEnabled) {
+                    document.getElementById('conf_led_R').value = readUint16LE_internal();
+                    document.getElementById('conf_led_G').value = readUint16LE_internal();
+                    document.getElementById('conf_led_B').value = readUint16LE_internal();
+                    document.getElementById('conf_led_inverted').checked = (readUint8_internal() !== 0);
+                }
+                if (nfcEnabled) {
+                    document.getElementById('conf_nfc_SDA').value = readUint16LE_internal();
+                    document.getElementById('conf_nfc_SCL').value = readUint16LE_internal();
+                    document.getElementById('conf_nfc_CS').value = readUint16LE_internal();
+                    document.getElementById('conf_nfc_IRQ').value = readUint16LE_internal();
+                }
+                if (flashEnabled) {
+                    document.getElementById('conf_flash_CS').value = readUint16LE_internal();
+                    document.getElementById('conf_flash_CLK').value = readUint16LE_internal();
+                    document.getElementById('conf_flash_MISO').value = readUint16LE_internal();
+                    document.getElementById('conf_flash_MOSI').value = readUint16LE_internal();
+                }
+                if (offset !== hexData.length) {
+                    addLog(`Warning: Dynamic config parsed, but ${(hexData.length - offset) / 2} bytes remain unparsed.`);
+                } else {
+                    addLog("Dynamic Config parsed & UI updated successfully.");
+                }
+            } catch (e) {
+                addLog("Error parsing dynamic config: " + e.message);
+                console.error("Parsing error:", e, "Raw Hex:", hexData, "Current Offset:", offset);
+            } finally {
+                doAll();
+            }
         }
-        function readDynamicConfig() { sendcmd("0011"); }
-        function sendDynamicConfigTest() { const p = buildDynamicConfigPayload(); if (p) sendcmd("000F" + p); }
-        function sendDynamicConfigSave() { const p = buildDynamicConfigPayload(); if (p) sendcmd("0010" + p); }
+
+        function readDynamicConfig() {
+            sendcmd("0011");
+        }
+
+        function sendDynamicConfigTest() {
+            const p = buildDynamicConfigPayload();
+            if (p) sendcmd("000F" + p);
+        }
+
+        function sendDynamicConfigSave() {
+            const p = buildDynamicConfigPayload();
+            if (p) sendcmd("0010" + p);
+        }
 
         function showView(viewToShow) {
             document.getElementById('ble-upload').style.display = 'none';
@@ -1948,30 +2714,42 @@
                 document.getElementById('ble-upload').style.display = 'block';
                 document.getElementById('log-area').style.display = 'block';
                 document.getElementById('btn-show-ble').classList.add('active');
-            }
-            else if (viewToShow === 'config') {
+            } else if (viewToShow === 'config') {
                 document.getElementById('display-type-set').style.display = 'block';
                 document.getElementById('log-area').style.display = 'block';
                 document.getElementById('btn-show-config').classList.add('active');
-            }
-            else if (viewToShow === 'lut') {
+            } else if (viewToShow === 'lut') {
                 document.getElementById('lut-upload').style.display = 'block';
                 document.getElementById('log-area').style.display = 'block';
                 document.getElementById('btn-show-lut').classList.add('active');
-            }
-            else if (viewToShow === 'uart') {
+            } else if (viewToShow === 'uart') {
                 document.getElementById('uart-flash-content').style.display = 'block';
                 document.getElementById('uart-log-area').style.display = 'block';
                 document.getElementById('btn-show-uart').classList.add('active');
             }
         }
-        function doAll() { createCanvas(); addText(); getPixelData(); }
+
+        function doAll() {
+            createCanvas();
+            addText();
+            getPixelData();
+        }
+
         function saveRememberDeviceSetting() {
             const checkbox = document.getElementById('rememberDeviceCheckbox');
             const namePrefixInput = document.getElementById('namePrefix');
-            const isEnabled = checkbox.checked; localStorage.setItem('rememberDeviceEnabled', isEnabled);
+            const isEnabled = checkbox.checked;
+            localStorage.setItem('rememberDeviceEnabled', isEnabled);
             addLog(`Remember device setting ${isEnabled ? 'enabled' : 'disabled'}.`);
-            if (isEnabled) { const lastDeviceName = localStorage.getItem('lastDeviceName'); if (lastDeviceName) { namePrefixInput.value = lastDeviceName; addLog(`Prefix filter set to remembered device: ${lastDeviceName}`); } else { addLog(`Remember device enabled, but no device name stored yet.`); } }
+            if (isEnabled) {
+                const lastDeviceName = localStorage.getItem('lastDeviceName');
+                if (lastDeviceName) {
+                    namePrefixInput.value = lastDeviceName;
+                    addLog(`Prefix filter set to remembered device: ${lastDeviceName}`);
+                } else {
+                    addLog(`Remember device enabled, but no device name stored yet.`);
+                }
+            }
         }
 
         function toggleViewMode() {
@@ -1999,7 +2777,9 @@
         async function loadServerFirmware(uartLogCallback) {
             uartLogCallback("Attempting to load ATC_BLE_OEPL.bin from server...");
             try {
-                const response = await fetch("./ATC_BLE_OEPL.bin", { mode: 'cors' });
+                const response = await fetch("./ATC_BLE_OEPL.bin", {
+                    mode: 'cors'
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}. Make sure ATC_BLE_OEPL.bin is in the same folder as the HTML and the server is configured for CORS if needed.`);
                 }
@@ -2014,7 +2794,9 @@
 
 
         window.addEventListener('load', function () {
-            populateDeviceTypeSelects(); populateGpioSelects(); populatePullTypeSelects();
+            populateDeviceTypeSelects();
+            populateGpioSelects();
+            populatePullTypeSelects();
 
             togglePinoutSection('epd_pinout_details', document.getElementById('conf_epd_pinout_enabled').checked);
             togglePinoutSection('led_pinout_details', document.getElementById('conf_led_pinout_enabled').checked);
@@ -2032,12 +2814,18 @@
             const rememberCheckbox = document.getElementById('rememberDeviceCheckbox');
             const namePrefixInput = document.getElementById('namePrefix');
             rememberCheckbox.checked = rememberEnabled;
-            if (rememberEnabled && lastDeviceName) { namePrefixInput.value = lastDeviceName; addLog(`Loaded remembered device name: ${lastDeviceName}`); }
-            else if (rememberEnabled) { addLog(`Remember device is enabled, no device name stored.`); }
-            else { addLog(`Remember device is disabled.`); }
+            if (rememberEnabled && lastDeviceName) {
+                namePrefixInput.value = lastDeviceName;
+                addLog(`Loaded remembered device name: ${lastDeviceName}`);
+            } else if (rememberEnabled) {
+                addLog(`Remember device is enabled, no device name stored.`);
+            } else {
+                addLog(`Remember device is disabled.`);
+            }
 
             showView('ble');
-            addLog("Page loaded. Ready."); setStatus("Ready");
+            addLog("Page loaded. Ready.");
+            setStatus("Ready");
 
 
             loadServerFirmware(addLog);
@@ -2142,7 +2930,8 @@
                     do {
                         if ((el & m) != 0) d[idx] = 0x80;
                         else d[idx] = 0xfe;
-                        idx += 1; m >>= 1;
+                        idx += 1;
+                        m >>= 1;
                     } while (m != 0);
                     pkt.set(d, n * 10);
                     d[0] = 0xfe; // start bit next byte swire = 0
@@ -2153,7 +2942,8 @@
                     do {
                         if ((el & m) != 0) d[idx] = 0x80;
                         else d[idx] = 0xfe;
-                        idx += 1; m >>= 1;
+                        idx += 1;
+                        m >>= 1;
                     } while (m != 0);
                     pkt.set(d, (n + 5) * 10);
                 });
@@ -2324,7 +3114,7 @@
                 const t_start = new Date().getTime();
                 try {
                     uart_swrite_span.innerHTML = 'Writing Device Type...';
-                    if(doActivate == 1)
+                    if (doActivate == 1)
                         await uartActivate(uart_uatime_select.value);
                     await uartFlashWriteEnable();
                     await uartFlashUnlock();
@@ -2600,7 +3390,10 @@
                             });
                             this.writer = this.port.writable.getWriter();
                             uartLog('DTR, RTS on.');
-                            await this.port.setSignals({ dataTerminalReady: false, requestToSend: false });
+                            await this.port.setSignals({
+                                dataTerminalReady: false,
+                                requestToSend: false
+                            });
                             uart_connect_btn.value = 'Close';
                             uartLog('USB-COM opened.');
                             uart_connect_btn.opened = true;
@@ -2617,15 +3410,13 @@
                                 uart_fwriter_btn.disabled = false;
                                 uart_bwrite_and_type_btn.disabled = false;
                                 uart_swrite_span.innerHTML = `Ready to write (${document.getElementById('uart_file').files.length > 0 ? "Local File" : (serverFirmwareBuffer && uartFirmwareArray === serverFirmwareBuffer ? "Server" : "File")})`;
-                            }
-                            else {
+                            } else {
                                 uart_swrite_span.innerHTML = 'Select firmware file';
                             }
 
 
                             if (typeof init_cb == 'function') await init_cb(this.port);
-                        }
-                        catch (err) {
+                        } catch (err) {
                             uartLog('Error opening serial port: ' + err);
                             uart_berase_btn.disabled = true;
                             uart_bunlock_btn.disabled = true;
@@ -2637,8 +3428,7 @@
                             uart_swrite_span.innerHTML = 'Open COM & Select file';
                         }
                         uart_connect_btn.disabled = false;
-                    }
-                    else {
+                    } else {
                         const errorMsg = 'Web serial API not enabled. Enable via chrome://flags/#enable-experimental-web-platform-features (or similar for your browser).';
                         uartLog(errorMsg);
                         alert(errorMsg);
@@ -2659,20 +3449,34 @@
                 }
                 async reset(t_ms) {
                     uartLog('DTR, RTS off.');
-                    await this.port.setSignals({ dataTerminalReady: true, requestToSend: true });
+                    await this.port.setSignals({
+                        dataTerminalReady: true,
+                        requestToSend: true
+                    });
                     await uartDelay(t_ms);
                     uartLog('DTR, RTS on.');
-                    return await this.port.setSignals({ dataTerminalReady: false, requestToSend: false });
+                    return await this.port.setSignals({
+                        dataTerminalReady: false,
+                        requestToSend: false
+                    });
                 }
                 async close() {
                     uart_fwriter_btn.disabled = true;
                     uart_bwrite_and_type_btn.disabled = true;
                     uart_swrite_span.innerHTML = 'Open COM & Select file';
                     if (this.writer) {
-                        try { await this.writer.close(); } catch (e) { uartLog("Writer close error: " + e); }
+                        try {
+                            await this.writer.close();
+                        } catch (e) {
+                            uartLog("Writer close error: " + e);
+                        }
                     }
                     if (this.port) {
-                        try { await this.port.close(); } catch (e) { uartLog("Port close error: " + e); }
+                        try {
+                            await this.port.close();
+                        } catch (e) {
+                            uartLog("Port close error: " + e);
+                        }
                     }
                     uart_connect_btn.value = 'Open';
                     uart_connect_btn.opened = false;
@@ -2686,7 +3490,7 @@
                 }
             }
             var uartSerialController = new UARTSerialController();
-        })(); 
+        })();
     </script>
 </body>
 
