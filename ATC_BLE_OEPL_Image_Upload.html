@@ -832,6 +832,9 @@
                     <label for="selectFirmware">Select Firmware:</label>
                     <input type="file" id="selectFirmware" onclick="resetFileSelector()"
                         onchange="selectFirmwareVoid()" />
+                    <button type="button" id="flashFromServerBleButton" onclick="flashFirmwareFromServerViaBLE()">Flash
+                        latest
+                        ATC_BLE_OEPL.bin</button>
                 </div>
                 <div>
                     <button type="button" onclick="sendcmd('0007');">Disable OEPL</button>
@@ -1969,6 +1972,25 @@
             document.getElementById("imageUpload").value = '';
         };
 
+        async function flashFirmwareFromServerViaBLE() {
+            addLog("Attempting to flash ATC_BLE_OEPL.bin from server via BLE...");
+            setStatus("BLE: Loading ATC_BLE_OEPL.bin...");
+            try {
+                const response = await fetch("./ATC_BLE_OEPL.bin", { mode: 'cors' });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}. Make sure ATC_BLE_OEPL.bin is in the same folder as the HTML file.`);
+                }
+                const serverBleFirmwareBuffer = await response.arrayBuffer();
+                addLog(`BLE: Successfully loaded ATC_BLE_OEPL.bin from server (${serverBleFirmwareBuffer.byteLength} bytes).`);
+                setStatus("BLE: FW loaded, starting flash...");
+                const firmwareByteArray = new Uint8Array(serverBleFirmwareBuffer);
+                sendFw(bytesToHex(firmwareByteArray));
+            } catch (error) {
+                addLog(`BLE: Error loading or flashing firmware from server: ${error.message}`);
+                setStatus(`BLE Error: ${error.message}`);
+                console.error("BLE server firmware load/flash error:", error);
+            }
+        }
         function selectFirmwareVoid() {
             const fileInput = document.getElementById('selectFirmware');
             if (fileInput.files && fileInput.files[0]) {
