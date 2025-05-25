@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenEPaperLink Template Designer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class', // Enable class-based dark mode
+        theme: {
+          extend: {
+            colors: {
+              epaperBlack: '#000000',
+              epaperWhite: '#FFFFFF',
+              epaperRed: '#FF0000',
+              epaperYellow: '#FFFF00',
+              epaperLightGray: '#D3D3D3',
+              epaperDarkGray: '#A9A9A9',
+              epaperPink: '#FFC0CB',
+              epaperBrown: '#A52A2A',
+              epaperGreen: '#008000',
+              epaperBlue: '#0000FF',
+              epaperOrange: '#FFA500',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Common TTFs used for preview */
+      @font-face {
+        font-family: 'OEL_signika_sb_ttf'; /* Matches actualCssFontId for signika_sb_ttf */
+        src: url('/oepl_json_designer/assets/Signika-SB-UYJvY4OM.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'OEL_weathericons_ttf'; /* Matches actualCssFontId for weathericons_ttf */
+        src: url('/oepl_json_designer/assets/weathericons-C-NtxvfT.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'OEL_bahnschrift_20_ttf'; /* Matches actualCssFontId for bahnschrift_20_ttf */
+        src: url('fonts/bahnschrift_20.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+      }
+       @font-face {
+        font-family: 'OEL_bahnschrift_30_ttf'; /* For bahnschrift_30_ttf */
+        src: url('fonts/bahnschrift_30.ttf') format('truetype'); /* Assuming this file exists */
+        font-weight: normal;
+        font-style: normal;
+      }
+       @font-face {
+        font-family: 'OEL_bahnschrift_70_ttf';  /* For bahnschrift_70_ttf */
+        src: url('fonts/bahnschrift_70.ttf') format('truetype'); /* Assuming this file exists */
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'OEL_calibrib_30_ttf'; /* Matches actualCssFontId for calibrib_30_ttf */
+        src: url('fonts/calibrib_30.ttf') format('truetype');
+        font-weight: bold;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'OEL_calibrib_50_ttf'; /* Matches actualCssFontId for calibrib_50_ttf */
+        src: url('fonts/calibrib_50.ttf') format('truetype');
+        font-weight: bold;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'OEL_calibrib_80_ttf'; /* Matches actualCssFontId for calibrib_80_ttf */
+        src: url('fonts/calibrib_80.ttf') format('truetype');
+        font-weight: bold;
+        font-style: normal;
+      }
+      .fallback-font {
+        font-family: monospace, sans-serif; /* Generic fallback for SVG text if font not loaded */
+      }
+    </style>
+
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "vite": "https://esm.sh/vite@^6.3.5",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^4.5.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/oepl_json_designer/assets/index-BnhHR_Lg.js"></script>
+  <link rel="stylesheet" crossorigin href="/oepl_json_designer/assets/index-tn0RQdqM.css">
+</head>
+  <body class="bg-slate-100 dark:bg-slate-900">
+    <script>
+      // Apply dark mode immediately based on localStorage
+      if (localStorage.getItem('oelDesigner_darkMode') === 'true' ||
+          (!('oelDesigner_darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
+    <div id="root"></div>
+  </body>
+</html>
