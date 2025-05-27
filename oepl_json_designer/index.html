@@ -33,32 +33,32 @@
       /* Common TTFs used for preview */
       @font-face {
         font-family: 'OEL_signika_sb_ttf'; /* Matches actualCssFontId for signika_sb_ttf */
-        src: url('/oepl_json_designer/assets/Signika-SB-UYJvY4OM.ttf') format('truetype');
+        src: url('fonts/Signika-SB.ttf') format('truetype');
         font-weight: normal;
         font-style: normal;
       }
       @font-face {
         font-family: 'OEL_weathericons_ttf'; /* Matches actualCssFontId for weathericons_ttf */
-        src: url('/oepl_json_designer/assets/weathericons-C-NtxvfT.ttf') format('truetype');
+        src: url('fonts/weathericons.ttf') format('truetype');
         font-weight: normal;
         font-style: normal;
       }
       @font-face {
         font-family: 'OEL_bahnschrift_20_ttf'; /* Matches actualCssFontId for bahnschrift_20_ttf */
         src: url('fonts/bahnschrift_20.ttf') format('truetype');
-        font-weight: normal;
+        font-weight: bold; /* Changed to bold */
         font-style: normal;
       }
        @font-face {
         font-family: 'OEL_bahnschrift_30_ttf'; /* For bahnschrift_30_ttf */
         src: url('fonts/bahnschrift_30.ttf') format('truetype'); /* Assuming this file exists */
-        font-weight: normal;
+        font-weight: bold; /* Changed to bold */
         font-style: normal;
       }
        @font-face {
         font-family: 'OEL_bahnschrift_70_ttf';  /* For bahnschrift_70_ttf */
         src: url('fonts/bahnschrift_70.ttf') format('truetype'); /* Assuming this file exists */
-        font-weight: normal;
+        font-weight: bold; /* Changed to bold */
         font-style: normal;
       }
       @font-face {
@@ -82,6 +82,15 @@
       .fallback-font {
         font-family: monospace, sans-serif; /* Generic fallback for SVG text if font not loaded */
       }
+      
+      /* Prevent text selection during drag operations */
+      body.dragging-active, body.dragging-active * {
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        /* cursor: grabbing !important; /* Optional: if you want the grabbing cursor globally */
+      }
     </style>
 
   <script type="importmap">
@@ -95,7 +104,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/oepl_json_designer/assets/index-CLBq2K2X.js"></script>
+  <script type="module" crossorigin src="/oepl_json_designer/assets/index-CejbOj5A.js"></script>
   <link rel="stylesheet" crossorigin href="/oepl_json_designer/assets/index-tn0RQdqM.css">
 </head>
   <body class="bg-slate-100 dark:bg-slate-900">
