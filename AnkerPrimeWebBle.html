@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anker Prime BLE Utility</title>
+    <style>
+        :root {
+            --bg-color: #1a1b26;
+            --fg-color: #c0caf5;
+            --card-bg: #24283b;
+            --primary-color: #7aa2f7;
+            --success-color: #9ece6a;
+            --warn-color: #e0af68;
+            --error-color: #f7768e;
+            --border-color: #414868;
+        }
+
+        /* Removed fixed height and overflow to allow for a natural document scroll */
+        body {
+            background-color: var(--bg-color);
+            color: var(--fg-color);
+            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            margin: 0;
+        }
+        
+        /* The top container will now dictate its own height based on content */
+        .top-container {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            color: var(--fg-color);
+            margin: 0;
+            font-size: 1.75rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+        }
+
+        #connectButton {
+            background-color: var(--primary-color);
+            color: var(--bg-color);
+        }
+
+        #connectButton:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(122, 162, 247, 0.4);
+        }
+        
+        #connectButton:disabled {
+            background-color: #545c7e;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        #resetButton {
+            background-color: #545c7e;
+            color: var(--fg-color);
+        }
+        #resetButton:hover {
+             background-color: var(--error-color);
+             color: var(--bg-color);
+        }
+
+        .status-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-card h2 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+        
+        .settings-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .setting-group label {
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .setting-button {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            background-color: #545c7e;
+            color: var(--fg-color);
+        }
+        .setting-button:hover {
+            background-color: var(--primary-color);
+            color: var(--bg-color);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+        
+        .port-card {
+            background-color: #1a1b26;
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            transition: opacity 0.3s ease;
+        }
+        .port-card.port-off {
+            opacity: 0.5;
+        }
+        .port-card h3 {
+            margin-top: 0;
+            margin-bottom: 0.75rem;
+            color: var(--primary-color);
+        }
+        .port-card .status-item {
+             flex-direction: row;
+             justify-content: space-between;
+             align-items: baseline;
+             padding-bottom: 0.5rem;
+             border-bottom: 1px dashed #2a2f4a;
+             margin-bottom: 0.5rem;
+        }
+         .port-card .status-item:last-child {
+            border-bottom: none;
+             margin-bottom: 0;
+        }
+
+        .custom-command-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 1rem;
+            align-items: center;
+        }
+        .custom-command-grid label { font-weight: bold; }
+        .custom-command-grid input[type="text"], .custom-command-grid textarea {
+            background-color: #16161e;
+            color: var(--fg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px;
+            font-family: 'Fira Code', monospace;
+        }
+        .custom-command-grid textarea {
+            grid-column: span 2;
+            height: 80px;
+            resize: vertical;
+        }
+        .custom-command-grid .options-container {
+            grid-column: span 2;
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .custom-command-grid .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .custom-command-grid .send-button {
+             grid-column: span 2;
+             background-color: var(--warn-color);
+             color: var(--bg-color);
+        }
+        .custom-command-grid .send-button:hover { background-color: #ffc977; }
+
+
+        .status-item { display: flex; flex-direction: column; }
+        .status-item .label { font-size: 0.9rem; color: #a9b1d6; margin-bottom: 0.25rem; }
+        .status-item .value { font-family: 'Fira Code', 'Cascadia Code', monospace; font-weight: bold; font-size: 1rem; word-break: break-all; color: var(--fg-color); }
+        .status-inactive { color: #545c7e !important; }
+        .status-active { color: var(--success-color) !important; }
+        .battery-level .value { font-size: 1.5rem; color: var(--success-color); }
+        
+        /* The log wrapper is given a fixed, responsive height */
+        #log-wrapper {
+            padding: 0 1.5rem 1.5rem 1.5rem;
+            height: 60vh; /* Assign a portion of the viewport height */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* The log div itself will grow to fill the wrapper and be scrollable */
+        #log {
+            background-color: #16161e;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            overflow-y: scroll;
+            flex-grow: 1; /* Fills the parent #log-wrapper */
+            font-family: 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .log-transaction {
+            border-left: 3px solid #545c7e;
+            padding-left: 10px;
+            margin-bottom: 12px;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 6px;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px 12px;
+            border-left: 4px solid var(--border-color);
+            line-height: 1.6;
+        }
+        .log-transaction .log-entry {
+            border-left: none;
+            padding-left: 0;
+        }
+
+        .log-entry.sent { border-left-color: var(--primary-color); }
+        .log-entry.received { border-left-color: var(--success-color); }
+        .log-entry.info { border-left-color: #545c7e; }
+        .log-entry.error { border-left-color: var(--error-color); color: var(--error-color); }
+        .log-entry.success { border-left-color: var(--success-color); color: var(--success-color); }
+        .log-entry.warn { border-left-color: var(--warn-color); }
+        .log-entry .payload {
+            color: #a9b1d6;
+            display: block;
+            margin-top: 5px;
+            padding: 8px;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="top-container">
+        <header>
+            <h1>Anker Prime BLE Utility</h1>
+            <div class="controls">
+                <button id="connectButton" class="button">Connect & Run Sequence</button>
+                <button id="resetButton" class="button">Reset</button>
+            </div>
+        </header>
+
+        <div class="status-card">
+            <h2>Device Information</h2>
+            <div class="status-grid">
+                <div class="status-item"><span class="label">MAC Address</span><span id="statusMac" class="value status-inactive">Not Extracted</span></div>
+                <div class="status-item"><span class="label">Serial Number</span><span id="statusSerial" class="value status-inactive">Not Extracted</span></div>
+                <div class="status-item"><span class="label">Firmware</span><span id="statusVersion" class="value status-inactive">Not Extracted</span></div>
+                <div class="status-item"><span class="label">Encryption</span><span id="statusCrypto" class="value status-inactive">INACTIVE</span></div>
+                <div class="status-item"><span class="label">Active Key</span><span id="statusKey" class="value status-inactive">Not Set</span></div>
+                <div class="status-item"><span class="label">Active IV</span><span id="statusIV" class="value status-inactive">Not Set</span></div>
+            </div>
+        </div>
+        
+        <div class="status-card">
+            <h2>Live Power Status</h2>
+            <div class="status-grid">
+                <div class="status-item battery-level"><span class="label">Battery Level</span><span id="statusBatteryLevel" class="value status-inactive">N/A</span></div>
+                <div class="status-item"><span class="label">Temperature</span><span id="statusTemperature" class="value status-inactive">N/A</span></div>
+                <div class="status-item"><span class="label">Total Input</span><span id="statusTotalInput" class="value status-inactive">N/A</span></div>
+                <div class="status-item"><span class="label">Total Output</span><span id="statusTotalOutput" class="value status-inactive">N/A</span></div>
+                <div class="port-card" id="portC1">
+                    <h3>USB-C 1</h3>
+                    <div class="status-item"><span class="label">Mode</span><span id="statusUsbC1Mode" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Voltage</span><span id="statusUsbC1Voltage" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Current (Calc)</span><span id="statusUsbC1Current" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Power</span><span id="statusUsbC1Power" class="value status-inactive">N/A</span></div>
+                </div>
+                <div class="port-card" id="portC2">
+                    <h3>USB-C 2</h3>
+                    <div class="status-item"><span class="label">Mode</span><span id="statusUsbC2Mode" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Voltage</span><span id="statusUsbC2Voltage" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Current (Calc)</span><span id="statusUsbC2Current" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Power</span><span id="statusUsbC2Power" class="value status-inactive">N/A</span></div>
+                </div>
+                <div class="port-card" id="portA">
+                    <h3>USB-A</h3>
+                    <div class="status-item"><span class="label">Mode</span><span id="statusUsbAMode" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Voltage</span><span id="statusUsbAVoltage" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Current (Calc)</span><span id="statusUsbACurrent" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Power</span><span id="statusUsbAPower" class="value status-inactive">N/A</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <h2>Device Settings</h2>
+            <div class="settings-container">
+                <div class="setting-group">
+                     <label>Display Theme:</label>
+                     <div class="button-group">
+                        <button id="setThemeSimpleButton" class="button setting-button">Simple</button>
+                        <button id="setThemeAdvancedButton" class="button setting-button">Advanced</button>
+                     </div>
+                </div>
+                 <div class="setting-group">
+                     <label>Device Beep:</label>
+                     <div class="button-group">
+                        <button id="setBeepOffButton" class="button setting-button">Off</button>
+                        <button id="setBeepOnButton" class="button setting-button">On</button>
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <h2>Custom Command Sender</h2>
+            <div class="custom-command-grid">
+                <label for="customCommandGroupInput">Group (Hex):</label>
+                <input type="text" id="customCommandGroupInput" placeholder="e.g., 01" value="01">
+                <label for="customCommandInput">Command (2-Byte Hex):</label>
+                <input type="text" id="customCommandInput" placeholder="e.g., 0504">
+                <label for="customTlvInput">TLV Data:</label>
+                <span>Format: <code>Type:Format:Value</code> (one entry per line)</span>
+                <textarea id="customTlvInput" placeholder="Examples:&#10;A1:HEX:112233&#10;A4:ASCII:HelloWorld"></textarea>
+                <div class="options-container">
+                    <div class="checkbox-container">
+                         <input type="checkbox" id="customEncryptCheckbox">
+                         <label for="customEncryptCheckbox">Send encrypted</label>
+                    </div>
+                </div>
+                <button id="sendCustomCommandButton" class="button send-button">Send Custom Command</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="log-wrapper">
+         <div id="log"></div>
+    </div>
+
+    <script>
+        const connectButton = document.getElementById('connectButton'), resetButton = document.getElementById('resetButton'), logDiv = document.getElementById('log');
+        const statusMac = document.getElementById('statusMac'), statusSerial = document.getElementById('statusSerial'), statusVersion = document.getElementById('statusVersion'), statusCrypto = document.getElementById('statusCrypto'), statusKey = document.getElementById('statusKey'), statusIV = document.getElementById('statusIV'), statusTemperature = document.getElementById('statusTemperature');
+        const statusBatteryLevel = document.getElementById('statusBatteryLevel'), statusTotalInput = document.getElementById('statusTotalInput'), statusTotalOutput = document.getElementById('statusTotalOutput');
+        const statusUsbC1Mode = document.getElementById('statusUsbC1Mode'), statusUsbC1Voltage = document.getElementById('statusUsbC1Voltage'), statusUsbC1Power = document.getElementById('statusUsbC1Power'), statusUsbC1Current = document.getElementById('statusUsbC1Current');
+        const statusUsbC2Mode = document.getElementById('statusUsbC2Mode'), statusUsbC2Voltage = document.getElementById('statusUsbC2Voltage'), statusUsbC2Power = document.getElementById('statusUsbC2Power'), statusUsbC2Current = document.getElementById('statusUsbC2Current');
+        const statusUsbAMode = document.getElementById('statusUsbAMode'), statusUsbAVoltage = document.getElementById('statusUsbAVoltage'), statusUsbAPower = document.getElementById('statusUsbAPower'), statusUsbACurrent = document.getElementById('statusUsbACurrent');
+        const setThemeSimpleButton = document.getElementById('setThemeSimpleButton'), setThemeAdvancedButton = document.getElementById('setThemeAdvancedButton');
+        const setBeepOnButton = document.getElementById('setBeepOnButton'), setBeepOffButton = document.getElementById('setBeepOffButton');
+        const customCommandGroupInput = document.getElementById('customCommandGroupInput'), customCommandInput = document.getElementById('customCommandInput'), customTlvInput = document.getElementById('customTlvInput');
+        const customEncryptCheckbox = document.getElementById('customEncryptCheckbox'), sendCustomCommandButton = document.getElementById('sendCustomCommandButton');
+        let device, server, writeCharacteristic, notifyCharacteristic, resolveNextNotificationPromise, activeKey, activeIv, cryptoState = 'INACTIVE', deviceInfo = {}, sessionUtcTimestampBytes = null, currentTransactionWrapper = null;
+        
+        const initialPowerStatus = { temperature: null, batteryLevel: null, totalInputPower: null, totalOutputPower: null, portC1: { mode: 'N/A', voltage: 'N/A', power: 'N/A', current: 'N/A' }, portC2: { mode: 'N/A', voltage: 'N/A', power: 'N/A', current: 'N/A' }, portA: { mode: 'N/A', voltage: 'N/A', power: 'N/A', current: 'N/A' } };
+        let powerStatus = JSON.parse(JSON.stringify(initialPowerStatus));
+
+        const A2_STATIC_VALUE_HEX = '32633337376466613039636462373932343838396534323932613337663631633863356564353264';
+        const INITIAL_ENCRYPTION_KEY_HEX = A2_STATIC_VALUE_HEX.substring(0, 32);
+        const ADVERTISED_SERVICE_UUID = 0x2215, FULL_SERVICE_UUID = '22150001-4002-81c5-b46e-cf057c562025', WRITE_CHARACTERISTIC_UUID = '22150002-4002-81c5-b46e-cf057c562025', NOTIFY_CHARACTERISTIC_UUID = '22150003-4002-81c5-b46e-cf057c562025';
+        const MAX_LOG_ENTRIES = 500;
+        
+        const toHexString = bytes => Array.from(bytes).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join('');
+        const hexToBytes = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        const asciiToBytes = str => new TextEncoder().encode(str);
+        const bytesToAscii = bytes => new TextDecoder().decode(bytes, { ignoreBOM: true }).replace(/[\u0000-\u001F\u007F-\u009F]/g, ".");
+        const calculateChecksum = data => data.reduce((checksum, byte) => checksum ^ byte, 0);
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+
+        function limitLogEntries() { while (logDiv.children.length > MAX_LOG_ENTRIES) { logDiv.removeChild(logDiv.firstChild); } }
+        function buildTlvBuffer(tlvArray) { let totalLength = 0; tlvArray.forEach(item => totalLength += 2 + item.value.length); const buffer = new Uint8Array(totalLength); let offset = 0; tlvArray.forEach(item => { buffer[offset++] = item.type; buffer[offset++] = item.value.length; buffer.set(item.value, offset); offset += item.value.length; }); return buffer; }
+        
+        function buildRequestContent(command, tlvArray, group = 0x01) {
+            const commandHigh = (command >> 8) & 0xFF;
+            const commandLow = command & 0xFF;
+            const commandHeader = new Uint8Array([0x03, 0x00, group, commandHigh]);
+            const commandCode = new Uint8Array([commandLow]);
+            const tlvData = buildTlvBuffer(tlvArray);
+            const payload = new Uint8Array(commandHeader.length + commandCode.length + tlvData.length);
+            payload.set(commandHeader, 0);
+            payload.set(commandCode, commandHeader.length);
+            payload.set(tlvData, commandHeader.length + commandCode.length);
+            return payload;
+        }
+
+        function log(message, type = 'info', payload = null, parentElement = null) {
+            const isScrolledToBottom = logDiv.scrollHeight - logDiv.clientHeight <= logDiv.scrollTop + 5;
+            const entry = document.createElement('div');
+            entry.innerHTML = `<strong>[${new Date().toLocaleTimeString('en-US', { hour12: false })}]</strong> ${message}`;
+            entry.className = `log-entry ${type}`;
+            if (payload) { const payloadDiv = document.createElement('div'); payloadDiv.className = 'payload'; payloadDiv.innerText = payload; entry.appendChild(payloadDiv); }
+            const target = parentElement || (type === 'sent' || type === 'received' ? null : currentTransactionWrapper) || logDiv;
+            target.appendChild(entry);
+            if (target === logDiv) { limitLogEntries(); }
+            if (isScrolledToBottom) { logDiv.scrollTop = logDiv.scrollHeight; }
+        }
+
+        function updateStatusDisplay() {
+            const update = (el, val, inactiveText = 'N/A') => { el.textContent = val !== null ? val : inactiveText; el.className = val !== null ? 'value' : 'value status-inactive'; };
+            update(statusMac, deviceInfo.macAddress, 'Not Extracted'); update(statusSerial, deviceInfo.serialNumber, 'Not Extracted'); update(statusVersion, deviceInfo.version, 'Not Extracted');
+            update(statusKey, deviceInfo.activeKeyHex, 'Not Set'); update(statusIV, deviceInfo.activeIvHex, 'Not Set');
+            statusCrypto.textContent = cryptoState; statusCrypto.className = cryptoState !== 'INACTIVE' ? 'value status-active' : 'value status-inactive';
+            
+            update(statusTemperature, powerStatus.temperature);
+            update(statusBatteryLevel, powerStatus.batteryLevel);
+            update(statusTotalInput, powerStatus.totalInputPower);
+            update(statusTotalOutput, powerStatus.totalOutputPower);
+            update(statusUsbC1Mode, powerStatus.portC1.mode); update(statusUsbC1Voltage, powerStatus.portC1.voltage); update(statusUsbC1Power, powerStatus.portC1.power); update(statusUsbC1Current, powerStatus.portC1.current);
+            update(statusUsbC2Mode, powerStatus.portC2.mode); update(statusUsbC2Voltage, powerStatus.portC2.voltage); update(statusUsbC2Power, powerStatus.portC2.power); update(statusUsbC2Current, powerStatus.portC2.current);
+            update(statusUsbAMode, powerStatus.portA.mode); update(statusUsbAVoltage, powerStatus.portA.voltage); update(statusUsbAPower, powerStatus.portA.power); update(statusUsbACurrent, powerStatus.portA.current);
+            
+            document.getElementById('portC1').className = powerStatus.portC1.mode === 'Off' ? 'port-card port-off' : 'port-card';
+            document.getElementById('portC2').className = powerStatus.portC2.mode === 'Off' ? 'port-card port-off' : 'port-card';
+            document.getElementById('portA').className = powerStatus.portA.mode === 'Off' ? 'port-card port-off' : 'port-card';
+        }
+
+        async function setupCrypto(keyBytes, ivBytes, state) { try { activeKey = await window.crypto.subtle.importKey("raw", keyBytes, { name: "AES-CBC", length: 128 }, false, ["encrypt", "decrypt"]); activeIv = ivBytes; deviceInfo.activeKeyHex = toHexString(keyBytes); deviceInfo.activeIvHex = toHexString(ivBytes); cryptoState = state; log(`Crypto context set to state "${state}"`, 'success'); } catch (error) { log(`ERROR during crypto initialization: ${error.message}`, 'error'); } updateStatusDisplay(); }
+        const encrypt = async (plainText) => window.crypto.subtle.encrypt({ name: "AES-CBC", iv: activeIv }, activeKey, plainText).then(d => new Uint8Array(d));
+        const decrypt = async (cipherText) => window.crypto.subtle.decrypt({ name: "AES-CBC", iv: activeIv }, activeKey, cipherText).then(d => new Uint8Array(d));
+
+        async function sendRawPayload(payload, expectsResponse = false) {
+            if (!writeCharacteristic) return log('Cannot send: No connection', 'error');
+
+            const commandHighByte = payload[3];
+            const commandLowByte = payload[4];
+            const isEncrypted = (commandHighByte & 0x40) !== 0;
+            const fullCommand = ((commandHighByte & ~0x40) << 8) | commandLowByte;
+
+            let flagDescriptions = [];
+            if (isEncrypted) flagDescriptions.push("Encrypted (0x40)");
+            if (flagDescriptions.length === 0) flagDescriptions.push("None");
+
+            const logMessage = `--> SENDING Command: 0x${fullCommand.toString(16).toUpperCase().padStart(4, '0')}`;
+            const logPayload = `Header: ${toHexString(payload.slice(0, 5))} (Group: ${payload[2]}, CmdByte1: 0x${commandHighByte.toString(16).toUpperCase().padStart(2, '0')})\nPayload: ${toHexString(payload.slice(5))}`;
+
+            if (expectsResponse) {
+                currentTransactionWrapper = document.createElement('div');
+                currentTransactionWrapper.className = 'log-transaction';
+                logDiv.appendChild(currentTransactionWrapper);
+                limitLogEntries();
+            }
+            log(logMessage, 'sent', logPayload, currentTransactionWrapper);
+
+            const totalPacketLength = payload.length + 5;
+            const messageForChecksum = new Uint8Array(4 + payload.length);
+            const view = new DataView(messageForChecksum.buffer);
+            view.setUint8(0, 0xff);
+            view.setUint8(1, 0x09);
+            view.setUint16(2, totalPacketLength, true);
+            messageForChecksum.set(payload, 4);
+            const checksum = calculateChecksum(messageForChecksum);
+            const finalMessage = new Uint8Array([...messageForChecksum, checksum]);
+            console.log(`[RAW SEND] Final packet written to characteristic: ${toHexString(finalMessage)}`);
+            await writeCharacteristic.writeValueWithoutResponse(finalMessage);
+        }
+        
+        async function sendEncryptedCommand(group, command, tlvArray, expectsResponse) {
+            if (cryptoState !== 'Initial' && cryptoState !== 'Session') {
+                throw new Error("Encryption requested, but crypto context is not ready.");
+            }
+            const commandHigh = (command >> 8) & 0xFF;
+            const commandLow = command & 0xFF;
+            const finalCommandHigh = commandHigh | 0x40; // Add encryption flag
+
+            const tlvForEncryption = buildTlvBuffer(tlvArray);
+            const cipherText = await encrypt(tlvForEncryption);
+
+            const commandHeader = new Uint8Array([0x03, 0x00, group, finalCommandHigh, commandLow]);
+            const finalPayload = new Uint8Array(commandHeader.length + cipherText.length);
+            finalPayload.set(commandHeader, 0);
+            finalPayload.set(cipherText, commandHeader.length);
+
+            await sendRawPayload(finalPayload, expectsResponse);
+        }
+
+        async function performHandshake() {
+            log('--- Starting Handshake Sequence ---', 'warn');
+            try {
+                const utcSeconds = Math.floor(Date.now() / 1000);
+                sessionUtcTimestampBytes = new Uint8Array(4); new DataView(sessionUtcTimestampBytes.buffer).setUint32(0, utcSeconds, true);
+                await sendRawPayload(buildRequestContent(0x0001, [{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }]), true);
+                await new Promise(r => resolveNextNotificationPromise = r);
+                await sendRawPayload(buildRequestContent(0x0003, [{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }, { type: 0xA3, value: new Uint8Array([0x20])}, { type: 0xA4, value: new Uint8Array([0x00, 0xF0])}]), true);
+                await new Promise(r => resolveNextNotificationPromise = r);
+                await sendRawPayload(buildRequestContent(0x0029, [{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }]), true);
+                const infoResponsePayload = await new Promise(r => resolveNextNotificationPromise = r);
+                extractHandshakeInfo(infoResponsePayload);
+                await sendRawPayload(buildRequestContent(0x0005, [{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }, { type: 0xA3, value: new Uint8Array([0x20])}, { type: 0xA4, value: new Uint8Array([0x00, 0xF0])}, { type: 0xA5, value: new Uint8Array([0x02])}]), true);
+                await new Promise(r => resolveNextNotificationPromise = r);
+                if (!deviceInfo.serialNumber) throw new Error("Serial number was not extracted during handshake.");
+                cryptoState = 'READY (Initial)'; log('Unencrypted handshake complete. Ready for encryption phase 1', 'success'); updateStatusDisplay(); return true;
+            } catch (error) { log(`HANDSHAKE FAILED: ${error.message}`, 'error'); updateStatusDisplay(); return false; }
+        }
+
+        async function performInitialEncryption() {
+             log('--- Preparing Initial Encryption ---', 'warn');
+            try {
+                if (!deviceInfo.serialNumber || !sessionUtcTimestampBytes) throw new Error("Prerequisites for encryption not met (missing S/N or timestamp)");
+                await setupCrypto(hexToBytes(INITIAL_ENCRYPTION_KEY_HEX), asciiToBytes(deviceInfo.serialNumber), 'Initial');
+                const tlvForEncryption = buildTlvBuffer([ { type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }, { type: 0xA3, value: new Uint8Array(4) }, { type: 0xA5, value: new Uint8Array(40) } ]);
+                const cipherText = await encrypt(tlvForEncryption);
+                const commandHeader = new Uint8Array([0x03, 0x00, 0x01, 0x40, 0x22]); // Command 0x0022, encrypted
+                const finalPayload = new Uint8Array(commandHeader.length + cipherText.length);
+                finalPayload.set(commandHeader, 0); finalPayload.set(cipherText, commandHeader.length);
+                await sendRawPayload(finalPayload, false); return true;
+            } catch(error) { log(`ERROR during initial encryption: ${error.message}`, 'error'); return false; }
+        }
+
+        async function performGetStatus() {
+            log('--- Sending Status Request with Session Key ---', 'warn');
+             try {
+                if (cryptoState !== 'Session') throw new Error("Session key is not active. Cannot get status");
+                await sendEncryptedCommand(0x11, 0x0500, [{ type: 0xA1, value: new Uint8Array([0x21]) }], true);
+                return true;
+            } catch(error) { log(`ERROR during status request: ${error.message}`, 'error'); return false; }
+        }
+
+        async function performSetTheme(themeValue) {
+            log(`--- Sending Set Theme Command (Theme: ${themeValue === '00' ? 'Simple' : 'Advanced'}) ---`, 'warn');
+            try {
+                if (cryptoState !== 'Session') throw new Error("Session key is not active. Cannot change settings.");
+                const command = 0x0504; // 0x05 for 2nd SoC, 0x04 for Set Theme
+                const tlvArray = [ { type: 0xA1, value: new Uint8Array([0x21]) }, { type: 0xA2, value: hexToBytes('01' + themeValue) } ];
+                await sendEncryptedCommand(0x11, command, tlvArray, true);
+                await new Promise(r => resolveNextNotificationPromise = r);
+                log('Theme change command acknowledged by device.', 'success'); return true;
+            } catch(error) { log(`ERROR during theme change: ${error.message}`, 'error'); return false; }
+        }
+
+        async function performSetBeep(beepValue) {
+            log(`--- Sending Set Beep Command (Beep: ${beepValue === '01' ? 'On' : 'Off'}) ---`, 'warn');
+            try {
+                if (cryptoState !== 'Session') throw new Error("Session key is not active. Cannot change settings.");
+                const command = 0x0505; // 0x05 for 2nd SoC, 0x05 for Set Beep
+                const tlvArray = [ { type: 0xA1, value: new Uint8Array([0x21]) }, { type: 0xA2, value: hexToBytes('01' + beepValue) } ];
+                await sendEncryptedCommand(0x11, command, tlvArray, true);
+                await new Promise(r => resolveNextNotificationPromise = r);
+                log('Beep setting command acknowledged by device.', 'success'); return true;
+            } catch(error) { log(`ERROR during beep setting change: ${error.message}`, 'error'); return false; }
+        }
+
+        connectButton.addEventListener('click', async () => {
+            log('Starting connection process...'); connectButton.disabled = true;
+            try {
+                device = await navigator.bluetooth.requestDevice({ filters: [{ services: [ADVERTISED_SERVICE_UUID] }], optionalServices: [FULL_SERVICE_UUID] });
+                log(`Device selected: ${device.name || 'Unknown'}`, 'success');
+                device.addEventListener('gattserverdisconnected', onDisconnected);
+                server = await device.gatt.connect();
+                const service = await server.getPrimaryService(FULL_SERVICE_UUID);
+                writeCharacteristic = await service.getCharacteristic(WRITE_CHARACTERISTIC_UUID);
+                notifyCharacteristic = await service.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
+                await notifyCharacteristic.startNotifications();
+                notifyCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+                log('Connection successful. Starting automated sequence', 'success');
+                await delay(500); const handshakeSuccess = await performHandshake(); if (!handshakeSuccess) throw new Error("Handshake failed.");
+                await delay(500); const initialEncryptSuccess = await performInitialEncryption(); if (!initialEncryptSuccess) throw new Error("Initial encryption step failed.");
+                log('Waiting for session key from device...', 'info');
+                let waitAttempts = 0; while (cryptoState !== 'Session' && waitAttempts < 20) { await delay(500); waitAttempts++; } if (cryptoState !== 'Session') throw new Error("Timed out waiting for session key.");
+                log('Session key established', 'success');
+                await delay(500); await performGetStatus();
+                log('--- AUTOMATED SEQUENCE COMPLETE ---', 'success');
+            } catch (error) { log(`SEQUENCE FAILED: ${error.message}`, 'error'); if (device && device.gatt.connected) { device.gatt.disconnect(); } else { fullReset(); } }
+        });
+
+        async function handleNotifications(event) {
+            const rawData = new Uint8Array(event.target.value.buffer);
+            const targetWrapper = resolveNextNotificationPromise ? currentTransactionWrapper : null;
+            if (rawData.byteLength < 5) { log(`<-- RECEIVED (${rawData.byteLength} Bytes)`, 'received', `${toHexString(rawData)}`, targetWrapper); if (resolveNextNotificationPromise) resolveNextNotificationPromise(rawData); return; }
+            const payloadWithHeader = rawData.slice(4, rawData.byteLength - 1);
+            let isEncrypted = false, fullCommand = 0, commandHighByte = 0, flagDescriptions = ['None'];
+            
+            if (payloadWithHeader.length >= 5) {
+                commandHighByte = payloadWithHeader[3];
+                const commandLowByte = payloadWithHeader[4];
+                isEncrypted = (commandHighByte & 0x40) !== 0;
+                fullCommand = ((commandHighByte & ~0x40) << 8) | commandLowByte;
+                const isAck = (commandHighByte & 0x08) !== 0; 
+                flagDescriptions = [];
+                if (isEncrypted) flagDescriptions.push("Encrypted (0x40)");
+                if (isAck) flagDescriptions.push("ACK (0x08)");
+                if (flagDescriptions.length === 0) flagDescriptions.push("None");
+            }
+
+            const logMessage = `<-- RECEIVED Command: 0x${fullCommand.toString(16).toUpperCase().padStart(4, '0')}`;
+            const logPayload = `CmdByte1: 0x${commandHighByte.toString(16).toUpperCase().padStart(2, '0')} (${flagDescriptions.join(', ')})\nRaw Packet: ${toHexString(rawData)}`;
+            log(logMessage, 'received', logPayload, targetWrapper);
+            
+            let contentToParse = payloadWithHeader;
+            if (isEncrypted) {
+                 if (!activeKey) { log('[DECRYPTION_ERROR] No active key available', 'error', null, targetWrapper); if (resolveNextNotificationPromise) resolveNextNotificationPromise(rawData); return; }
+                 const cipherText = payloadWithHeader.slice(5);
+                 try {
+                     const decryptedPayload = await decrypt(cipherText);
+                     log('[SUCCESS] Packet decrypted', 'success', `Plaintext: ${toHexString(decryptedPayload)}`, targetWrapper);
+                     contentToParse = decryptedPayload;
+                     // --- COMMAND-BASED ROUTING ---
+                     switch (fullCommand) {
+                        case 0x0D00: // Added based on log analysis
+                        case 0x0500: parseComprehensiveStatus(decryptedPayload); break;
+                        case 0x050E: parseLivePowerStatus(decryptedPayload); break;
+                        case 0x0522: parseDedicatedTemperature(decryptedPayload); break;
+                     }
+                 } catch (e) { log('[DECRYPTION_ERROR] ' + e.message, 'error', `Ciphertext: ${toHexString(cipherText)}`, targetWrapper); if (resolveNextNotificationPromise) resolveNextNotificationPromise(rawData); return; }
+            }
+            logTlvData(contentToParse, targetWrapper);
+            if (resolveNextNotificationPromise) { resolveNextNotificationPromise(contentToParse); currentTransactionWrapper = null; }
+        }
+
+        function* _parseTlvGenerator(payload, offset) { let i = offset; while (i < payload.length - 1) { const type = payload[i], length = payload[i + 1]; if (i + 2 + length > payload.length) { log(`[TLV_ERROR] Type 0x${toHexString([type])} at index ${i} declares length ${length}, which exceeds packet boundaries`, 'error'); return; } const value = payload.slice(i + 2, i + 2 + length); yield { type, length, value }; i += 2 + length; } }
+        
+        function extractHandshakeInfo(payload) {
+            log('[EXTRACT] Searching for handshake data (SN, FW, MAC)', 'info', null, currentTransactionWrapper);
+            for (const { type, value } of _parseTlvGenerator(payload, 6)) {
+                switch (type) {
+                    case 0xA3: deviceInfo.version = bytesToAscii(value); break;
+                    case 0xA4: deviceInfo.serialNumber = bytesToAscii(value); break;
+                    case 0xA5: deviceInfo.macAddress = toHexString(value).match(/.{1,2}/g).join(':'); break;
+                }
+            }
+            updateStatusDisplay();
+        }
+
+        /**
+         * Parses the comprehensive status dump received with Command 0x0500.
+         * This updates all live values at once.
+         */
+        function parseComprehensiveStatus(payload) {
+            log('[INFO] Parsing comprehensive status from Command 0x0500...', 'info', null, currentTransactionWrapper);
+            const newStatus = JSON.parse(JSON.stringify(initialPowerStatus));
+
+            const getModeString = (modeByte) => { switch(modeByte) { case 0: return 'Off'; case 1: return 'Input'; case 2: return 'Output'; default: return `Unknown (${toHexString([modeByte])})`; } };
+            const _parsePortData = (portData, value) => {
+                const view = new DataView(value.buffer);
+                 if (value.length < 12) return;
+                portData.mode = getModeString(value[2]);
+                if (portData.mode !== 'Off') {
+                    const voltage_scaled = view.getUint16(3, true);
+                    const current_scaled = view.getUint16(5, true);
+                    const voltage_v = voltage_scaled / 10.0;
+                    const current_a = current_scaled / 10.0;
+                    const power_w = voltage_v * current_a;
+                    portData.voltage = voltage_v.toFixed(2) + ' V';
+                    portData.current = current_a.toFixed(3) + ' A';
+                    portData.power = power_w.toFixed(2) + ' W';
+                }
+            };
+            
+            try {
+                const offset = (payload.length > 0 && payload[0] === 0x00) ? 1 : 0;
+                if (offset === 1) log(`[INFO] Detected 0x00 status code, starting TLV parse at index 1`, 'info', null, currentTransactionWrapper);
+                
+                for (const { type, value } of _parseTlvGenerator(payload, offset)) {
+                    const view = new DataView(value.buffer);
+                    switch (type) {
+                        case 0xA2:
+                            if (value.length >= 10) {
+                                newStatus.batteryLevel = `${value[8]}.${String(value[9] || '0').padStart(2, '0')} %`;
+                            }
+                            break;
+                        case 0xA4: _parsePortData(newStatus.portC1, value); break;
+                        case 0xA5: _parsePortData(newStatus.portC2, value); break;
+                        case 0xA6: _parsePortData(newStatus.portA, value); break;
+                        case 0xAE:
+                             if (value.length >= 5) {
+                                newStatus.totalOutputPower = (view.getUint16(1, true) / 10.0).toFixed(2) + ' W';
+                                newStatus.totalInputPower = (view.getUint16(3, true) / 10.0).toFixed(2) + ' W';
+                            }
+                            break;
+                        case 0xB3:
+                            if (value.length >= 3) {
+                                newStatus.temperature = `${value[1]}°C / ${value[2]}°F`;
+                            }
+                            break;
+                    }
+                }
+                powerStatus = newStatus;
+            } catch (e) {
+                log(`[PARSER_ERROR] Failed to parse comprehensive status: ${e.message}`, 'error', null, currentTransactionWrapper);
+            }
+            updateStatusDisplay();
+        }
+        
+        /**
+         * Parses the dedicated temperature update received with Command 0x0522.
+         */
+        function parseDedicatedTemperature(payload) {
+            log('[INFO] Parsing dedicated temperature from Command 0x0522...', 'info', null, currentTransactionWrapper);
+            try {
+                const offset = (payload.length > 0 && payload[0] === 0x00) ? 1 : 0;
+                if (offset === 1) log(`[INFO] Detected 0x00 status code, starting TLV parse at index 1`, 'info', null, currentTransactionWrapper);
+                
+                for (const { type, value } of _parseTlvGenerator(payload, offset)) {
+                    if (type === 0xA2 && value.length >= 3) {
+                        const tempC = value[1];
+                        const tempF = value[2];
+                        powerStatus.temperature = `${tempC}°C / ${tempF}°F`;
+                        log(`[EXTRACT] Temperature: ${powerStatus.temperature}`, 'success', null, currentTransactionWrapper);
+                        break; 
+                    }
+                }
+            } catch (e) {
+                log(`[PARSER_ERROR] Failed to parse temperature status: ${e.message}`, 'error', null, currentTransactionWrapper);
+            }
+            updateStatusDisplay();
+        }
+        
+        /**
+         * Parses the live power status update received with Command 0x050E.
+         */
+        function parseLivePowerStatus(payload) {
+            log('[INFO] Parsing live power status from Command 0x050E...', 'info', null, currentTransactionWrapper);
+            const newStatus = JSON.parse(JSON.stringify(powerStatus));
+            try {
+                const offset = (payload.length > 0 && payload[0] === 0x00) ? 1 : 0;
+                if (offset === 1) log(`[INFO] Detected 0x00 status code, starting TLV parse at index 1`, 'info', null, currentTransactionWrapper);
+
+                const tlvData = _parseTlvGenerator(payload, offset);
+                const getModeString = (modeByte) => { switch(modeByte) { case 0: return 'Off'; case 1: return 'Input'; case 2: return 'Output'; default: return `Unknown (${toHexString([modeByte])})`; } };
+
+                for (const { type, value } of tlvData) {
+                    const view = new DataView(value.buffer);
+                    let portData;
+                    switch (type) {
+                        case 0xA2: portData = newStatus.portC1; break;
+                        case 0xA3: portData = newStatus.portC2; break;
+                        case 0xA4: portData = newStatus.portA; break;
+                        case 0xA6:
+                            if (value.length >= 5) {
+                                newStatus.totalOutputPower = (view.getUint16(1, true) / 10.0).toFixed(2) + ' W';
+                                newStatus.totalInputPower = (view.getUint16(3, true) / 10.0).toFixed(2) + ' W';
+                            }
+                            continue;
+                        case 0xA8: 
+                             if (value.length >= 10) newStatus.batteryLevel = `${value[8]}.${String(value[9] || '0').padStart(2, '0')} %`;
+                             continue;
+                        default: continue; 
+                    }
+                    if (!portData || value.length < 12) continue;
+
+                    portData.mode = getModeString(value[2]);
+                    if (portData.mode !== 'Off') {
+                        const voltage_scaled = view.getUint16(3, true);
+                        const current_scaled = view.getUint16(5, true);
+                        const voltage_v = voltage_scaled / 10.0;
+                        const current_a = current_scaled / 10.0;
+                        const power_w = voltage_v * current_a;
+                        portData.voltage = voltage_v.toFixed(2) + ' V';
+                        portData.current = current_a.toFixed(3) + ' A';
+                        portData.power = power_w.toFixed(2) + ' W';
+                    }
+                }
+                powerStatus = newStatus;
+            } catch (e) {
+                log(`[PARSER_ERROR] Failed to parse live power status: ${e.message}`, 'error', null, currentTransactionWrapper);
+            }
+            updateStatusDisplay();
+        }
+
+        function logTlvData(payload, parentElement) {
+            const isUnencryptedFrame = payload.length > 5 && payload[0] === 0x03 && payload[1] === 0x00;
+            // For unencrypted frames, TLV data starts after the 5-byte header and 1-byte status code.
+            // For decrypted payloads, TLV data typically starts after a 1-byte status code.
+            let offset = isUnencryptedFrame ? 6 : (payload.length > 0 && payload[0] === 0x00 ? 1 : 0);
+        
+            if (payload.length <= offset) return;
+        
+            if (isUnencryptedFrame) log(`[INFO] Unencrypted response, parsing TLV at index ${offset}`, 'info', null, parentElement);
+            if (offset === 1 && payload[0] === 0x00) log(`[INFO] Decrypted Status Code: 0x00`, 'success', null, parentElement);
+            
+            for (const { type, value, length } of _parseTlvGenerator(payload, offset)) {
+                log(`[TLV] Type: 0x${toHexString([type])}, Length: ${length}`, 'info', `Hex: ${toHexString(value)}\nASCII: ${bytesToAscii(value)}`, parentElement);
+                 if (cryptoState === 'Initial' && type === 0xA1 && value.length === 16) { 
+                     log('[INFO] New session key received!', 'success', null, parentElement); 
+                     setupCrypto(value, asciiToBytes(deviceInfo.serialNumber), 'Session'); 
+                 }
+            }
+        }
+        
+        function parseCustomTlvInput() { const lines = customTlvInput.value.split('\n'); const tlvArray = []; for (const line of lines) { if (!line.trim()) continue; const parts = line.split(':'); if (parts.length !== 3) { log(`[CUSTOM_CMD_ERROR] Invalid TLV format in line: "${line}"`, 'error'); return null; } const [typeStr, format, valueStr] = parts.map(p => p.trim()); const type = parseInt(typeStr, 16); if (isNaN(type) || type < 0 || type > 255) { log(`[CUSTOM_CMD_ERROR] Invalid TLV type: "${typeStr}"`, 'error'); return null; } let value; if (format.toUpperCase() === 'HEX') { try { value = hexToBytes(valueStr); } catch (e) { log(`[CUSTOM_CMD_ERROR] Invalid Hex value: "${valueStr}"`, 'error'); return null; } } else if (format.toUpperCase() === 'ASCII') { value = asciiToBytes(valueStr); } else { log(`[CUSTOM_CMD_ERROR] Unknown TLV format: "${format}". Use HEX or ASCII.`, 'error'); return null; } tlvArray.push({ type, value }); } return tlvArray; }
+        
+        setThemeSimpleButton.addEventListener('click', async () => { await performSetTheme('00'); });
+        setThemeAdvancedButton.addEventListener('click', async () => { await performSetTheme('01'); });
+        setBeepOnButton.addEventListener('click', async () => { await performSetBeep('01'); });
+        setBeepOffButton.addEventListener('click', async () => { await performSetBeep('00'); });
+
+        sendCustomCommandButton.addEventListener('click', async () => {
+            if (!writeCharacteristic) { return log('Error: Not connected.', 'error'); }
+            const groupHex = customCommandGroupInput.value.trim(); const group = parseInt(groupHex, 16); if (isNaN(group) || group < 0 || group > 255) { return log(`[CUSTOM_CMD_ERROR] Invalid Group: "${groupHex}".`, 'error'); }
+            const cmdHex = customCommandInput.value.trim(); const cmd = parseInt(cmdHex, 16); if (isNaN(cmd) || cmd < 0 || cmd > 0xFFFF) { return log(`[CUSTOM_CMD_ERROR] Invalid Command: "${cmdHex}". Must be a 2-byte hex value.`, 'error'); }
+            const tlvArray = parseCustomTlvInput(); if (tlvArray === null) { return; }
+            
+            const isEncrypted = customEncryptCheckbox.checked;
+            const commandHigh = (cmd >> 8) & 0xFF;
+            const commandLow = cmd & 0xFF;
+            const finalCommandHigh = isEncrypted ? (commandHigh | 0x40) : commandHigh;
+            
+            let finalPayload;
+            try {
+                const commandHeader = new Uint8Array([0x03, 0x00, group, finalCommandHigh, commandLow]);
+                if (isEncrypted) {
+                    if (cryptoState !== 'Initial' && cryptoState !== 'Session') { return log('[CUSTOM_CMD_ERROR] Encryption requested, but crypto context is not ready.', 'error'); }
+                    const tlvData = buildTlvBuffer(tlvArray); const cipherText = await encrypt(tlvData);
+                    finalPayload = new Uint8Array(commandHeader.length + cipherText.length);
+                    finalPayload.set(commandHeader, 0);
+                    finalPayload.set(cipherText, commandHeader.length);
+                } else {
+                    const tlvData = buildTlvBuffer(tlvArray);
+                    finalPayload = new Uint8Array(commandHeader.length + tlvData.length);
+                    finalPayload.set(commandHeader, 0);
+                    finalPayload.set(tlvData, commandHeader.length);
+                }
+                await sendRawPayload(finalPayload, true);
+                await new Promise(r => resolveNextNotificationPromise = r);
+            } catch (error) { log(`[CUSTOM_CMD_ERROR] Error while sending command: ${error.message}`, 'error'); }
+        });
+
+        function onDisconnected() { log('Disconnected from device. Please reconnect', 'error'); device = server = writeCharacteristic = notifyCharacteristic = null; resolveNextNotificationPromise = null; activeKey = activeIv = null; cryptoState = 'INACTIVE'; connectButton.disabled = false; currentTransactionWrapper = null; powerStatus = JSON.parse(JSON.stringify(initialPowerStatus)); updateStatusDisplay(); }
+        function fullReset() { log('Performing full reset', 'warn'); if (device && device.gatt.connected) device.gatt.disconnect(); deviceInfo = {}; sessionUtcTimestampBytes = null; onDisconnected(); logDiv.innerHTML = ''; log('Log and all state data cleared'); updateStatusDisplay(); }
+        resetButton.addEventListener('click', fullReset);
+        updateStatusDisplay();
+        log('Utility initialized. Please press "Connect & Run Sequence" to start.');
+    </script>
+</body>
+</html>
