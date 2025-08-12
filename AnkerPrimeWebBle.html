@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,7 +24,7 @@
             font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
             margin: 0;
         }
-        
+
         /* The top container will now dictate its own height based on content */
         .top-container {
             padding: 1.5rem;
@@ -70,7 +71,7 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(122, 162, 247, 0.4);
         }
-        
+
         #connectButton:disabled {
             background-color: #545c7e;
             color: #999;
@@ -81,9 +82,10 @@
             background-color: #545c7e;
             color: var(--fg-color);
         }
+
         #resetButton:hover {
-             background-color: var(--error-color);
-             color: var(--bg-color);
+            background-color: var(--error-color);
+            color: var(--bg-color);
         }
 
         .status-card {
@@ -99,7 +101,7 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 0.75rem;
         }
-        
+
         .settings-container {
             display: flex;
             flex-wrap: wrap;
@@ -113,20 +115,24 @@
             align-items: center;
             gap: 1rem;
         }
+
         .setting-group label {
             font-weight: bold;
             flex-shrink: 0;
         }
+
         .button-group {
             display: flex;
             gap: 0.5rem;
         }
+
         .setting-button {
             padding: 8px 16px;
             font-size: 0.9rem;
             background-color: #545c7e;
             color: var(--fg-color);
         }
+
         .setting-button:hover {
             background-color: var(--primary-color);
             color: var(--bg-color);
@@ -137,7 +143,7 @@
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1rem;
         }
-        
+
         .port-card {
             background-color: #1a1b26;
             border-radius: 8px;
@@ -145,25 +151,29 @@
             border: 1px solid var(--border-color);
             transition: opacity 0.3s ease;
         }
+
         .port-card.port-off {
             opacity: 0.5;
         }
+
         .port-card h3 {
             margin-top: 0;
             margin-bottom: 0.75rem;
             color: var(--primary-color);
         }
+
         .port-card .status-item {
-             flex-direction: row;
-             justify-content: space-between;
-             align-items: baseline;
-             padding-bottom: 0.5rem;
-             border-bottom: 1px dashed #2a2f4a;
-             margin-bottom: 0.5rem;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: baseline;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed #2a2f4a;
+            margin-bottom: 0.5rem;
         }
-         .port-card .status-item:last-child {
+
+        .port-card .status-item:last-child {
             border-bottom: none;
-             margin-bottom: 0;
+            margin-bottom: 0;
         }
 
         .custom-command-grid {
@@ -172,8 +182,13 @@
             gap: 1rem;
             align-items: center;
         }
-        .custom-command-grid label { font-weight: bold; }
-        .custom-command-grid input[type="text"], .custom-command-grid textarea {
+
+        .custom-command-grid label {
+            font-weight: bold;
+        }
+
+        .custom-command-grid input[type="text"],
+        .custom-command-grid textarea {
             background-color: #16161e;
             color: var(--fg-color);
             border: 1px solid var(--border-color);
@@ -181,41 +196,74 @@
             padding: 8px;
             font-family: 'Fira Code', monospace;
         }
+
         .custom-command-grid textarea {
             grid-column: span 2;
             height: 80px;
             resize: vertical;
         }
+
         .custom-command-grid .options-container {
             grid-column: span 2;
             display: flex;
             gap: 1.5rem;
             align-items: center;
         }
+
         .custom-command-grid .checkbox-container {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
+
         .custom-command-grid .send-button {
-             grid-column: span 2;
-             background-color: var(--warn-color);
-             color: var(--bg-color);
+            grid-column: span 2;
+            background-color: var(--warn-color);
+            color: var(--bg-color);
         }
-        .custom-command-grid .send-button:hover { background-color: #ffc977; }
+
+        .custom-command-grid .send-button:hover {
+            background-color: #ffc977;
+        }
 
 
-        .status-item { display: flex; flex-direction: column; }
-        .status-item .label { font-size: 0.9rem; color: #a9b1d6; margin-bottom: 0.25rem; }
-        .status-item .value { font-family: 'Fira Code', 'Cascadia Code', monospace; font-weight: bold; font-size: 1rem; word-break: break-all; color: var(--fg-color); }
-        .status-inactive { color: #545c7e !important; }
-        .status-active { color: var(--success-color) !important; }
-        .battery-level .value { font-size: 1.5rem; color: var(--success-color); }
-        
+        .status-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-item .label {
+            font-size: 0.9rem;
+            color: #a9b1d6;
+            margin-bottom: 0.25rem;
+        }
+
+        .status-item .value {
+            font-family: 'Fira Code', 'Cascadia Code', monospace;
+            font-weight: bold;
+            font-size: 1rem;
+            word-break: break-all;
+            color: var(--fg-color);
+        }
+
+        .status-inactive {
+            color: #545c7e !important;
+        }
+
+        .status-active {
+            color: var(--success-color) !important;
+        }
+
+        .battery-level .value {
+            font-size: 1.5rem;
+            color: var(--success-color);
+        }
+
         /* The log wrapper is given a fixed, responsive height */
         #log-wrapper {
             padding: 0 1.5rem 1.5rem 1.5rem;
-            height: 60vh; /* Assign a portion of the viewport height */
+            height: 60vh;
+            /* Assign a portion of the viewport height */
             display: flex;
             flex-direction: column;
         }
@@ -227,16 +275,17 @@
             border-radius: 12px;
             padding: 1rem;
             overflow-y: scroll;
-            flex-grow: 1; /* Fills the parent #log-wrapper */
+            flex-grow: 1;
+            /* Fills the parent #log-wrapper */
             font-family: 'Fira Code', 'Cascadia Code', monospace;
             font-size: 0.9rem;
         }
-        
+
         .log-transaction {
             border-left: 3px solid #545c7e;
             padding-left: 10px;
             margin-bottom: 12px;
-            background-color: rgba(0,0,0,0.1);
+            background-color: rgba(0, 0, 0, 0.1);
             border-radius: 6px;
         }
 
@@ -246,35 +295,73 @@
             border-left: 4px solid var(--border-color);
             line-height: 1.6;
         }
+
         .log-transaction .log-entry {
             border-left: none;
             padding-left: 0;
         }
 
-        .log-entry.sent { border-left-color: var(--primary-color); }
-        .log-entry.received { border-left-color: var(--success-color); }
-        .log-entry.info { border-left-color: #545c7e; }
-        .log-entry.error { border-left-color: var(--error-color); color: var(--error-color); }
-        .log-entry.success { border-left-color: var(--success-color); color: var(--success-color); }
-        .log-entry.warn { border-left-color: var(--warn-color); }
+        .log-entry.sent {
+            border-left-color: var(--primary-color);
+        }
+
+        .log-entry.received {
+            border-left-color: var(--success-color);
+        }
+
+        .log-entry.info {
+            border-left-color: #545c7e;
+        }
+
+        .log-entry.error {
+            border-left-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        .log-entry.success {
+            border-left-color: var(--success-color);
+            color: var(--success-color);
+        }
+
+        .log-entry.warn {
+            border-left-color: var(--warn-color);
+        }
+
         .log-entry .payload {
             color: #a9b1d6;
             display: block;
             margin-top: 5px;
             padding: 8px;
-            background-color: rgba(0,0,0,0.2);
+            background-color: rgba(0, 0, 0, 0.2);
             border-radius: 4px;
             white-space: pre-wrap;
             word-break: break-all;
         }
 
+        .info-link {
+            margin: 0.25rem 0 0 0;
+            font-size: 0.9rem;
+            color: #a9b1d6;
+        }
+
+        .info-link a {
+            color: var(--primary-color);
+        }
+
+        .info-link a:hover {
+            color: var(--warn-color);
+        }
     </style>
 </head>
+
 <body>
 
     <div class="top-container">
         <header>
             <h1>Anker Prime BLE Utility</h1>
+            <p class="info-link">More Infos: <a href="https://github.com/atc1441/Anker_Prime_BLE_hacking"
+                    target="_blank">github.com/atc1441/Anker_Prime_BLE_hacking</a></p>
+
             <div class="controls">
                 <button id="connectButton" class="button">Connect & Run Sequence</button>
                 <button id="resetButton" class="button">Reset</button>
@@ -284,42 +371,64 @@
         <div class="status-card">
             <h2>Device Information</h2>
             <div class="status-grid">
-                <div class="status-item"><span class="label">MAC Address</span><span id="statusMac" class="value status-inactive">Not Extracted</span></div>
-                <div class="status-item"><span class="label">Serial Number</span><span id="statusSerial" class="value status-inactive">Not Extracted</span></div>
-                <div class="status-item"><span class="label">Firmware</span><span id="statusVersion" class="value status-inactive">Not Extracted</span></div>
-                <div class="status-item"><span class="label">Encryption</span><span id="statusCrypto" class="value status-inactive">INACTIVE</span></div>
-                <div class="status-item"><span class="label">Active Key</span><span id="statusKey" class="value status-inactive">Not Set</span></div>
-                <div class="status-item"><span class="label">Active IV</span><span id="statusIV" class="value status-inactive">Not Set</span></div>
+                <div class="status-item"><span class="label">MAC Address</span><span id="statusMac"
+                        class="value status-inactive">Not Extracted</span></div>
+                <div class="status-item"><span class="label">Serial Number</span><span id="statusSerial"
+                        class="value status-inactive">Not Extracted</span></div>
+                <div class="status-item"><span class="label">Firmware</span><span id="statusVersion"
+                        class="value status-inactive">Not Extracted</span></div>
+                <div class="status-item"><span class="label">Encryption</span><span id="statusCrypto"
+                        class="value status-inactive">INACTIVE</span></div>
+                <div class="status-item"><span class="label">Active Key</span><span id="statusKey"
+                        class="value status-inactive">Not Set</span></div>
+                <div class="status-item"><span class="label">Active IV</span><span id="statusIV"
+                        class="value status-inactive">Not Set</span></div>
             </div>
         </div>
-        
+
         <div class="status-card">
             <h2>Live Power Status</h2>
             <div class="status-grid">
-                <div class="status-item battery-level"><span class="label">Battery Level</span><span id="statusBatteryLevel" class="value status-inactive">N/A</span></div>
-                <div class="status-item"><span class="label">Temperature</span><span id="statusTemperature" class="value status-inactive">N/A</span></div>
-                <div class="status-item"><span class="label">Total Input</span><span id="statusTotalInput" class="value status-inactive">N/A</span></div>
-                <div class="status-item"><span class="label">Total Output</span><span id="statusTotalOutput" class="value status-inactive">N/A</span></div>
+                <div class="status-item battery-level"><span class="label">Battery Level</span><span
+                        id="statusBatteryLevel" class="value status-inactive">N/A</span></div>
+                <div class="status-item"><span class="label">Temperature</span><span id="statusTemperature"
+                        class="value status-inactive">N/A</span></div>
+                <div class="status-item"><span class="label">Total Input</span><span id="statusTotalInput"
+                        class="value status-inactive">N/A</span></div>
+                <div class="status-item"><span class="label">Total Output</span><span id="statusTotalOutput"
+                        class="value status-inactive">N/A</span></div>
                 <div class="port-card" id="portC1">
                     <h3>USB-C 1</h3>
-                    <div class="status-item"><span class="label">Mode</span><span id="statusUsbC1Mode" class="value status-inactive">N/A</span></div>
-                    <div class="status-item"><span class="label">Voltage</span><span id="statusUsbC1Voltage" class="value status-inactive">N/A</span></div>
-                    <div class="status-item"><span class="label">Current (Calc)</span><span id="statusUsbC1Current" class="value status-inactive">N/A</span></div>
-                    <div class="status-item"><span class="label">Power</span><span id="statusUsbC1Power" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Mode</span><span id="statusUsbC1Mode"
+                            class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Voltage</span><span id="statusUsbC1Voltage"
+                            class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Current (Calc)</span><span id="statusUsbC1Current"
+                            class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Power</span><span id="statusUsbC1Power"
+                            class="value status-inactive">N/A</span></div>
                 </div>
                 <div class="port-card" id="portC2">
                     <h3>USB-C 2</h3>
-                    <div class="status-item"><span class="label">Mode</span><span id="statusUsbC2Mode" class="value status-inactive">N/A</span></div>
-                    <div class="status-item"><span class="label">Voltage</span><span id="statusUsbC2Voltage" class="value status-inactive">N/A</span></div>
-                    <div class="status-item"><span class="label">Current (Calc)</span><span id="statusUsbC2Current" class="value status-inactive">N/A</span></div>
-                    <div class="status-item"><span class="label">Power</span><span id="statusUsbC2Power" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Mode</span><span id="statusUsbC2Mode"
+                            class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Voltage</span><span id="statusUsbC2Voltage"
+                            class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Current (Calc)</span><span id="statusUsbC2Current"
+                            class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Power</span><span id="statusUsbC2Power"
+                            class="value status-inactive">N/A</span></div>
                 </div>
                 <div class="port-card" id="portA">
                     <h3>USB-A</h3>
-                    <div class="status-item"><span class="label">Mode</span><span id="statusUsbAMode" class="value status-inactive">N/A</span></div>
-                    <div class="status-item"><span class="label">Voltage</span><span id="statusUsbAVoltage" class="value status-inactive">N/A</span></div>
-                    <div class="status-item"><span class="label">Current (Calc)</span><span id="statusUsbACurrent" class="value status-inactive">N/A</span></div>
-                    <div class="status-item"><span class="label">Power</span><span id="statusUsbAPower" class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Mode</span><span id="statusUsbAMode"
+                            class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Voltage</span><span id="statusUsbAVoltage"
+                            class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Current (Calc)</span><span id="statusUsbACurrent"
+                            class="value status-inactive">N/A</span></div>
+                    <div class="status-item"><span class="label">Power</span><span id="statusUsbAPower"
+                            class="value status-inactive">N/A</span></div>
                 </div>
             </div>
         </div>
@@ -328,18 +437,18 @@
             <h2>Device Settings</h2>
             <div class="settings-container">
                 <div class="setting-group">
-                     <label>Display Theme:</label>
-                     <div class="button-group">
+                    <label>Display Theme:</label>
+                    <div class="button-group">
                         <button id="setThemeSimpleButton" class="button setting-button">Simple</button>
                         <button id="setThemeAdvancedButton" class="button setting-button">Advanced</button>
-                     </div>
+                    </div>
                 </div>
-                 <div class="setting-group">
-                     <label>Device Beep:</label>
-                     <div class="button-group">
+                <div class="setting-group">
+                    <label>Device Beep:</label>
+                    <div class="button-group">
                         <button id="setBeepOffButton" class="button setting-button">Off</button>
                         <button id="setBeepOnButton" class="button setting-button">On</button>
-                     </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -353,20 +462,21 @@
                 <input type="text" id="customCommandInput" placeholder="e.g., 0504">
                 <label for="customTlvInput">TLV Data:</label>
                 <span>Format: <code>Type:Format:Value</code> (one entry per line)</span>
-                <textarea id="customTlvInput" placeholder="Examples:&#10;A1:HEX:112233&#10;A4:ASCII:HelloWorld"></textarea>
+                <textarea id="customTlvInput"
+                    placeholder="Examples:&#10;A1:HEX:112233&#10;A4:ASCII:HelloWorld"></textarea>
                 <div class="options-container">
                     <div class="checkbox-container">
-                         <input type="checkbox" id="customEncryptCheckbox">
-                         <label for="customEncryptCheckbox">Send encrypted</label>
+                        <input type="checkbox" id="customEncryptCheckbox">
+                        <label for="customEncryptCheckbox">Send encrypted</label>
                     </div>
                 </div>
                 <button id="sendCustomCommandButton" class="button send-button">Send Custom Command</button>
             </div>
         </div>
     </div>
-    
+
     <div id="log-wrapper">
-         <div id="log"></div>
+        <div id="log"></div>
     </div>
 
     <script>
@@ -381,7 +491,7 @@
         const customCommandGroupInput = document.getElementById('customCommandGroupInput'), customCommandInput = document.getElementById('customCommandInput'), customTlvInput = document.getElementById('customTlvInput');
         const customEncryptCheckbox = document.getElementById('customEncryptCheckbox'), sendCustomCommandButton = document.getElementById('sendCustomCommandButton');
         let device, server, writeCharacteristic, notifyCharacteristic, resolveNextNotificationPromise, activeKey, activeIv, cryptoState = 'INACTIVE', deviceInfo = {}, sessionUtcTimestampBytes = null, currentTransactionWrapper = null;
-        
+
         const initialPowerStatus = { temperature: null, batteryLevel: null, totalInputPower: null, totalOutputPower: null, portC1: { mode: 'N/A', voltage: 'N/A', power: 'N/A', current: 'N/A' }, portC2: { mode: 'N/A', voltage: 'N/A', power: 'N/A', current: 'N/A' }, portA: { mode: 'N/A', voltage: 'N/A', power: 'N/A', current: 'N/A' } };
         let powerStatus = JSON.parse(JSON.stringify(initialPowerStatus));
 
@@ -389,7 +499,7 @@
         const INITIAL_ENCRYPTION_KEY_HEX = A2_STATIC_VALUE_HEX.substring(0, 32);
         const ADVERTISED_SERVICE_UUID = 0x2215, FULL_SERVICE_UUID = '22150001-4002-81c5-b46e-cf057c562025', WRITE_CHARACTERISTIC_UUID = '22150002-4002-81c5-b46e-cf057c562025', NOTIFY_CHARACTERISTIC_UUID = '22150003-4002-81c5-b46e-cf057c562025';
         const MAX_LOG_ENTRIES = 500;
-        
+
         const toHexString = bytes => Array.from(bytes).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join('');
         const hexToBytes = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
         const asciiToBytes = str => new TextEncoder().encode(str);
@@ -399,7 +509,7 @@
 
         function limitLogEntries() { while (logDiv.children.length > MAX_LOG_ENTRIES) { logDiv.removeChild(logDiv.firstChild); } }
         function buildTlvBuffer(tlvArray) { let totalLength = 0; tlvArray.forEach(item => totalLength += 2 + item.value.length); const buffer = new Uint8Array(totalLength); let offset = 0; tlvArray.forEach(item => { buffer[offset++] = item.type; buffer[offset++] = item.value.length; buffer.set(item.value, offset); offset += item.value.length; }); return buffer; }
-        
+
         function buildRequestContent(command, tlvArray, group = 0x01) {
             const commandHigh = (command >> 8) & 0xFF;
             const commandLow = command & 0xFF;
@@ -430,7 +540,7 @@
             update(statusMac, deviceInfo.macAddress, 'Not Extracted'); update(statusSerial, deviceInfo.serialNumber, 'Not Extracted'); update(statusVersion, deviceInfo.version, 'Not Extracted');
             update(statusKey, deviceInfo.activeKeyHex, 'Not Set'); update(statusIV, deviceInfo.activeIvHex, 'Not Set');
             statusCrypto.textContent = cryptoState; statusCrypto.className = cryptoState !== 'INACTIVE' ? 'value status-active' : 'value status-inactive';
-            
+
             update(statusTemperature, powerStatus.temperature);
             update(statusBatteryLevel, powerStatus.batteryLevel);
             update(statusTotalInput, powerStatus.totalInputPower);
@@ -438,7 +548,7 @@
             update(statusUsbC1Mode, powerStatus.portC1.mode); update(statusUsbC1Voltage, powerStatus.portC1.voltage); update(statusUsbC1Power, powerStatus.portC1.power); update(statusUsbC1Current, powerStatus.portC1.current);
             update(statusUsbC2Mode, powerStatus.portC2.mode); update(statusUsbC2Voltage, powerStatus.portC2.voltage); update(statusUsbC2Power, powerStatus.portC2.power); update(statusUsbC2Current, powerStatus.portC2.current);
             update(statusUsbAMode, powerStatus.portA.mode); update(statusUsbAVoltage, powerStatus.portA.voltage); update(statusUsbAPower, powerStatus.portA.power); update(statusUsbACurrent, powerStatus.portA.current);
-            
+
             document.getElementById('portC1').className = powerStatus.portC1.mode === 'Off' ? 'port-card port-off' : 'port-card';
             document.getElementById('portC2').className = powerStatus.portC2.mode === 'Off' ? 'port-card port-off' : 'port-card';
             document.getElementById('portA').className = powerStatus.portA.mode === 'Off' ? 'port-card port-off' : 'port-card';
@@ -483,7 +593,7 @@
             console.log(`[RAW SEND] Final packet written to characteristic: ${toHexString(finalMessage)}`);
             await writeCharacteristic.writeValueWithoutResponse(finalMessage);
         }
-        
+
         async function sendEncryptedCommand(group, command, tlvArray, expectsResponse) {
             if (cryptoState !== 'Initial' && cryptoState !== 'Session') {
                 throw new Error("Encryption requested, but crypto context is not ready.");
@@ -510,12 +620,12 @@
                 sessionUtcTimestampBytes = new Uint8Array(4); new DataView(sessionUtcTimestampBytes.buffer).setUint32(0, utcSeconds, true);
                 await sendRawPayload(buildRequestContent(0x0001, [{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }]), true);
                 await new Promise(r => resolveNextNotificationPromise = r);
-                await sendRawPayload(buildRequestContent(0x0003, [{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }, { type: 0xA3, value: new Uint8Array([0x20])}, { type: 0xA4, value: new Uint8Array([0x00, 0xF0])}]), true);
+                await sendRawPayload(buildRequestContent(0x0003, [{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }, { type: 0xA3, value: new Uint8Array([0x20]) }, { type: 0xA4, value: new Uint8Array([0x00, 0xF0]) }]), true);
                 await new Promise(r => resolveNextNotificationPromise = r);
                 await sendRawPayload(buildRequestContent(0x0029, [{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }]), true);
                 const infoResponsePayload = await new Promise(r => resolveNextNotificationPromise = r);
                 extractHandshakeInfo(infoResponsePayload);
-                await sendRawPayload(buildRequestContent(0x0005, [{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }, { type: 0xA3, value: new Uint8Array([0x20])}, { type: 0xA4, value: new Uint8Array([0x00, 0xF0])}, { type: 0xA5, value: new Uint8Array([0x02])}]), true);
+                await sendRawPayload(buildRequestContent(0x0005, [{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }, { type: 0xA3, value: new Uint8Array([0x20]) }, { type: 0xA4, value: new Uint8Array([0x00, 0xF0]) }, { type: 0xA5, value: new Uint8Array([0x02]) }]), true);
                 await new Promise(r => resolveNextNotificationPromise = r);
                 if (!deviceInfo.serialNumber) throw new Error("Serial number was not extracted during handshake.");
                 cryptoState = 'READY (Initial)'; log('Unencrypted handshake complete. Ready for encryption phase 1', 'success'); updateStatusDisplay(); return true;
@@ -523,26 +633,26 @@
         }
 
         async function performInitialEncryption() {
-             log('--- Preparing Initial Encryption ---', 'warn');
+            log('--- Preparing Initial Encryption ---', 'warn');
             try {
                 if (!deviceInfo.serialNumber || !sessionUtcTimestampBytes) throw new Error("Prerequisites for encryption not met (missing S/N or timestamp)");
                 await setupCrypto(hexToBytes(INITIAL_ENCRYPTION_KEY_HEX), asciiToBytes(deviceInfo.serialNumber), 'Initial');
-                const tlvForEncryption = buildTlvBuffer([ { type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }, { type: 0xA3, value: new Uint8Array(4) }, { type: 0xA5, value: new Uint8Array(40) } ]);
+                const tlvForEncryption = buildTlvBuffer([{ type: 0xA1, value: sessionUtcTimestampBytes }, { type: 0xA2, value: hexToBytes(A2_STATIC_VALUE_HEX) }, { type: 0xA3, value: new Uint8Array(4) }, { type: 0xA5, value: new Uint8Array(40) }]);
                 const cipherText = await encrypt(tlvForEncryption);
                 const commandHeader = new Uint8Array([0x03, 0x00, 0x01, 0x40, 0x22]); // Command 0x0022, encrypted
                 const finalPayload = new Uint8Array(commandHeader.length + cipherText.length);
                 finalPayload.set(commandHeader, 0); finalPayload.set(cipherText, commandHeader.length);
                 await sendRawPayload(finalPayload, false); return true;
-            } catch(error) { log(`ERROR during initial encryption: ${error.message}`, 'error'); return false; }
+            } catch (error) { log(`ERROR during initial encryption: ${error.message}`, 'error'); return false; }
         }
 
         async function performGetStatus() {
             log('--- Sending Status Request with Session Key ---', 'warn');
-             try {
+            try {
                 if (cryptoState !== 'Session') throw new Error("Session key is not active. Cannot get status");
                 await sendEncryptedCommand(0x11, 0x0500, [{ type: 0xA1, value: new Uint8Array([0x21]) }], true);
                 return true;
-            } catch(error) { log(`ERROR during status request: ${error.message}`, 'error'); return false; }
+            } catch (error) { log(`ERROR during status request: ${error.message}`, 'error'); return false; }
         }
 
         async function performSetTheme(themeValue) {
@@ -550,11 +660,11 @@
             try {
                 if (cryptoState !== 'Session') throw new Error("Session key is not active. Cannot change settings.");
                 const command = 0x0504; // 0x05 for 2nd SoC, 0x04 for Set Theme
-                const tlvArray = [ { type: 0xA1, value: new Uint8Array([0x21]) }, { type: 0xA2, value: hexToBytes('01' + themeValue) } ];
+                const tlvArray = [{ type: 0xA1, value: new Uint8Array([0x21]) }, { type: 0xA2, value: hexToBytes('01' + themeValue) }];
                 await sendEncryptedCommand(0x11, command, tlvArray, true);
                 await new Promise(r => resolveNextNotificationPromise = r);
                 log('Theme change command acknowledged by device.', 'success'); return true;
-            } catch(error) { log(`ERROR during theme change: ${error.message}`, 'error'); return false; }
+            } catch (error) { log(`ERROR during theme change: ${error.message}`, 'error'); return false; }
         }
 
         async function performSetBeep(beepValue) {
@@ -562,11 +672,11 @@
             try {
                 if (cryptoState !== 'Session') throw new Error("Session key is not active. Cannot change settings.");
                 const command = 0x0505; // 0x05 for 2nd SoC, 0x05 for Set Beep
-                const tlvArray = [ { type: 0xA1, value: new Uint8Array([0x21]) }, { type: 0xA2, value: hexToBytes('01' + beepValue) } ];
+                const tlvArray = [{ type: 0xA1, value: new Uint8Array([0x21]) }, { type: 0xA2, value: hexToBytes('01' + beepValue) }];
                 await sendEncryptedCommand(0x11, command, tlvArray, true);
                 await new Promise(r => resolveNextNotificationPromise = r);
                 log('Beep setting command acknowledged by device.', 'success'); return true;
-            } catch(error) { log(`ERROR during beep setting change: ${error.message}`, 'error'); return false; }
+            } catch (error) { log(`ERROR during beep setting change: ${error.message}`, 'error'); return false; }
         }
 
         connectButton.addEventListener('click', async () => {
@@ -598,13 +708,13 @@
             if (rawData.byteLength < 5) { log(`<-- RECEIVED (${rawData.byteLength} Bytes)`, 'received', `${toHexString(rawData)}`, targetWrapper); if (resolveNextNotificationPromise) resolveNextNotificationPromise(rawData); return; }
             const payloadWithHeader = rawData.slice(4, rawData.byteLength - 1);
             let isEncrypted = false, fullCommand = 0, commandHighByte = 0, flagDescriptions = ['None'];
-            
+
             if (payloadWithHeader.length >= 5) {
                 commandHighByte = payloadWithHeader[3];
                 const commandLowByte = payloadWithHeader[4];
                 isEncrypted = (commandHighByte & 0x40) !== 0;
                 fullCommand = ((commandHighByte & ~0x40) << 8) | commandLowByte;
-                const isAck = (commandHighByte & 0x08) !== 0; 
+                const isAck = (commandHighByte & 0x08) !== 0;
                 flagDescriptions = [];
                 if (isEncrypted) flagDescriptions.push("Encrypted (0x40)");
                 if (isAck) flagDescriptions.push("ACK (0x08)");
@@ -614,30 +724,30 @@
             const logMessage = `<-- RECEIVED Command: 0x${fullCommand.toString(16).toUpperCase().padStart(4, '0')}`;
             const logPayload = `CmdByte1: 0x${commandHighByte.toString(16).toUpperCase().padStart(2, '0')} (${flagDescriptions.join(', ')})\nRaw Packet: ${toHexString(rawData)}`;
             log(logMessage, 'received', logPayload, targetWrapper);
-            
+
             let contentToParse = payloadWithHeader;
             if (isEncrypted) {
-                 if (!activeKey) { log('[DECRYPTION_ERROR] No active key available', 'error', null, targetWrapper); if (resolveNextNotificationPromise) resolveNextNotificationPromise(rawData); return; }
-                 const cipherText = payloadWithHeader.slice(5);
-                 try {
-                     const decryptedPayload = await decrypt(cipherText);
-                     log('[SUCCESS] Packet decrypted', 'success', `Plaintext: ${toHexString(decryptedPayload)}`, targetWrapper);
-                     contentToParse = decryptedPayload;
-                     // --- COMMAND-BASED ROUTING ---
-                     switch (fullCommand) {
+                if (!activeKey) { log('[DECRYPTION_ERROR] No active key available', 'error', null, targetWrapper); if (resolveNextNotificationPromise) resolveNextNotificationPromise(rawData); return; }
+                const cipherText = payloadWithHeader.slice(5);
+                try {
+                    const decryptedPayload = await decrypt(cipherText);
+                    log('[SUCCESS] Packet decrypted', 'success', `Plaintext: ${toHexString(decryptedPayload)}`, targetWrapper);
+                    contentToParse = decryptedPayload;
+                    // --- COMMAND-BASED ROUTING ---
+                    switch (fullCommand) {
                         case 0x0D00: // Added based on log analysis
                         case 0x0500: parseComprehensiveStatus(decryptedPayload); break;
                         case 0x050E: parseLivePowerStatus(decryptedPayload); break;
                         case 0x0522: parseDedicatedTemperature(decryptedPayload); break;
-                     }
-                 } catch (e) { log('[DECRYPTION_ERROR] ' + e.message, 'error', `Ciphertext: ${toHexString(cipherText)}`, targetWrapper); if (resolveNextNotificationPromise) resolveNextNotificationPromise(rawData); return; }
+                    }
+                } catch (e) { log('[DECRYPTION_ERROR] ' + e.message, 'error', `Ciphertext: ${toHexString(cipherText)}`, targetWrapper); if (resolveNextNotificationPromise) resolveNextNotificationPromise(rawData); return; }
             }
             logTlvData(contentToParse, targetWrapper);
             if (resolveNextNotificationPromise) { resolveNextNotificationPromise(contentToParse); currentTransactionWrapper = null; }
         }
 
         function* _parseTlvGenerator(payload, offset) { let i = offset; while (i < payload.length - 1) { const type = payload[i], length = payload[i + 1]; if (i + 2 + length > payload.length) { log(`[TLV_ERROR] Type 0x${toHexString([type])} at index ${i} declares length ${length}, which exceeds packet boundaries`, 'error'); return; } const value = payload.slice(i + 2, i + 2 + length); yield { type, length, value }; i += 2 + length; } }
-        
+
         function extractHandshakeInfo(payload) {
             log('[EXTRACT] Searching for handshake data (SN, FW, MAC)', 'info', null, currentTransactionWrapper);
             for (const { type, value } of _parseTlvGenerator(payload, 6)) {
@@ -658,10 +768,10 @@
             log('[INFO] Parsing comprehensive status from Command 0x0500...', 'info', null, currentTransactionWrapper);
             const newStatus = JSON.parse(JSON.stringify(initialPowerStatus));
 
-            const getModeString = (modeByte) => { switch(modeByte) { case 0: return 'Off'; case 1: return 'Input'; case 2: return 'Output'; default: return `Unknown (${toHexString([modeByte])})`; } };
+            const getModeString = (modeByte) => { switch (modeByte) { case 0: return 'Off'; case 1: return 'Input'; case 2: return 'Output'; default: return `Unknown (${toHexString([modeByte])})`; } };
             const _parsePortData = (portData, value) => {
                 const view = new DataView(value.buffer);
-                 if (value.length < 12) return;
+                if (value.length < 12) return;
                 portData.mode = getModeString(value[2]);
                 if (portData.mode !== 'Off') {
                     const voltage_scaled = view.getUint16(3, true);
@@ -674,11 +784,11 @@
                     portData.power = power_w.toFixed(2) + ' W';
                 }
             };
-            
+
             try {
                 const offset = (payload.length > 0 && payload[0] === 0x00) ? 1 : 0;
                 if (offset === 1) log(`[INFO] Detected 0x00 status code, starting TLV parse at index 1`, 'info', null, currentTransactionWrapper);
-                
+
                 for (const { type, value } of _parseTlvGenerator(payload, offset)) {
                     const view = new DataView(value.buffer);
                     switch (type) {
@@ -691,7 +801,7 @@
                         case 0xA5: _parsePortData(newStatus.portC2, value); break;
                         case 0xA6: _parsePortData(newStatus.portA, value); break;
                         case 0xAE:
-                             if (value.length >= 5) {
+                            if (value.length >= 5) {
                                 newStatus.totalOutputPower = (view.getUint16(1, true) / 10.0).toFixed(2) + ' W';
                                 newStatus.totalInputPower = (view.getUint16(3, true) / 10.0).toFixed(2) + ' W';
                             }
@@ -709,7 +819,7 @@
             }
             updateStatusDisplay();
         }
-        
+
         /**
          * Parses the dedicated temperature update received with Command 0x0522.
          */
@@ -718,14 +828,14 @@
             try {
                 const offset = (payload.length > 0 && payload[0] === 0x00) ? 1 : 0;
                 if (offset === 1) log(`[INFO] Detected 0x00 status code, starting TLV parse at index 1`, 'info', null, currentTransactionWrapper);
-                
+
                 for (const { type, value } of _parseTlvGenerator(payload, offset)) {
                     if (type === 0xA2 && value.length >= 3) {
                         const tempC = value[1];
                         const tempF = value[2];
                         powerStatus.temperature = `${tempC}°C / ${tempF}°F`;
                         log(`[EXTRACT] Temperature: ${powerStatus.temperature}`, 'success', null, currentTransactionWrapper);
-                        break; 
+                        break;
                     }
                 }
             } catch (e) {
@@ -733,7 +843,7 @@
             }
             updateStatusDisplay();
         }
-        
+
         /**
          * Parses the live power status update received with Command 0x050E.
          */
@@ -745,7 +855,7 @@
                 if (offset === 1) log(`[INFO] Detected 0x00 status code, starting TLV parse at index 1`, 'info', null, currentTransactionWrapper);
 
                 const tlvData = _parseTlvGenerator(payload, offset);
-                const getModeString = (modeByte) => { switch(modeByte) { case 0: return 'Off'; case 1: return 'Input'; case 2: return 'Output'; default: return `Unknown (${toHexString([modeByte])})`; } };
+                const getModeString = (modeByte) => { switch (modeByte) { case 0: return 'Off'; case 1: return 'Input'; case 2: return 'Output'; default: return `Unknown (${toHexString([modeByte])})`; } };
 
                 for (const { type, value } of tlvData) {
                     const view = new DataView(value.buffer);
@@ -760,10 +870,10 @@
                                 newStatus.totalInputPower = (view.getUint16(3, true) / 10.0).toFixed(2) + ' W';
                             }
                             continue;
-                        case 0xA8: 
-                             if (value.length >= 10) newStatus.batteryLevel = `${value[8]}.${String(value[9] || '0').padStart(2, '0')} %`;
-                             continue;
-                        default: continue; 
+                        case 0xA8:
+                            if (value.length >= 10) newStatus.batteryLevel = `${value[8]}.${String(value[9] || '0').padStart(2, '0')} %`;
+                            continue;
+                        default: continue;
                     }
                     if (!portData || value.length < 12) continue;
 
@@ -791,23 +901,23 @@
             // For unencrypted frames, TLV data starts after the 5-byte header and 1-byte status code.
             // For decrypted payloads, TLV data typically starts after a 1-byte status code.
             let offset = isUnencryptedFrame ? 6 : (payload.length > 0 && payload[0] === 0x00 ? 1 : 0);
-        
+
             if (payload.length <= offset) return;
-        
+
             if (isUnencryptedFrame) log(`[INFO] Unencrypted response, parsing TLV at index ${offset}`, 'info', null, parentElement);
             if (offset === 1 && payload[0] === 0x00) log(`[INFO] Decrypted Status Code: 0x00`, 'success', null, parentElement);
-            
+
             for (const { type, value, length } of _parseTlvGenerator(payload, offset)) {
                 log(`[TLV] Type: 0x${toHexString([type])}, Length: ${length}`, 'info', `Hex: ${toHexString(value)}\nASCII: ${bytesToAscii(value)}`, parentElement);
-                 if (cryptoState === 'Initial' && type === 0xA1 && value.length === 16) { 
-                     log('[INFO] New session key received!', 'success', null, parentElement); 
-                     setupCrypto(value, asciiToBytes(deviceInfo.serialNumber), 'Session'); 
-                 }
+                if (cryptoState === 'Initial' && type === 0xA1 && value.length === 16) {
+                    log('[INFO] New session key received!', 'success', null, parentElement);
+                    setupCrypto(value, asciiToBytes(deviceInfo.serialNumber), 'Session');
+                }
             }
         }
-        
+
         function parseCustomTlvInput() { const lines = customTlvInput.value.split('\n'); const tlvArray = []; for (const line of lines) { if (!line.trim()) continue; const parts = line.split(':'); if (parts.length !== 3) { log(`[CUSTOM_CMD_ERROR] Invalid TLV format in line: "${line}"`, 'error'); return null; } const [typeStr, format, valueStr] = parts.map(p => p.trim()); const type = parseInt(typeStr, 16); if (isNaN(type) || type < 0 || type > 255) { log(`[CUSTOM_CMD_ERROR] Invalid TLV type: "${typeStr}"`, 'error'); return null; } let value; if (format.toUpperCase() === 'HEX') { try { value = hexToBytes(valueStr); } catch (e) { log(`[CUSTOM_CMD_ERROR] Invalid Hex value: "${valueStr}"`, 'error'); return null; } } else if (format.toUpperCase() === 'ASCII') { value = asciiToBytes(valueStr); } else { log(`[CUSTOM_CMD_ERROR] Unknown TLV format: "${format}". Use HEX or ASCII.`, 'error'); return null; } tlvArray.push({ type, value }); } return tlvArray; }
-        
+
         setThemeSimpleButton.addEventListener('click', async () => { await performSetTheme('00'); });
         setThemeAdvancedButton.addEventListener('click', async () => { await performSetTheme('01'); });
         setBeepOnButton.addEventListener('click', async () => { await performSetBeep('01'); });
@@ -818,12 +928,12 @@
             const groupHex = customCommandGroupInput.value.trim(); const group = parseInt(groupHex, 16); if (isNaN(group) || group < 0 || group > 255) { return log(`[CUSTOM_CMD_ERROR] Invalid Group: "${groupHex}".`, 'error'); }
             const cmdHex = customCommandInput.value.trim(); const cmd = parseInt(cmdHex, 16); if (isNaN(cmd) || cmd < 0 || cmd > 0xFFFF) { return log(`[CUSTOM_CMD_ERROR] Invalid Command: "${cmdHex}". Must be a 2-byte hex value.`, 'error'); }
             const tlvArray = parseCustomTlvInput(); if (tlvArray === null) { return; }
-            
+
             const isEncrypted = customEncryptCheckbox.checked;
             const commandHigh = (cmd >> 8) & 0xFF;
             const commandLow = cmd & 0xFF;
             const finalCommandHigh = isEncrypted ? (commandHigh | 0x40) : commandHigh;
-            
+
             let finalPayload;
             try {
                 const commandHeader = new Uint8Array([0x03, 0x00, group, finalCommandHigh, commandLow]);
@@ -851,4 +961,5 @@
         log('Utility initialized. Please press "Connect & Run Sequence" to start.');
     </script>
 </body>
+
 </html>
