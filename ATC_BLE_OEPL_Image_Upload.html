@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ATC_BLE_OEPL Uploader</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: "Roboto", sans-serif;
@@ -100,12 +101,12 @@
         }
 
 
-        canvas {
-            border: 1px solid black;
-            background-color: white;
-            display: block;
-            margin: 10px auto;
-        }
+        #myCanvas {
+			border: 1px solid black;
+			background-color: white;
+			display: block;
+			margin: 10px auto;
+		}
 
         textarea {
             border: 1px solid #ccc;
@@ -129,7 +130,8 @@
         #ble-upload,
         #lut-upload,
         #display-type-set,
-        #uart-flash-content {
+        #uart-flash-content,
+        #debug-view {
             min-width: 380px;
             max-width: 600px;
             padding: 12px;
@@ -149,7 +151,8 @@
         #display-type-set button,
         #display-type-set input[type="button"],
         #uart-flash-content button,
-        #uart-flash-content input[type="button"] {
+        #uart-flash-content input[type="button"],
+        #debug-view button {
             background-color: #fff;
             color: #007bff;
         }
@@ -161,7 +164,8 @@
         #display-type-set button:hover,
         #display-type-set input[type="button"]:hover,
         #uart-flash-content button:hover,
-        #uart-flash-content input[type="button"]:hover {
+        #uart-flash-content input[type="button"]:hover,
+        #debug-view button:hover {
             background-color: #ddd;
         }
 
@@ -656,7 +660,8 @@
         body.simple-view #display-type-set,
         body.simple-view #lut-upload,
         body.simple-view #uart-flash-content,
-        body.simple-view #uart-log-area {
+        body.simple-view #uart-log-area,
+        body.simple-view #debug-view {
             display: none !important;
         }
 
@@ -720,6 +725,42 @@
 
         #uart-flash-content .firmware-source-group input[type="button"] {
             margin-left: 5px;
+        }
+
+        #debug-chart-container {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+			width: 100%;
+			min-height: 600px; 
+			box-sizing: border-box;
+			flex-grow: 1; 
+			display: flex; 
+			flex-direction: column;
+        }
+        
+        #debug-status-display {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #0056b3;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 15px;
+            text-align: left;
+        }
+        #debug-status-display h3 {
+            margin-top: 0;
+            color: #007bff;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        #debug-status-display div {
+            margin-bottom: 5px;
+        }
+        #debug-status-display strong {
+            display: inline-block;
+            width: 150px;
         }
     </style>
 </head>
@@ -791,6 +832,7 @@
             <button id="btn-show-ble" onclick="showView('ble')" class="active">BLE Connection</button>
             <button id="btn-show-config" onclick="showView('config')">HW Config</button>
             <button id="btn-show-lut" onclick="showView('lut')">LUT Playground</button>
+            <button id="btn-show-debug" onclick="showView('debug')">Debug</button>
             <button id="btn-show-uart" onclick="showView('uart')">UART Flasher</button>
         </div>
 
@@ -1049,6 +1091,20 @@
                 <br /><br />
             </div>
 
+            <div id="debug-view" style="display: none;">
+                <h2>Debug</h2>
+                <div id="debug-status-display">
+                    <h3>Latest Reading</h3>
+                    <div><strong>Battery Voltage:</strong> <span id="status-battery">N/A</span></div>
+                    <div><strong>ADC RAW:</strong> <span id="status-adc-raw">N/A</span></div>
+                    <div><strong>ADC Temperature:</strong> <span id="status-adc-temp">N/A</span></div>
+                    <div><strong>EPD Temperature:</strong> <span id="status-epd-temp">N/A</span></div>
+                    <div><strong>Last Updated:</strong> <span id="status-timestamp">N/A</span></div>
+                </div>
+                <div id="debug-chart-container">
+                    <canvas id="debugChart"></canvas>
+                </div>
+            </div>
 
             <div id="uart-flash-content" style="display: none;">
                 <h2>UART Flasher</h2>
@@ -1226,6 +1282,11 @@
         let imgArray = "";
         let imgArrayLen = 0;
         let serverFirmwareBuffer = null;
+		let currentView = 'ble';
+        
+        let debugPollingInterval = null;
+        let myDebugChart = null;
+        const MAX_CHART_POINTS = 1000;
 
         function createCanvas() {
             var width = parseInt(document.getElementById('widthInput').value);
@@ -2143,6 +2204,40 @@
                     addLog("ERROR: Device Dynamic Config Error.");
                     setStatus("Dynamic Config Error.");
                     break;
+                case "00D1":
+                    addLog("Debug Status Info (00D1) received.");
+                    try {
+                        const payloadBytes = hexToBytes(payloadHex);
+                        if (payloadBytes.length >= 6) {
+                            const batteryVoltage = (payloadBytes[0] << 8) | payloadBytes[1];
+                            const adcTempRaw = (payloadBytes[2] << 8) | payloadBytes[3];
+                            const adcTemp = payloadBytes[4];
+                            const epdTemp = payloadBytes[5];
+
+                            const signedAdcTemp = (adcTemp > 127) ? adcTemp - 256 : adcTemp;
+                            const signedEpdTemp = (epdTemp > 127) ? epdTemp - 256 : epdTemp;
+                            
+                            const timestamp = new Date();
+                            const timeString = timestamp.toLocaleTimeString();
+                            const dateTimeString = timestamp.toLocaleString();
+
+                            const statusString = `Status - Battery: ${batteryVoltage}mV, Raw ADC: ${adcTempRaw}, ADC Temp: ${signedAdcTemp}°C, EPD Temp: ${signedEpdTemp}°C`;
+                            addLog(statusString);
+                            document.getElementById('status-battery').textContent = `${batteryVoltage} mV`;
+                            document.getElementById('status-adc-raw').textContent = `${adcTempRaw}`;
+                            document.getElementById('status-adc-temp').textContent = `${signedAdcTemp} °C`;
+                            document.getElementById('status-epd-temp').textContent = `${signedEpdTemp} °C`;
+                            document.getElementById('status-timestamp').textContent = dateTimeString;
+
+                            addChartData(timeString, batteryVoltage, adcTempRaw, signedAdcTemp, signedEpdTemp);
+
+                        } else {
+                            addLog(`Debug info payload too short (${payloadBytes.length} bytes). Expected 6.`);
+                        }
+                    } catch (e) {
+                        addLog("Error parsing Debug Status Info (00D1): " + e);
+                    }
+                    break;
                 case "0063":
                     setStatus("Command ACK.");
                     break;
@@ -2154,6 +2249,11 @@
                     addLog("Unhandled CMD: " + cmdHex + " Payload: " + payloadHex.substring(0, 40) + "...");
                     break;
             }
+        }
+        
+        function readDebugStatus() {
+            addLog("Requesting battery and temperature status...");
+            sendcmd('00160000');
         }
 
         function bleNotificationHandler(event) {
@@ -2169,6 +2269,7 @@
             if (bleDevice && bleDevice.removeEventListener) {
                 bleDevice.removeEventListener('gattserverdisconnected', disconnect);
             }
+            stopDebugPolling();
             resetVariables();
         }
 
@@ -2291,6 +2392,10 @@
                     }
                     setTimeout(() => {
                         readDynamicConfig();
+						if (currentView === 'debug') {
+							addLog("Connection established while in Debug view, starting polling.");
+							startDebugPolling();
+						}
                     }, 450);
                 })
                 .catch(handleError);
@@ -2722,10 +2827,19 @@
         }
 
         function showView(viewToShow) {
+			currentView = viewToShow;
+            if (viewToShow !== 'debug') {
+                stopDebugPolling();
+                if (myDebugChart) {
+                    myDebugChart.destroy();
+                    myDebugChart = null;
+                }
+            }
             document.getElementById('ble-upload').style.display = 'none';
             document.getElementById('display-type-set').style.display = 'none';
             document.getElementById('lut-upload').style.display = 'none';
             document.getElementById('uart-flash-content').style.display = 'none';
+            document.getElementById('debug-view').style.display = 'none';
 
             document.getElementById('log-area').style.display = 'none';
             document.getElementById('uart-log-area').style.display = 'none';
@@ -2734,6 +2848,7 @@
             document.getElementById('btn-show-config').classList.remove('active');
             document.getElementById('btn-show-lut').classList.remove('active');
             document.getElementById('btn-show-uart').classList.remove('active');
+            document.getElementById('btn-show-debug').classList.remove('active');
 
             if (viewToShow === 'ble') {
                 document.getElementById('ble-upload').style.display = 'block';
@@ -2747,6 +2862,12 @@
                 document.getElementById('lut-upload').style.display = 'block';
                 document.getElementById('log-area').style.display = 'block';
                 document.getElementById('btn-show-lut').classList.add('active');
+            } else if (viewToShow === 'debug') {
+                document.getElementById('debug-view').style.display = 'block';
+                document.getElementById('log-area').style.display = 'block';
+                document.getElementById('btn-show-debug').classList.add('active');
+                initDebugChart();
+                startDebugPolling();
             } else if (viewToShow === 'uart') {
                 document.getElementById('uart-flash-content').style.display = 'block';
                 document.getElementById('uart-log-area').style.display = 'block';
@@ -2789,14 +2910,179 @@
                 if (uploadCompressedBtn) {
                     uploadCompressedBtn.textContent = 'Upload Image';
                 }
+				localStorage.setItem('viewMode', 'simple');
                 doAll();
             } else {
                 button.textContent = 'Simple View';
                 if (uploadCompressedBtn) {
                     uploadCompressedBtn.textContent = 'Upload Compressed Image';
                 }
+				localStorage.setItem('viewMode', 'advanced');
                 showView('ble');
             }
+        }
+		
+		function startDebugPolling() {
+            if (debugPollingInterval) {
+                return;
+            }
+            if (!bleDevice || !bleDevice.gatt || !bleDevice.gatt.connected) {
+                addLog("Cannot start auto-read: Not connected.");
+                return;
+            }
+            debugPollingInterval = setInterval(readDebugStatus, 3000);
+            addLog("Started automatic status reading every 3 seconds.");
+            readDebugStatus();
+        }
+
+        function stopDebugPolling() {
+            if (debugPollingInterval) {
+                clearInterval(debugPollingInterval);
+                debugPollingInterval = null;
+                addLog("Stopped automatic status reading.");
+            }
+        }
+		
+        function initDebugChart() {
+            if (myDebugChart) {
+                myDebugChart.destroy();
+            }
+            const ctx = document.getElementById('debugChart').getContext('2d');
+            const voltageColor = 'rgba(255, 99, 132, 1)';
+            const adcRawColor = 'rgba(255, 159, 64, 1)';
+            const tempColor = 'rgba(54, 162, 235, 1)';
+            const epdTempColor = 'rgba(75, 192, 192, 1)';
+
+            myDebugChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Battery Voltage (mV)',
+                        data: [],
+                        borderColor: voltageColor,
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        yAxisID: 'y_voltage',
+                        tension: 0.1,
+                        pointRadius: 4,
+                        borderWidth: 2,
+                    }, {
+                        label: 'ADC Raw',
+                        data: [],
+                        borderColor: adcRawColor,
+                        backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                        yAxisID: 'y_adc_raw',
+                        tension: 0.1,
+                        pointRadius: 4,
+                        borderWidth: 2,
+                    }, {
+                        label: 'ADC Temp (°C)',
+                        data: [],
+                        borderColor: tempColor,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        yAxisID: 'y_temp',
+                        tension: 0.1,
+                        pointRadius: 4,
+                        borderWidth: 2,
+                    }, {
+                        label: 'EPD Temp (°C)',
+                        data: [],
+                        borderColor: epdTempColor,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        yAxisID: 'y_temp',
+                        tension: 0.1,
+                        pointRadius: 4,
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y_voltage: {
+                            type: 'linear',
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Voltage (mV)',
+                                color: voltageColor
+                            },
+                            ticks: {
+                                color: voltageColor
+                            },
+                            suggestedMin: 2000,
+                            suggestedMax: 3600
+                        },
+                        y_temp: {
+                            type: 'linear',
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Temperature (°C)',
+                                color: tempColor
+                            },
+                            ticks: {
+                                color: tempColor
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            suggestedMin: -20,
+                            suggestedMax: 50
+                        },
+                        y_adc_raw: {
+                            type: 'linear',
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'ADC Raw Value',
+                                color: adcRawColor
+                            },
+                            ticks: {
+                                color: adcRawColor,
+                                callback: function(value, index, values) {
+                                    return value.toString().padStart(8, ' ');
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            suggestedMin: 750,
+                            suggestedMax: 1400
+                        }
+                    }
+                }
+            });
+        }
+
+        function addChartData(timestamp, battery, adcRaw, adcTemp, epdTemp) {
+            if (!myDebugChart) return;
+
+            myDebugChart.data.labels.push(timestamp);
+            myDebugChart.data.datasets[0].data.push(battery);
+            myDebugChart.data.datasets[1].data.push(adcRaw);
+            myDebugChart.data.datasets[2].data.push(adcTemp);
+            myDebugChart.data.datasets[3].data.push(epdTemp);
+
+            if (myDebugChart.data.labels.length > MAX_CHART_POINTS) {
+                myDebugChart.data.labels.shift();
+                myDebugChart.data.datasets.forEach((dataset) => {
+                    dataset.data.shift();
+                });
+            }
+
+            myDebugChart.update();
         }
 
         async function loadServerFirmware(uartLogCallback) {
@@ -2828,9 +3114,23 @@
             togglePinoutSection('nfc_pinout_details', document.getElementById('conf_nfc_pinout_enabled').checked);
             togglePinoutSection('flash_pinout_details', document.getElementById('conf_flash_pinout_enabled').checked);
 
-            document.body.classList.add('simple-view');
-            const toggleBtn = document.getElementById('viewModeToggleButton');
-            if (toggleBtn) toggleBtn.textContent = 'Advanced View';
+            const savedViewMode = localStorage.getItem('viewMode');
+			const body = document.body;
+			const button = document.getElementById('viewModeToggleButton');
+			const uploadCompressedBtn = document.getElementById('uploadCompressedImageButton');
+		
+			if (savedViewMode === 'advanced') {
+				body.classList.remove('simple-view');
+				button.textContent = 'Simple View';
+				if (uploadCompressedBtn) {
+					uploadCompressedBtn.textContent = 'Upload Compressed Image';
+				}
+			} else {
+				button.textContent = 'Advanced View';
+				if (uploadCompressedBtn) {
+					uploadCompressedBtn.textContent = 'Upload Image';
+				}
+			}
 
             doAll();
 
