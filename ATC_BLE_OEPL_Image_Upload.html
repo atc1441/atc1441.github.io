@@ -3119,18 +3119,20 @@
 			const button = document.getElementById('viewModeToggleButton');
 			const uploadCompressedBtn = document.getElementById('uploadCompressedImageButton');
 		
-			if (savedViewMode === 'advanced') {
-				body.classList.remove('simple-view');
-				button.textContent = 'Simple View';
-				if (uploadCompressedBtn) {
-					uploadCompressedBtn.textContent = 'Upload Compressed Image';
-				}
-			} else {
-				button.textContent = 'Advanced View';
-				if (uploadCompressedBtn) {
-					uploadCompressedBtn.textContent = 'Upload Image';
-				}
-			}
+            if (savedViewMode === 'advanced') {
+                body.classList.remove('simple-view');
+                button.textContent = 'Simple View';
+                if (uploadCompressedBtn) {
+                    uploadCompressedBtn.textContent = 'Upload Compressed Image';
+                }
+                showView('ble');
+            } else {
+                body.classList.add('simple-view');
+                button.textContent = 'Advanced View';
+                if (uploadCompressedBtn) {
+                    uploadCompressedBtn.textContent = 'Upload Image';
+                }
+            }
 
             doAll();
 
