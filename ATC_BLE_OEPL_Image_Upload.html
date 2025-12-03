@@ -881,7 +881,8 @@
                 <div>
                     <button type="button" onclick="sendcmd('0007');">Disable OEPL</button>
                     <button type="button" onclick="sendcmd('0006');">Enable OEPL</button>
-                    <button type="button" onclick="sendClockMode()">Set Clock Mode</button>
+                    <button type="button" onclick="sendClockMode(1)">Clock Mode</button>
+                    <button type="button" onclick="sendClockMode(2)">Segment Clock Mode</button>
                     <button type="button" onclick="sendcmd('000C');">Disable Clock Mode</button>
                 </div>
                 <div>
@@ -1723,10 +1724,10 @@
             await sendCommand(cmd);
         }
 
-        function sendClockMode() {
+        function sendClockMode(design) {
             var timeHexString = (Math.floor((Date.now() / 1000) + (-(new Date().getTimezoneOffset() * 60)))).toString(16);
             timeHexString = timeHexString.padStart(8, '0');
-            sendcmd('000B' + timeHexString.substring(6, 8) + timeHexString.substring(4, 6) + timeHexString.substring(2, 4) + timeHexString.substring(0, 2));
+            sendcmd('000B' + timeHexString.substring(6, 8) + timeHexString.substring(4, 6) + timeHexString.substring(2, 4) + timeHexString.substring(0, 2) + design.toString(16).padStart(2, '0'));
         }
 
         function setDisplayType(newType) {
