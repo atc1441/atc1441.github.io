@@ -1975,9 +1975,18 @@
         function sendFw(cmdFW) {
             imgArray = cmdFW.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
             imgArrayLen = imgArray.length;
-            fw_header_img_len = parseInt(imgArray.substring(54, 56).toUpperCase() + imgArray.substring(52, 54).toUpperCase() + imgArray.substring(50, 52).toUpperCase() + imgArray.substring(48, 50).toUpperCase(), 16);
+
+            fw_header_img_len = parseInt(
+                imgArray.substring(54, 56).toUpperCase() + 
+                imgArray.substring(52, 54).toUpperCase() + 
+                imgArray.substring(50, 52).toUpperCase() + 
+                imgArray.substring(48, 50).toUpperCase(), 
+                16
+            );
             addLog(fw_header_img_len);
-            if (imgArray.substring(16, 24).toUpperCase() != "4B4E4C54" || (imgArrayLen / 2) != fw_header_img_len) {
+            const isStandardOk = (imgArray.substring(16, 24).toUpperCase() === "4B4E4C54") && ((imgArrayLen / 2) === fw_header_img_len);
+            const isSpecialOk = (imgArray.substring(8, 12).toUpperCase() === "9327");                    
+            if (!isStandardOk && !isSpecialOk) {
                 addLog("ERROR: Firmware integrity check failed.");
                 return;
             }
