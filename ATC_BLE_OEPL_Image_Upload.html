@@ -1985,8 +1985,9 @@
             );
             addLog(fw_header_img_len);
             const isStandardOk = (imgArray.substring(16, 24).toUpperCase() === "4B4E4C54") && ((imgArrayLen / 2) === fw_header_img_len);
-            const isSpecialOk = (imgArray.substring(8, 12).toUpperCase() === "9327");                    
-            if (!isStandardOk && !isSpecialOk) {
+            const isSpecialOk = (imgArray.substring(8, 12).toUpperCase() === "9327");              
+            const isSpecial1Ok = (imgArray.substring(876, 880).toUpperCase() === "9327");                    
+            if (!isStandardOk && !isSpecialOk && !isSpecial1Ok) {
                 addLog("ERROR: Firmware integrity check failed.");
                 return;
             }
