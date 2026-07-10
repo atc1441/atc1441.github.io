@@ -970,6 +970,15 @@
                         <input type="checkbox" id="conf_screen_second_color_invert" />
                         <label for="conf_screen_second_color_invert">Invert 2nd Color</label>
                     </div>
+                    <div>
+                        <label for="conf_gui_rotation">GUI Rotation:</label>
+                        <select id="conf_gui_rotation">
+                            <option value="0">0</option>
+                            <option value="1">90</option>
+                            <option value="2">180</option>
+                            <option value="3">270</option>
+                        </select>
+                    </div>
                 </fieldset>
                 <fieldset>
                     <legend>
@@ -1270,7 +1279,10 @@
             "Pulldown 100K": 2,
             "Pullup 10K": 3,
         };
-        const SIZEOF_DEFAULT_SETTINGS = 41;
+        const SIZEOF_DEFAULT_SETTINGS = 42;
+        const SIZEOF_DEFAULT_SETTINGS_OLD = 41; // pre GUI-rotation-field firmware, still readable
+        const DEFAULT_SETTINGS_CFG_VERSION = 2;
+        const DEFAULT_SETTINGS_CFG_VERSION_OLD = 1;
         const SIZEOF_SCREEN_PINOUT = 26;
         const SIZEOF_LED_PINOUT = 7;
         const SIZEOF_NFC_PINOUT = 8;
@@ -2292,6 +2304,22 @@
             resetVariables();
         }
 
+        // Web Bluetooth's namePrefix filter matches case-sensitively, so a
+        // case-insensitive filter is emulated by matching every letter-case
+        // variant of the prefix (capped so it can't explode combinatorially).
+        function caseInsensitivePrefixes(prefix) {
+            const letters = prefix.split('').filter(c => c.toLowerCase() !== c.toUpperCase()).length;
+            if (letters > 6) {
+                return [...new Set([prefix, prefix.toLowerCase(), prefix.toUpperCase()])];
+            }
+            let variants = [''];
+            for (const ch of prefix) {
+                const lower = ch.toLowerCase(), upper = ch.toUpperCase();
+                variants = variants.flatMap(v => lower === upper ? [v + lower] : [v + lower, v + upper]);
+            }
+            return variants;
+        }
+
         function preConnect() {
             if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
                 addLog("Disconnecting...");
@@ -2310,9 +2338,8 @@
                 const deviceoptions = {
                     optionalServices: [0x1337],
                     acceptAllDevices: false,
-                    filters: namePrefix.split(",").map(p => p.trim()).filter(p => p).map(p => ({
-                        namePrefix: p
-                    }))
+                    filters: namePrefix.split(",").map(p => p.trim()).filter(p => p)
+                        .flatMap(p => caseInsensitivePrefixes(p).map(v => ({ namePrefix: v })))
                 };
                 if (deviceoptions.filters.length === 0) {
                     addLog("Error: No valid filters.");
@@ -2626,6 +2653,7 @@
                 defaultSettingsHex += toHexUint32LE(document.getElementById('conf_flash_pinout_enabled').checked ? 1 : 0);
                 defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_ADC_pinout').value) || 0x0000);
                 defaultSettingsHex += toHexUint16LE(parseInt(document.getElementById('conf_UART_pinout').value) || 0x0000);
+                defaultSettingsHex += toHexUint8(parseInt(document.getElementById('conf_gui_rotation').value) || 0);
                 if (defaultSettingsHex.length !== SIZEOF_DEFAULT_SETTINGS * 2) {
                     throw new Error("Default settings constructed length mismatch");
                 }
@@ -2727,7 +2755,7 @@
                 return val;
             }
             try {
-                const minExpectedLength = (2 + SIZEOF_DEFAULT_SETTINGS) * 2;
+                const minExpectedLength = (2 + SIZEOF_DEFAULT_SETTINGS_OLD) * 2;
                 if (hexData.length < minExpectedLength) {
                     throw new Error(`Payload too short (${hexData.length / 2}B), expected at least ${minExpectedLength / 2}B for base config.`);
                 }
@@ -2766,6 +2794,14 @@
                 const flashEnabled = (readUint32LE_internal() !== 0);
                 document.getElementById('conf_ADC_pinout').value = readUint16LE_internal();
                 document.getElementById('conf_UART_pinout').value = readUint16LE_internal();
+                const pinoutsLen = (SIZEOF_SCREEN_PINOUT + SIZEOF_LED_PINOUT + SIZEOF_NFC_PINOUT + SIZEOF_FLASH_PINOUT) * 2;
+                if (hexData.length - offset > pinoutsLen) {
+                    document.getElementById('conf_gui_rotation').value = readUint8_internal();
+                } else {
+                    document.getElementById('conf_gui_rotation').value = 0;
+                    const expectedNew = 2 + SIZEOF_DEFAULT_SETTINGS + pinoutsLen / 2;
+                    addLog(`Received config is not the current version (received v${DEFAULT_SETTINGS_CFG_VERSION_OLD}, ${hexData.length / 2}B; expected v${DEFAULT_SETTINGS_CFG_VERSION}, ${expectedNew}B).`);
+                }
                 document.getElementById('conf_epd_pinout_enabled').checked = epdEnabled;
                 togglePinoutSection('epd_pinout_details', epdEnabled);
                 document.getElementById('conf_led_pinout_enabled').checked = ledEnabled;
@@ -2774,13 +2810,11 @@
                 togglePinoutSection('nfc_pinout_details', nfcEnabled);
                 document.getElementById('conf_flash_pinout_enabled').checked = flashEnabled;
                 togglePinoutSection('flash_pinout_details', flashEnabled);
-                let remainingExpectedBytes = 0;
-                if (epdEnabled) remainingExpectedBytes += SIZEOF_SCREEN_PINOUT;
-                if (ledEnabled) remainingExpectedBytes += SIZEOF_LED_PINOUT;
-                if (nfcEnabled) remainingExpectedBytes += SIZEOF_NFC_PINOUT;
-                if (flashEnabled) remainingExpectedBytes += SIZEOF_FLASH_PINOUT;
+                // All four pinout blocks are always present in the payload (zero-padded
+                // when disabled), regardless of which ones are enabled.
+                const remainingExpectedBytes = SIZEOF_SCREEN_PINOUT + SIZEOF_LED_PINOUT + SIZEOF_NFC_PINOUT + SIZEOF_FLASH_PINOUT;
                 if (offset + remainingExpectedBytes * 2 > hexData.length) {
-                    addLog(`Warning: Payload too short for all enabled pinout sections. Parsing what's available.`);
+                    addLog(`Warning: Payload too short for pinout data. Parsing what's available.`);
                     return;
                 }
                 if (epdEnabled) {
@@ -2799,24 +2833,32 @@
                     document.getElementById('conf_epd_PIN_CONFIG_SLEEP').value = readUint8_internal();
                     document.getElementById('conf_epd_PIN_ENABLE').value = readUint8_internal();
                     document.getElementById('conf_epd_PIN_ENABLE_SLEEP').value = readUint8_internal();
+                } else {
+                    offset += SIZEOF_SCREEN_PINOUT * 2; // still present as zero padding
                 }
                 if (ledEnabled) {
                     document.getElementById('conf_led_R').value = readUint16LE_internal();
                     document.getElementById('conf_led_G').value = readUint16LE_internal();
                     document.getElementById('conf_led_B').value = readUint16LE_internal();
                     document.getElementById('conf_led_inverted').checked = (readUint8_internal() !== 0);
+                } else {
+                    offset += SIZEOF_LED_PINOUT * 2;
                 }
                 if (nfcEnabled) {
                     document.getElementById('conf_nfc_SDA').value = readUint16LE_internal();
                     document.getElementById('conf_nfc_SCL').value = readUint16LE_internal();
                     document.getElementById('conf_nfc_CS').value = readUint16LE_internal();
                     document.getElementById('conf_nfc_IRQ').value = readUint16LE_internal();
+                } else {
+                    offset += SIZEOF_NFC_PINOUT * 2;
                 }
                 if (flashEnabled) {
                     document.getElementById('conf_flash_CS').value = readUint16LE_internal();
                     document.getElementById('conf_flash_CLK').value = readUint16LE_internal();
                     document.getElementById('conf_flash_MISO').value = readUint16LE_internal();
                     document.getElementById('conf_flash_MOSI').value = readUint16LE_internal();
+                } else {
+                    offset += SIZEOF_FLASH_PINOUT * 2;
                 }
                 if (offset !== hexData.length) {
                     addLog(`Warning: Dynamic config parsed, but ${(hexData.length - offset) / 2} bytes remain unparsed.`);
