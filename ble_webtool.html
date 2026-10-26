@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BLE Explorer</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c232c; --line:#2b3340;
+    --fg:#e6edf3; --muted:#8b98a8; --accent:#4cc2ff; --accent2:#2ea043;
+    --warn:#d29922; --err:#f85149; --mono:"SF Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px}
+  header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);
+    padding:10px 16px env(safe-area-inset-top,10px);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.2px}
+  header h1 small{color:var(--muted);font-weight:400}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:16px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{background:var(--accent);color:#04121c;border:0;border-radius:7px;
+    padding:9px 14px;font-weight:600;cursor:pointer;font-size:13px}
+  button.sec{background:var(--panel2);color:var(--fg);border:1px solid var(--line)}
+  button.danger{background:var(--panel2);color:var(--err);border:1px solid var(--line)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  input,select{background:var(--bg);color:var(--fg);border:1px solid var(--line);
+    border-radius:7px;padding:8px 10px;font-size:13px;font-family:var(--mono)}
+  input:focus,select:focus{outline:1px solid var(--accent)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .card>.hd{padding:10px 14px;border-bottom:1px solid var(--line);font-weight:600;
+    display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .card>.bd{padding:12px 14px}
+  .pill{font:600 11px var(--mono);padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .pill.on{color:var(--accent2);border-color:#23502f;background:#0f2417}
+  .pill.off{color:var(--err);border-color:#4a2320;background:#2a1513}
+  .svc{border:1px solid var(--line);border-radius:9px;margin-bottom:10px;background:var(--panel2)}
+  .svc>.sh{padding:9px 12px;font-family:var(--mono);font-size:12.5px;cursor:pointer;
+    display:flex;justify-content:space-between;gap:10px;align-items:center}
+  .svc>.sh b{color:var(--accent)}
+  .chrs{border-top:1px solid var(--line);display:none}
+  .svc.open .chrs{display:block}
+  .chr{padding:10px 12px;border-bottom:1px solid var(--line)}
+  .chr:last-child{border-bottom:0}
+  .chr .uuid{font-family:var(--mono);font-size:12.5px}
+  .chr .props{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}
+  .prop{font:600 10px var(--mono);padding:1px 6px;border-radius:4px;background:#0c1420;
+    border:1px solid var(--line);color:var(--muted)}
+  .chr .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;align-items:center}
+  .chr .val{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:6px;
+    word-break:break-all;white-space:pre-wrap}
+  .mini{padding:5px 9px;font-size:11.5px;border-radius:6px}
+  #log{font-family:var(--mono);font-size:12px;line-height:1.5;background:#0a0d12;
+    border:1px solid var(--line);border-radius:9px;padding:10px;height:340px;overflow:auto;white-space:pre-wrap}
+  .le{border-bottom:1px solid #141a22;padding:2px 0}
+  .le .t{color:#566475}
+  .le .rx{color:var(--accent2)} .le .tx{color:var(--accent)}
+  .le .sys{color:var(--muted)} .le .er{color:var(--err)}
+  .le b{color:var(--fg)}
+  label.inl{color:var(--muted);font-size:12px;display:flex;gap:6px;align-items:center}
+  .note{color:var(--muted);font-size:12px;line-height:1.55}
+  .banner{background:#2a1513;border:1px solid #4a2320;color:#ffb4ad;border-radius:9px;
+    padding:10px 14px;font-size:13px;display:none}
+  code{font-family:var(--mono);background:#0c1420;padding:1px 5px;border-radius:4px;color:var(--accent)}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <h1>BLE Explorer <small>· Web Bluetooth</small></h1>
+  <span id="status" class="pill off">getrennt</span>
+  <div class="row" style="margin-left:auto">
+    <label class="inl"><input type="checkbox" id="allDevices"> alle Geräte zeigen</label>
+    <button id="btnScan">Scannen &amp; Verbinden</button>
+    <button id="btnDisc" class="danger" disabled>Trennen</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="unsupported" class="banner"></div>
+
+  <div class="card">
+    <div class="hd">Gerät <span id="devName" class="pill">—</span></div>
+    <div class="bd">
+      <div class="note" id="devInfo">Noch nichts verbunden. Klick „Scannen &amp; Verbinden".
+      Standardmäßig wird nach Geräten mit Namenspräfix <code>MGA</code> gefiltert; mit „alle Geräte zeigen" siehst du jedes BLE-Gerät.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="hd">GATT-Services &amp; Characteristics
+      <button id="btnRefresh" class="sec mini" disabled>neu einlesen</button></div>
+    <div class="bd" id="services"><div class="note">—</div></div>
+  </div>
+
+  <div class="card">
+    <div class="hd">Schreiben
+      <span class="note" style="font-weight:400">Hex, Leerzeichen/Doppelpunkt egal — z.B. <code>12</code> oder <code>01 03 AA</code></span></div>
+    <div class="bd">
+      <div class="row">
+        <select id="writeChar" style="flex:1;min-width:220px"><option value="">— Characteristic wählen (nach Verbinden) —</option></select>
+        <input id="writeHex" placeholder="12" style="flex:1;min-width:140px" value="12">
+        <button id="btnWrite" disabled>Senden</button>
+      </div>
+      <div class="note" style="margin-top:8px">Es wird „with response" genutzt, wo möglich, sonst „without response".</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="hd">Live-Log
+      <div class="row">
+        <label class="inl"><input type="checkbox" id="showAscii" checked> ASCII</label>
+        <button id="btnCopy" class="sec mini">Kopieren</button>
+        <button id="btnClear" class="sec mini">Leeren</button>
+      </div></div>
+    <div class="bd"><div id="log"></div></div>
+  </div>
+
+  <div class="note">
+    <b>Hinweis zu diesem Gerät (MGA Record Player):</b> relevante Services sind
+    <code>0xAE00</code> und <code>0xAE30</code>, jeweils mit <code>0xAE01</code> (write) und
+    <code>0xAE02</code> (notify). Abonniere <code>AE02</code>, um die Antworten/Frames zu sehen;
+    über <code>AE01</code> schreibst du Kommandos. Diese UUIDs sind unten vorab freigegeben, damit
+    Web Bluetooth sie überhaupt anzeigt.
+  </div>
+</div>
+
+<script>
+"use strict";
+// ---- known UUIDs this tool is allowed to see (Web Bluetooth needs them allow-listed) ----
+const SHORT = n => `0000${n.toString(16).padStart(4,"0")}-0000-1000-8000-00805f9b34fb`;
+const OPTIONAL_SERVICES = [];
+for (let s=0xAE00; s<=0xAE3F; s++) OPTIONAL_SERVICES.push(SHORT(s));   // AE00..AE3F range
+[0x1800,0x1801,0x180A,0x180F,0x1802,0x1803,0x1804,0xFE59,0xFFF0,0xFFE0,0xFD00]
+  .forEach(s=>OPTIONAL_SERVICES.push(SHORT(s)));
+// common vendor 128-bit (Nordic UART) for good measure:
+OPTIONAL_SERVICES.push("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
+
+const KNOWN = {
+  "1800":"Generic Access","1801":"Generic Attribute","180a":"Device Information",
+  "180f":"Battery Service","2a00":"Device Name","2a19":"Battery Level",
+  "2a29":"Manufacturer","2a24":"Model Number","2a26":"Firmware Rev","2a28":"Software Rev",
+  "ae00":"MGA Data Service","ae30":"MGA Control Service","ae01":"MGA Write","ae02":"MGA Notify",
+  "2902":"Client Characteristic Config"
+};
+const shortOf = u => (""+u).toLowerCase().replace(/^0000/,"").replace(/-0000-1000-8000-00805f9b34fb$/,"");
+const nameOf  = u => { const s=shortOf(u); return KNOWN[s] ? `${KNOWN[s]}` : null; };
+
+// ---- state ----
+let device=null, server=null;
+const chars = new Map();   // key -> {char, svcShort, chrShort}
+
+// ---- log ----
+const logEl = document.getElementById("log");
+const pad2 = n => (""+n).padStart(2,"0");
+function now(){const d=new Date();return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}.${(""+d.getMilliseconds()).padStart(3,"0")}`;}
+function hexdump(dv){const b=[];for(let i=0;i<dv.byteLength;i++)b.push(pad2(dv.getUint8(i).toString(16).toUpperCase()));return b.join(" ");}
+function ascii(dv){let s="";for(let i=0;i<dv.byteLength;i++){const c=dv.getUint8(i);s+=(c>=0x20&&c<0x7f)?String.fromCharCode(c):".";}return s;}
+function log(kind,label,dv){
+  const le=document.createElement("div");le.className="le";
+  let body=`<span class="t">${now()}</span> <span class="${kind}">${label}</span>`;
+  if(dv){body+=` <b>${hexdump(dv)}</b>`;
+    if(document.getElementById("showAscii").checked) body+=`  <span class="t">|${ascii(dv)}|</span>`;
+    body+=` <span class="t">(${dv.byteLength}B)</span>`;}
+  le.innerHTML=body;logEl.appendChild(le);logEl.scrollTop=logEl.scrollHeight;
+}
+function sys(m){log("sys","·",null);logEl.lastChild.innerHTML=`<span class="t">${now()}</span> <span class="sys">${m}</span>`;}
+function err(m){log("er","!",null);logEl.lastChild.innerHTML=`<span class="t">${now()}</span> <span class="er">${m}</span>`;}
+
+// ---- support check ----
+(function(){
+  const b=document.getElementById("unsupported");
+  if(!navigator.bluetooth){
+    b.style.display="block";
+    b.innerHTML="⚠️ <b>Web Bluetooth nicht verfügbar.</b> Öffne diese Datei in <b>Chrome</b> oder Edge "+
+      "(Desktop oder Android), nicht in der Chat-Vorschau/iframe und nicht in Firefox/Safari. "+
+      "Außerdem nötig: sicherer Kontext (die lokale Datei via <code>file://</code> reicht auf dem Desktop).";
+    document.getElementById("btnScan").disabled=true;
+  }
+})();
+
+// ---- connect ----
+async function connect(){
+  try{
+    const opts = document.getElementById("allDevices").checked
+      ? {acceptAllDevices:true, optionalServices:OPTIONAL_SERVICES}
+      : {filters:[{namePrefix:"MGA"},{namePrefix:"mga"}], optionalServices:OPTIONAL_SERVICES};
+    sys("fordere Gerät an …");
+    device = await navigator.bluetooth.requestDevice(opts);
+    device.addEventListener("gattserverdisconnected", onDisconnected);
+    sys(`gewählt: ${device.name||"(ohne Name)"} [${device.id}]`);
+    document.getElementById("devName").textContent = device.name||"(ohne Name)";
+    sys("verbinde GATT …");
+    server = await device.gatt.connect();
+    setConnected(true);
+    sys("verbunden ✓");
+    await enumerate();
+  }catch(e){ err("Verbindung: "+e.message); }
+}
+function onDisconnected(){ setConnected(false); sys("Gerät getrennt."); }
+async function disconnect(){ if(device&&device.gatt.connected) device.gatt.disconnect(); }
+
+function setConnected(on){
+  const s=document.getElementById("status");
+  s.textContent=on?"verbunden":"getrennt"; s.className="pill "+(on?"on":"off");
+  document.getElementById("btnDisc").disabled=!on;
+  document.getElementById("btnRefresh").disabled=!on;
+  document.getElementById("btnWrite").disabled=!on;
+  if(!on){chars.clear();}
+}
+
+// ---- enumerate services ----
+async function enumerate(){
+  const host=document.getElementById("services"); host.innerHTML="";
+  const sel=document.getElementById("writeChar");
+  sel.innerHTML='<option value="">— Characteristic wählen —</option>';
+  chars.clear();
+  const info=[];
+  let services=[];
+  try{ services = await server.getPrimaryServices(); }
+  catch(e){ err("getPrimaryServices: "+e.message); }
+  if(!services.length){ host.innerHTML='<div class="note">Keine der vorab freigegebenen Services gefunden. '+
+    'Falls das Gerät andere UUIDs nutzt, sag mir welche — ich erweitere die Allow-List.</div>'; return; }
+
+  for(const svc of services){
+    const sShort=shortOf(svc.uuid);
+    const sDiv=document.createElement("div"); sDiv.className="svc open";
+    const label=nameOf(svc.uuid)?` <span class="t">(${nameOf(svc.uuid)})</span>`:"";
+    sDiv.innerHTML=`<div class="sh"><span><b>0x${sShort.toUpperCase()}</b>${label}</span>
+      <span class="pill">Service</span></div><div class="chrs"></div>`;
+    const chrs=sDiv.querySelector(".chrs");
+    sDiv.querySelector(".sh").onclick=()=>sDiv.classList.toggle("open");
+    let cs=[];
+    try{ cs=await svc.getCharacteristics(); }catch(e){ err("chars @"+sShort+": "+e.message); }
+    for(const c of cs){
+      const cShort=shortOf(c.uuid); const key=sShort+"/"+cShort;
+      chars.set(key,{char:c,svcShort:sShort,chrShort:cShort});
+      const p=c.properties; const props=[];
+      ["read","write","writeWithoutResponse","notify","indicate","broadcast","authenticatedSignedWrites","reliableWrite"]
+        .forEach(k=>{if(p[k])props.push(k.replace("writeWithoutResponse","write-nr").replace("authenticatedSignedWrites","signed"))});
+      const clabel=nameOf(c.uuid)?` <span class="t">(${nameOf(c.uuid)})</span>`:"";
+      const cDiv=document.createElement("div"); cDiv.className="chr";
+      cDiv.innerHTML=`<div class="uuid"><b>0x${cShort.toUpperCase()}</b>${clabel}</div>
+        <div class="props">${props.map(x=>`<span class="prop">${x}</span>`).join("")}</div>
+        <div class="acts"></div><div class="val" data-val="${key}"></div>`;
+      const acts=cDiv.querySelector(".acts");
+      if(p.read){const b=mkBtn("Read",()=>readChar(key));acts.appendChild(b);}
+      if(p.notify||p.indicate){
+        const b=mkBtn("Notify an",async()=>{ if(b.dataset.on==="1"){await stopNotify(key);b.textContent="Notify an";b.dataset.on="0";b.classList.add("sec");}
+          else{await startNotify(key);b.textContent="Notify aus";b.dataset.on="1";b.classList.remove("sec");}});
+        b.classList.add("sec");acts.appendChild(b);
+      }
+      if(p.write||p.writeWithoutResponse){
+        const o=document.createElement("option");o.value=key;o.textContent=`${sShort.toUpperCase()}/${cShort.toUpperCase()}`;
+        document.getElementById("writeChar").appendChild(o);
+      }
+      chrs.appendChild(cDiv);
+      info.push(`${sShort.toUpperCase()}/${cShort.toUpperCase()} [${props.join(",")}]`);
+    }
+    host.appendChild(sDiv);
+  }
+  document.getElementById("devInfo").innerHTML=
+    `<b>${device.name||"(ohne Name)"}</b> · ${services.length} Service(s), ${chars.size} Characteristic(s)`;
+  // auto-subscribe AE02 in both services if present
+  for(const key of ["ae00/ae02","ae30/ae02"]) if(chars.has(key)){ try{await startNotify(key);
+    sys("AE02 ("+key+") automatisch abonniert");}catch(e){} }
+}
+function mkBtn(txt,fn){const b=document.createElement("button");b.className="mini";b.textContent=txt;b.onclick=fn;return b;}
+
+async function readChar(key){
+  const e=chars.get(key); try{const dv=await e.char.readValue();
+    log("rx",`RD ${key.toUpperCase()}`,dv);
+    const cell=document.querySelector(`[data-val="${key}"]`); if(cell)cell.textContent="= "+hexdump(dv)+"  |"+ascii(dv)+"|";
+  }catch(err2){err("read "+key+": "+err2.message);}
+}
+async function startNotify(key){
+  const e=chars.get(key);
+  await e.char.startNotifications();
+  e.char.addEventListener("characteristicvaluechanged",ev=>{
+    const dv=ev.target.value; log("rx",`RX ${key.toUpperCase()}`,dv);
+    const cell=document.querySelector(`[data-val="${key}"]`); if(cell)cell.textContent="→ "+hexdump(dv);
+  });
+}
+async function stopNotify(key){const e=chars.get(key);try{await e.char.stopNotifications();}catch(err3){}}
+
+function parseHex(s){
+  const clean=s.replace(/0x/gi,"").replace(/[^0-9a-fA-F]/g,"");
+  if(clean.length%2) throw new Error("ungerade Hex-Länge");
+  const out=new Uint8Array(clean.length/2);
+  for(let i=0;i<out.length;i++)out[i]=parseInt(clean.substr(i*2,2),16);
+  return out;
+}
+async function writeChar(){
+  const key=document.getElementById("writeChar").value;
+  if(!key){err("keine Characteristic gewählt");return;}
+  let bytes; try{bytes=parseHex(document.getElementById("writeHex").value);}catch(e){err(e.message);return;}
+  if(!bytes.length){err("nichts zu senden");return;}
+  const e=chars.get(key); const p=e.char.properties;
+  try{
+    if(p.write && e.char.writeValueWithResponse) await e.char.writeValueWithResponse(bytes);
+    else if(p.write) await e.char.writeValue(bytes);
+    else if(p.writeWithoutResponse && e.char.writeValueWithoutResponse) await e.char.writeValueWithoutResponse(bytes);
+    else await e.char.writeValue(bytes);
+    const dv=new DataView(bytes.buffer); log("tx",`TX ${key.toUpperCase()}`,dv);
+  }catch(err4){err("write "+key+": "+err4.message);}
+}
+
+// ---- wiring ----
+document.getElementById("btnScan").onclick=connect;
+document.getElementById("btnDisc").onclick=disconnect;
+document.getElementById("btnRefresh").onclick=()=>{if(server&&device.gatt.connected)enumerate();};
+document.getElementById("btnWrite").onclick=writeChar;
+document.getElementById("writeHex").addEventListener("keydown",e=>{if(e.key==="Enter")writeChar();});
+document.getElementById("btnClear").onclick=()=>logEl.innerHTML="";
+document.getElementById("btnCopy").onclick=()=>{navigator.clipboard.writeText(logEl.innerText).then(()=>sys("Log kopiert"));};
+sys("bereit. Chrome/Edge nötig. Klick „Scannen & Verbinden".");
+</script>
+</body>
+</html>
