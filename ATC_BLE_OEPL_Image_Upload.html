@@ -131,6 +131,7 @@
         #lut-upload,
         #display-type-set,
         #uart-flash-content,
+        #info-view,
         #debug-view {
             min-width: 380px;
             max-width: 600px;
@@ -152,6 +153,7 @@
         #display-type-set input[type="button"],
         #uart-flash-content button,
         #uart-flash-content input[type="button"],
+        #info-view button,
         #debug-view button {
             background-color: #fff;
             color: #007bff;
@@ -165,6 +167,7 @@
         #display-type-set input[type="button"]:hover,
         #uart-flash-content button:hover,
         #uart-flash-content input[type="button"]:hover,
+        #info-view button:hover,
         #debug-view button:hover {
             background-color: #ddd;
         }
@@ -341,11 +344,259 @@
             color: #333;
         }
 
+        /* The tag's own log sits at the foot of the page, outside the tabs,
+           and folds away.
+
+           It used to live inside the Debug view, where it was hidden exactly
+           when it was wanted: reading it meant leaving the view you were
+           working in, and switching back stopped the tail. Down here it is
+           there whichever tab is in front, and folded until it is asked for.
+
+           Nothing else moved. The page's BLE log and the serial flasher's log
+           keep their place above the tab buttons, where one takes over from
+           the other when the UART Flasher tab is picked. */
+        #log-dock {
+            width: 100%;
+            max-width: 1300px;
+            margin: 20px auto 0 auto;
+            padding-top: 12px;
+            border-top: 2px solid #c6ccd2;
+            text-align: left;
+        }
+
+        #log-dock > details {
+            background-color: #f8f9fa;
+            border: 1px solid #d3d8dd;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        #log-dock > details > summary {
+            align-items: center;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            flex-wrap: wrap;
+            font-weight: bold;
+            gap: 10px;
+            list-style: none;
+            padding: 8px 12px;
+        }
+
+        #log-dock > details > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        #log-dock > details > summary::before {
+            content: "\25B8";
+            color: #6c757d;
+        }
+
+        #log-dock > details[open] > summary::before {
+            content: "\25BE";
+        }
+
+        #log-dock .dock-sub {
+            color: #5a6268;
+            font-weight: normal;
+            font-size: 0.85em;
+        }
+
+        #log-dock .dock-body {
+            padding: 0 12px 12px 12px;
+        }
+
+        #log-dock .dock-note {
+            color: #555;
+            font-size: 0.8em;
+            line-height: 1.45;
+            margin: 6px 0 0 0;
+        }
+
+        #log-dock .log-header {
+            padding: 0 0 4px 0;
+        }
+
 
         .view-toggle-buttons {
             margin-bottom: 10px;
             text-align: center;
         }
+
+        /* ---- Low Level tab ---- */
+        .ll-note {
+            background-color: #fff8e1;
+            border-left: 4px solid #d6a21a;
+            color: #5a4b16;
+            padding: 8px 12px;
+            margin: 0 0 12px 0;
+            font-size: 0.9em;
+            line-height: 1.45;
+        }
+
+        .ll-box {
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            margin-bottom: 14px;
+            padding: 8px 12px 12px 12px;
+        }
+
+        .ll-box legend {
+            padding: 0 6px;
+            font-weight: bold;
+        }
+
+        .ll-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .ll-row label {
+            min-width: auto;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .ll-row input[type="text"],
+        .ll-row select {
+            margin: 0;
+        }
+
+        .ll-row button {
+            margin: 0;
+            padding: 4px 10px;
+        }
+
+        #nfc-view h2,
+        #lowlevel-view h2 {
+            color: #0056b3;
+        }
+
+        .prot-state { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0; }
+        /* Each badge brings its own background, because it has to read on two
+           very different ones: the blue cards (#007bff, white text) and the
+           plain page behind the NFC and Low Level views. A coloured border
+           with coloured text cannot do that - dark green on strong blue is
+           unreadable - so these are filled, and the only thing inherited is
+           the font.
+
+           What the four states mean, which is where the old ones went wrong
+           as much as the colours did:
+             on      the thing is active and healthy
+             off     a legitimate, deliberate setting - not a fault. No PIN set
+                     and the NFC command channel switched off both belong here;
+                     amber said "something is wrong" about a tag configured
+                     exactly as its owner asked.
+             warn    nothing is broken but it blocks what this page wants to do,
+                     e.g. a locked tag
+             bad     the answer did not arrive, so the state is not known */
+        .prot-badge { display: inline-block; padding: 3px 10px; border-radius: 11px;
+            border: 1px solid #b9c0c7; background-color: rgba(255, 255, 255, 0.92);
+            color: #4a5056; font-size: 0.85em; font-weight: bold;
+            white-space: nowrap; }
+        .prot-badge.prot-on { background-color: #1b7f35; border-color: #14682a; color: #fff; }
+        .prot-badge.prot-off { background-color: #eceff1; border-color: #cfd8dc; color: #455a64; }
+        .prot-badge.prot-warn { background-color: #f0a500; border-color: #c98700; color: #2f2200; }
+        .prot-badge.prot-bad { background-color: #c62828; border-color: #a31f1f; color: #fff; }
+        .prot-relock { font-size: 0.85em; opacity: 0.8; }
+        .prot-hint { font-size: 0.85em; opacity: 0.85; margin: 2px 0 8px 0; }
+        .prot-box { margin: 8px 0; }
+        .sysinfo-grid { display: grid; grid-template-columns: max-content 1fr;
+            gap: 2px 14px; font-size: 0.9em; margin-top: 4px; }
+        .sysinfo-grid .k { white-space: nowrap; opacity: 0.85; }
+        .sysinfo-grid .v { font-family: monospace; word-break: break-word; }
+        .sysinfo-grid .h { grid-column: 1 / -1; font-weight: bold;
+            margin-top: 8px; padding-bottom: 2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.35); }
+        .sysinfo-grid .h:first-child { margin-top: 0; }
+        .prot-box small { display: block; margin-top: 4px; opacity: 0.85; }
+        #taglog-details { margin-top: 12px; }
+        #taglog-details > summary { cursor: pointer; font-weight: bold; }
+        .taglog-controls { display: flex; flex-wrap: wrap; align-items: center;
+            gap: 8px; margin: 6px 0; }
+        .taglog-follow { font-size: 0.85em; }
+        #taglog-text { width: 100%; min-height: 16em; font-family: monospace;
+            font-size: 0.8em; white-space: pre; overflow: auto; }
+        .ll-out {
+            background-color: #1b1b1b;
+            border: 1px solid #444;
+            border-radius: 3px;
+            color: #d7d7d7;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.35;
+            margin: 6px 0 0 0;
+            max-height: 320px;
+            overflow: auto;
+            padding: 8px;
+            white-space: pre;
+        }
+
+        .ll-grid {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(72px, 1fr));
+            gap: 4px;
+            margin: 8px 0;
+        }
+
+        .ll-pin {
+            border: 1px solid #aaa;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 4px;
+            text-align: center;
+            user-select: none;
+        }
+
+        .ll-pin:hover {
+            border-color: #007bff;
+        }
+
+        .ll-pin-name {
+            display: block;
+            font-weight: bold;
+        }
+
+        .ll-pin-lvl {
+            display: block;
+            font-size: 15px;
+            line-height: 1.1;
+        }
+
+        .ll-pin-role {
+            display: block;
+            font-size: 9px;
+            min-height: 11px;
+            opacity: 0.75;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .ll-pin.ll-hi {
+            background-color: #c8e6c9;
+        }
+
+        .ll-pin.ll-lo {
+            background-color: #e2e2e2;
+        }
+
+        /* An output driver is on: the level shown is what we are driving, not
+           what is being read back. */
+        .ll-pin.ll-drive {
+            border-color: #b7791f;
+            border-width: 2px;
+        }
+
+        /* The firmware has a role for this pin, so poking it has consequences. */
+        .ll-pin.ll-used .ll-pin-name {
+            color: #c05621;
+        }
+
 
         .view-toggle-buttons button {
             background-color: #6c757d;
@@ -655,12 +906,15 @@
 
 
         body.simple-view #pixelData,
+        body.simple-view #log-dock,
         body.simple-view #log-area,
+
         body.simple-view .view-toggle-buttons,
         body.simple-view #display-type-set,
         body.simple-view #lut-upload,
         body.simple-view #uart-flash-content,
         body.simple-view #uart-log-area,
+        body.simple-view #info-view,
         body.simple-view #debug-view {
             display: none !important;
         }
@@ -830,9 +1084,12 @@
 
         <div class="view-toggle-buttons">
             <button id="btn-show-ble" onclick="showView('ble')" class="active">BLE Connection</button>
+            <button id="btn-show-info" onclick="showView('info')">Tag Info</button>
             <button id="btn-show-config" onclick="showView('config')">HW Config</button>
             <button id="btn-show-lut" onclick="showView('lut')">LUT Playground</button>
+            <button id="btn-show-nfc" onclick="showView('nfc')">NFC</button>
             <button id="btn-show-debug" onclick="showView('debug')">Debug</button>
+            <button id="btn-show-lowlevel" onclick="showView('lowlevel')">Low Level</button>
             <button id="btn-show-uart" onclick="showView('uart')">UART Flasher</button>
         </div>
 
@@ -911,6 +1168,37 @@
                     <button type="button" onclick="sendcmd('0014');">DeepSleep</button>
                     <button type="button" onclick="sendcmd('0017');">Reboot</button>
                 </div>
+
+                <div>
+                    <button type="button" id="prot-btn-nfcon" onclick="sendcmd('001D');">NFC CMD Enable</button>
+                    <button type="button" id="prot-btn-nfcoff" onclick="disableNfcCmds()">NFC CMD Disable</button>
+                    <span class="prot-badge" id="prot-nfc">NFC commands &ndash;</span>
+                </div>
+
+                <fieldset class="prot-box">
+                    <legend>PIN Protection</legend>
+                    <div class="prot-state">
+                        <span class="prot-badge" id="prot-pin">PIN &ndash;</span>
+                        <span class="prot-badge" id="prot-lock">lock &ndash;</span>
+                        <span class="prot-relock" id="prot-relock"></span>
+                        <button type="button" onclick="readProtection()">Refresh</button>
+                    </div>
+                    <div>
+                        <label for="cmdPin">PIN:</label>
+                        <input type="text" id="cmdPin" value="" maxlength="16" placeholder="up to 16 characters" />
+                        <button type="button" id="prot-btn-setpin" onclick="setPin()">Set PIN</button>
+                    </div>
+                    <div>
+                        <button type="button" id="prot-btn-clearpin" onclick="clearPin()">Remove</button>
+                        <button type="button" id="prot-btn-unlock" onclick="unlockPin()">Unlock</button>
+                        <button type="button" id="prot-btn-lock" onclick="sendcmd('001F')">Lock now</button>
+                    </div>
+                    <small id="prot-hint">Locks BLE, not NFC. Kept in RAM, so a
+                        reboot clears it. An unlock lasts
+                        <span id="prot-relock-s">60</span> s of silence<span
+                        id="prot-maxlock-line"> and at most
+                        <span id="prot-maxlock-s">600</span> s</span>.</small>
+                </fieldset>
             </div>
 
             <div id="display-type-set" style="display: none;">
@@ -1102,6 +1390,90 @@
                 <br /><br />
             </div>
 
+            <div id="nfc-view" style="display: none;">
+                <h2>NFC</h2>
+                <p class="ll-note">
+                    What a phone meets when it is held against the tag: the message it
+                    reads without any app, and the command channel an app uses to talk to
+                    the tag the way this page does over BLE.
+                </p>
+
+                <div class="prot-state">
+                    <span class="prot-badge" id="nfc-chip">chip &ndash;</span>
+                    <span class="prot-badge" id="nfc-cmds">commands &ndash;</span>
+                    <span class="prot-relock" id="nfc-uid"></span>
+                    <button type="button" onclick="nfcRefresh()">Refresh</button>
+                </div>
+
+                <fieldset class="prot-box">
+                    <legend>The message a tap reads</legend>
+                    <div>
+                        <label for="nfcNdefKind">Kind:</label>
+                        <select id="nfcNdefKind" onchange="nfcNdefKindChanged()">
+                            <option value="url">URL</option>
+                            <option value="text">Text</option>
+                            <option value="raw">Raw bytes (hex)</option>
+                        </select>
+                        <input type="text" id="nfcNdefValue" placeholder="https://example.com"
+                            style="min-width: 22em;" />
+                    </div>
+                    <div>
+                        <button type="button" id="nfc-btn-write" onclick="nfcWriteNdef()">Write</button>
+                        <button type="button" id="nfc-btn-clear" onclick="nfcClearNdef()">Clear</button>
+                        <span id="nfc-ndef-note" class="prot-relock"></span>
+                    </div>
+                    <small>Written to flash and kept across reboots. Clearing puts the
+                        tag's own default message back rather than leaving a phone with
+                        nothing to read.</small>
+                </fieldset>
+
+                <fieldset class="prot-box">
+                    <legend>Command channel</legend>
+                    <div>
+                        <button type="button" id="nfc-btn-cmds-on" onclick="sendcmd('001D');">Enable</button>
+                        <button type="button" id="nfc-btn-cmds-off" onclick="disableNfcCmds()">Disable</button>
+                    </div>
+                    <small>The same switch as under Protection, where it sits with the PIN
+                        &ndash; both decide who may command this tag, so changing one
+                        without seeing the other is how a tag ends up half shut. Kept here
+                        too because this is where someone working on NFC looks.</small>
+                </fieldset>
+
+                <fieldset class="prot-box">
+                    <legend>Diagnostics</legend>
+                    <div class="ll-row">
+                        <button type="button" onclick="llNfcInfo()">Chip info</button>
+                        <button type="button" onclick="llNfcDump()">Registers</button>
+                        <button type="button" onclick="llNfcEeprom()">EEPROM + NDEF</button>
+                        <button type="button" onclick="llNfcRecover()">Recover bus</button>
+                    </div>
+                    <p class="ll-note">Which NFC IC is fitted is detected at runtime, so
+                        the address and register layout below come from the tag, not from
+                        an assumption here. Recover clocks a jammed bus free and scans for
+                        the chip again &ndash; the device address of some NFC ICs lives in
+                        their own writable EEPROM, so a chip can legitimately move.</p>
+                    <pre id="ll-nfc-out" class="ll-out"></pre>
+                </fieldset>
+            </div>
+
+            <div id="info-view" style="display: none;">
+                <h2>Tag Info</h2>
+                <fieldset class="prot-box">
+                    <legend>Readout</legend>
+                    <div class="prot-state">
+                        <button type="button" onclick="readSysInfo(true)">Read</button>
+                        <span class="prot-relock" id="sysinfo-state">not read yet</span>
+                    </div>
+                    <div id="sysinfo-grid" class="sysinfo-grid"></div>
+                    <small>One command and one answer: what firmware is running,
+                        what it is measuring, what panel, flash and NFC chip it
+                        has, and which modes are on. A plain command, not the
+                        debug channel &ndash; reading a tag's vital signs should
+                        not go through something that can also erase it.</small>
+                </fieldset>
+
+            </div>
+
             <div id="debug-view" style="display: none;">
                 <h2>Debug</h2>
                 <div id="debug-status-display">
@@ -1115,6 +1487,228 @@
                 <div id="debug-chart-container">
                     <canvas id="debugChart"></canvas>
                 </div>
+            </div>
+
+            <div id="lowlevel-view" style="display: none;">
+                <p class="ll-note">
+                    Direct access to memory, peripheral and analog registers, flash, GPIO, I2C
+                    and the panel, through <code>BLE_CMD_DEBUG</code> (0x001B). There is no undo.
+                    The firmware area of the flash is write protected at every boot, so a stray
+                    write there does nothing until you lift the protection on purpose; everything
+                    else is yours to break. The same commands also work over NFC.
+                </p>
+
+                <fieldset class="ll-box">
+                    <legend>System</legend>
+                    <div class="ll-row">
+                        <button type="button" onclick="llSysinfo()">Sysinfo</button>
+                        <button type="button" onclick="llSensors()">Sensors</button>
+                        <button type="button" onclick="llRamInfo()">RAM map</button>
+                        <button type="button" onclick="llFlashInfo()">Flash ID</button>
+                        <button type="button" onclick="llFlashMap()">Flash map</button>
+                        <button type="button" onclick="llSettingsDump(0)">Settings</button>
+                        <button type="button" onclick="llSettingsDump(1)">Type record</button>
+                        <button type="button" onclick="llEcho()">Link test</button>
+                    </div>
+                    <pre id="ll-sys-out" class="ll-out"></pre>
+                </fieldset>
+
+                <fieldset class="ll-box">
+                    <legend>Memory and peripheral registers</legend>
+                    <div class="ll-row">
+                        <label for="ll-mem-space">Space</label>
+                        <select id="ll-mem-space">
+                            <option value="abs">Absolute address</option>
+                            <option value="reg">Register offset (+0x800000)</option>
+                        </select>
+                        <label for="ll-mem-addr">Address</label>
+                        <input type="text" id="ll-mem-addr" value="0x840000" size="10">
+                        <label for="ll-mem-len">Bytes</label>
+                        <input type="text" id="ll-mem-len" value="128" size="5">
+                        <label for="ll-mem-width">Width</label>
+                        <select id="ll-mem-width">
+                            <option value="1">8 bit</option>
+                            <option value="2">16 bit</option>
+                            <option value="4">32 bit</option>
+                        </select>
+                        <button type="button" onclick="llMemRead()">Read</button>
+                        <button type="button" onclick="llMemDump(1024)">Dump 1 KiB</button>
+                    </div>
+                    <div class="ll-row">
+                        <label>Jump to</label>
+                        <button type="button" onclick="llGo('0x800000')">Peripherals</button>
+                        <button type="button" onclick="llGo('0x800580')">GPIO regs</button>
+                        <button type="button" onclick="llGo('0x840000')">SRAM start</button>
+                        <button type="button" onclick="llGo('0x847f00')">SRAM end</button>
+                    </div>
+                    <div class="ll-row">
+                        <label for="ll-mem-data">Write</label>
+                        <input type="text" id="ll-mem-data" placeholder="DE AD BE EF" size="48">
+                        <button type="button" onclick="llMemWrite()">Write at address</button>
+                    </div>
+                    <div class="ll-row">
+                        <label for="ll-fill-count">Fill</label>
+                        <input type="text" id="ll-fill-count" value="16" size="5">
+                        <span>elements of</span>
+                        <input type="text" id="ll-fill-value" value="0x00" size="10">
+                        <button type="button" onclick="llMemFill()">Fill</button>
+                    </div>
+                    <div class="ll-row">
+                        <label for="ll-search-len">Search</label>
+                        <input type="text" id="ll-search-len" value="0x8000" size="8">
+                        <span>bytes from the address for</span>
+                        <input type="text" id="ll-search-pat" placeholder="hex pattern" size="24">
+                        <button type="button" onclick="llMemSearch()">Search</button>
+                    </div>
+                    <div class="ll-row">
+                        <label>Watch</label>
+                        <button type="button" onclick="llMemDiff()">Diff now</button>
+                        <span class="remember-group">
+                            <input type="checkbox" id="ll-watch" onchange="llWatchToggle()">
+                            <label for="ll-watch">repeat every</label>
+                        </span>
+                        <input type="text" id="ll-watch-ms" value="500" size="5">
+                        <span>ms &mdash; shows only the bytes that changed</span>
+                    </div>
+                    <pre id="ll-mem-out" class="ll-out"></pre>
+                </fieldset>
+
+                <fieldset class="ll-box">
+                    <legend>Analog registers</legend>
+                    <div class="ll-row">
+                        <label for="ll-ana-addr">Address</label>
+                        <input type="text" id="ll-ana-addr" value="0x00" size="6">
+                        <label for="ll-ana-len">Bytes</label>
+                        <input type="text" id="ll-ana-len" value="64" size="5">
+                        <button type="button" onclick="llAnaRead()">Read</button>
+                        <button type="button" onclick="llAnaDumpAll()">Dump all 256</button>
+                        <label for="ll-ana-data">Write</label>
+                        <input type="text" id="ll-ana-data" placeholder="hex" size="24">
+                        <button type="button" onclick="llAnaWrite()">Write</button>
+                    </div>
+                    <pre id="ll-ana-out" class="ll-out"></pre>
+                </fieldset>
+
+                <fieldset class="ll-box">
+                    <legend>Internal flash</legend>
+                    <div class="ll-row">
+                        <label for="ll-flash-addr">Address</label>
+                        <input type="text" id="ll-flash-addr" value="0x79000" size="10">
+                        <label for="ll-flash-len">Bytes</label>
+                        <input type="text" id="ll-flash-len" value="128" size="5">
+                        <button type="button" onclick="llFlashRead()">Read</button>
+                        <button type="button" onclick="llFlashDump(1024)">Dump 1 KiB</button>
+                    </div>
+                    <div class="ll-row">
+                        <label for="ll-flash-data">Write</label>
+                        <input type="text" id="ll-flash-data" placeholder="hex" size="48">
+                        <button type="button" onclick="llFlashWrite()">Write</button>
+                        <button type="button" onclick="llFlashErase()">Erase sector</button>
+                    </div>
+                    <div class="ll-row">
+                        <label>Protection</label>
+                        <button type="button" onclick="llFlashUnlock()">Unlock firmware area</button>
+                        <button type="button" onclick="llFlashLock()">Re-lock</button>
+                        <span>&mdash; unlocked, a wrong address bricks the tag until you reflash over SWS</span>
+                    </div>
+                    <pre id="ll-flash-out" class="ll-out"></pre>
+                </fieldset>
+
+                <fieldset class="ll-box">
+                    <legend>GPIO</legend>
+                    <div class="ll-row">
+                        <button type="button" onclick="llGpioRefresh()">Read all pins</button>
+                        <span class="remember-group">
+                            <input type="checkbox" id="ll-gpio-auto" onchange="llGpioAutoToggle()">
+                            <label for="ll-gpio-auto">auto refresh</label>
+                        </span>
+                        <button type="button" onclick="llGpioPinout()">Show pin roles</button>
+                        <span>&mdash; click a pin to toggle it</span>
+                    </div>
+                    <div id="ll-gpio-grid" class="ll-grid"></div>
+                    <div class="ll-row">
+                        <label for="ll-gpio-pin">Pin</label>
+                        <select id="ll-gpio-pin"></select>
+                        <label for="ll-gpio-func">Function</label>
+                        <select id="ll-gpio-func"></select>
+                        <span class="remember-group">
+                            <input type="checkbox" id="ll-gpio-oe"><label for="ll-gpio-oe">output</label>
+                        </span>
+                        <span class="remember-group">
+                            <input type="checkbox" id="ll-gpio-ie"><label for="ll-gpio-ie">input</label>
+                        </span>
+                        <label for="ll-gpio-pull">Pull</label>
+                        <select id="ll-gpio-pull">
+                            <option value="0">float</option>
+                            <option value="1">up 1M</option>
+                            <option value="2">down 100K</option>
+                            <option value="3">up 10K</option>
+                        </select>
+                        <button type="button" onclick="llGpioConfig()">Apply</button>
+                    </div>
+                    <div class="ll-row">
+                        <button type="button" onclick="llGpioSet(1)">Drive high</button>
+                        <button type="button" onclick="llGpioSet(0)">Drive low</button>
+                        <label for="ll-gpio-ms">Pulse</label>
+                        <input type="text" id="ll-gpio-ms" value="50" size="5">
+                        <span>ms (capped at 200)</span>
+                        <button type="button" onclick="llGpioPulse(1)">High pulse</button>
+                        <button type="button" onclick="llGpioPulse(0)">Low pulse</button>
+                    </div>
+                    <pre id="ll-gpio-out" class="ll-out"></pre>
+                </fieldset>
+
+                <fieldset class="ll-box">
+                    <legend>I2C</legend>
+                    <div class="ll-row">
+                        <button type="button" onclick="llI2cScan()">Scan bus</button>
+                        <label for="ll-i2c-dev">Device (8 bit write addr)</label>
+                        <input type="text" id="ll-i2c-dev" value="0xAE" size="6">
+                        <label for="ll-i2c-alen">Reg bytes</label>
+                        <select id="ll-i2c-alen">
+                            <option value="2">2</option>
+                            <option value="1">1</option>
+                            <option value="0">0 (none)</option>
+                        </select>
+                        <label for="ll-i2c-reg">Register</label>
+                        <input type="text" id="ll-i2c-reg" value="0xFFF2" size="8">
+                        <label for="ll-i2c-len">Bytes</label>
+                        <input type="text" id="ll-i2c-len" value="8" size="5">
+                        <button type="button" onclick="llI2cRead()">Read</button>
+                    </div>
+                    <div class="ll-row">
+                        <label for="ll-i2c-data">Write</label>
+                        <input type="text" id="ll-i2c-data" placeholder="hex" size="36">
+                        <button type="button" onclick="llI2cWrite()">Write register</button>
+                        <button type="button" onclick="llI2cRaw()">Write raw stream</button>
+                    </div>
+                    <pre id="ll-i2c-out" class="ll-out"></pre>
+                </fieldset>
+
+                <fieldset class="ll-box">
+                    <legend>NFC</legend>
+                    <p class="ll-note">Moved to its own <b>NFC</b> tab, together with the
+                        message a tap reads and the command channel.</p>
+                </fieldset>
+
+                <fieldset class="ll-box">
+                    <legend>Panel</legend>
+                    <div class="ll-row">
+                        <button type="button" onclick="llEpdState()">Read state</button>
+                        <button type="button" onclick="llEpdPower(1)">Power up</button>
+                        <button type="button" onclick="llEpdPower(0)">Power down</button>
+                    </div>
+                    <div class="ll-row">
+                        <label for="ll-epd-cmd">Command</label>
+                        <input type="text" id="ll-epd-cmd" value="0x71" size="6">
+                        <label for="ll-epd-data">Data</label>
+                        <input type="text" id="ll-epd-data" placeholder="hex, may be empty" size="30">
+                        <label for="ll-epd-rlen">Read back</label>
+                        <input type="text" id="ll-epd-rlen" value="1" size="4">
+                        <button type="button" onclick="llEpdCmd()">Send</button>
+                    </div>
+                    <pre id="ll-epd-out" class="ll-out"></pre>
+                </fieldset>
             </div>
 
             <div id="uart-flash-content" style="display: none;">
@@ -1178,6 +1772,39 @@
 
             </div>
         </div>
+
+        <!-- The one log that used to be behind a tab: the tag's own UART
+             output, read live over BLE. The page's BLE log and the serial
+             flasher's log share their old place above the tabs, where one
+             takes over from the other with the tab. -->
+        <div id="log-dock">
+            <details id="taglog-details" ontoggle="tagLogToggled()">
+                <summary>Tag log (live)
+                    <span class="dock-sub" id="taglog-state">closed</span>
+                </summary>
+                <div class="dock-body">
+                    <div class="taglog-controls">
+                        <button type="button" onclick="tagLogClearDevice()">Clear on tag</button>
+                        <button type="button" onclick="tagLogClearView()">Clear view</button>
+                        <label class="taglog-follow"
+                               title="Scroll up to read; it stops following by itself and picks up again when you scroll back to the bottom.">
+                            <input type="checkbox" id="taglog-follow" checked />
+                            Follow the end
+                        </label>
+                    </div>
+                    <textarea id="taglog-text" readonly spellcheck="false"
+                        placeholder="Opens a live tail of everything the tag prints."></textarea>
+                    <p class="dock-note">Everything the tag would have printed on its UART.
+                        Opening this box tells the tag to send it as it is printed; closing
+                        it tells the tag to stop. Nothing is polled in between, so a quiet
+                        tag costs no traffic at all, and what it sends is dropped from its
+                        buffer on the way out, so nothing arrives twice. The tag switches
+                        it off by itself whenever the link drops, which is why it is always
+                        off after a reconnect until this box is opened again.</p>
+                </div>
+            </details>
+        </div>
+
     </div>
     <script src="./pako.js"></script>
     <script>
@@ -1647,7 +2274,42 @@
             ctx.putImageData(imageData, 0, 0);
         }
 
+        /**
+         * Forget everything this page worked out about the tag it was talking
+         * to.
+         *
+         * All of it is true only of one tag with the firmware it had at the
+         * time: which commands it understands, whether it has a PIN, what its
+         * firmware version is. A reconnect can be the same tag after a
+         * firmware update, or a different display altogether, and in both
+         * cases carrying the old answers over is how the page tells people
+         * something that is no longer true.
+         *
+         * That is not hypothetical: a tag was updated from a firmware without
+         * the readout command to one with it, reconnected, and the page went
+         * on saying the command did not exist - because it had been told so
+         * once, by a firmware that was no longer there.
+         */
+        function forgetTagFacts() {
+            sysInfoSeen = false;
+            sysInfoUnsupported = false;
+            sysInfoAskedAt = 0;
+            tagLogUnsupported = false;
+            tagLogArmedAt = 0;
+            tagLogQuietAt = 0;
+            protState = null;
+            protectionRender();
+            const grid = document.getElementById('sysinfo-grid');
+            if (grid) grid.innerHTML = '';
+            const st = document.getElementById('sysinfo-state');
+            if (st) st.textContent = 'not read yet';
+            const chip = document.getElementById('nfc-uid');
+            if (chip) chip.textContent = '';
+            protBadge('nfc-chip', 'chip \u2013');
+        }
+
         function resetVariables() {
+            forgetTagFacts();
             gattServer = null;
             Theservice = null;
             writeCharacteristic = null;
@@ -1677,11 +2339,17 @@
             if (canRetry && reconnectTrys < 5) {
                 reconnectTrys++;
                 const delay = 200;
+                const gen = bleGeneration;
                 addLog(`Connection failed/lost. Retrying connection attempt ${reconnectTrys}/5 in ${delay}ms...`);
                 setStatus(`Connection Failed. Retrying ${reconnectTrys}/5...`);
                 document.getElementById("connectbutton").innerHTML = 'Retrying...';
                 bleDevice = deviceToRetry;
-                setTimeout(connect, delay);
+                setTimeout(() => {
+                    // Abandoned in the meantime - Disconnect, or a new
+                    // Connect - so this retry belongs to nothing.
+                    if (gen !== bleGeneration) return;
+                    connect();
+                }, delay);
             } else if (canRetry) {
                 addLog("Connection failed after retries.");
                 setStatus("Connection Failed.");
@@ -1701,7 +2369,35 @@
                 setTimeout(resolve, delay);
             });
         }
-        async function sendCommand(cmd) {
+        // Web Bluetooth allows one GATT operation at a time, and the second
+        // one does not wait - it throws "GATT operation already in progress".
+        // Two commands fired together survived that on the retry; three did
+        // not, and the failure was read as a lost link, which reconnected,
+        // which fired the same three again. The page sat in that loop sending
+        // nothing useful until it was closed.
+        //
+        // So every write goes through one chain. It costs nothing when
+        // nothing else is in flight and it removes the whole class of
+        // collision, including the ones nobody has written yet: whatever gets
+        // sent on connect in future is serialised with everything else by
+        // construction rather than by remembering to stagger it.
+        let gattChain = Promise.resolve();
+
+        function sendCommand(cmd) {
+            gattChain = gattChain.then(() => sendCommandNow(cmd),
+                                       () => sendCommandNow(cmd));
+            return gattChain;
+        }
+
+        async function sendCommandNow(cmd) {
+            if (!writeCharacteristic && bleDevice && bleDevice.gatt
+                && bleDevice.gatt.connected) {
+                // The link is up and this page is not holding on to it. Pick
+                // it up rather than refusing - see connect().
+                addLog("The link is up but the characteristic was lost; " +
+                    "picking it up before sending.");
+                connect();
+            }
             if (writeCharacteristic) {
                 try {
                     await writeCharacteristic.writeValueWithoutResponse(cmd);
@@ -1741,6 +2437,10 @@
             const payloadHex = cmdTXT.substring(4);
             const logPayload = payloadHex.length > 40 ? payloadHex.substring(0, 40) + '...' : payloadHex;
             addLog(`CMD> ${commandIdHex} Payload: ${logPayload} (${payloadHex.length / 2}B)`);
+            // AvailDataInfo starts an image, firmware or NDEF transfer. Noted
+            // so the live tail stands aside while one runs - bleXferTouch().
+            if (commandIdHex === '0064') bleXferTouch();
+            protectionRefreshAfter(commandIdHex);
             let cmd = hexToBytes(cmdTXT);
             await sendCommand(cmd);
         }
@@ -1787,6 +2487,691 @@
                 return;
             }
             sendcmd('0009' + macHex);
+        }
+
+        // --- protection: the NFC command channel, and the PIN ---------------
+        //
+        // Both are sent as plain commands; the only thing worth any code here
+        // is turning the PIN field into hex and making the one irreversible
+        // button say so before it acts.
+
+        // Set while a protection query is in flight, so one refusal does not
+        // turn into a storm of them: every command refused by a locked tag
+        // would otherwise ask again.
+        let protectionAsked = false;
+
+        function pinHex(required) {
+            const field = document.getElementById('cmdPin');
+            const pin = field.value;
+            if (required && pin.length === 0) {
+                addLog("Error: type a PIN first.");
+                field.focus();
+                return null;
+            }
+            if (pin.length > 16) {
+                addLog("Error: the PIN can be at most 16 characters.");
+                field.focus();
+                return null;
+            }
+            let hex = '';
+            for (let i = 0; i < pin.length; i++) {
+                const c = pin.charCodeAt(i);
+                if (c > 0xFF) {
+                    addLog("Error: the PIN must be plain ASCII.");
+                    field.focus();
+                    return null;
+                }
+                hex += c.toString(16).padStart(2, '0');
+            }
+            return hex.toUpperCase();
+        }
+
+        function setPin() {
+            const hex = pinHex(true);
+            if (hex === null) return;
+            localStorage.setItem('tagPin', document.getElementById('cmdPin').value);
+            addLog("Setting a PIN. It lives in RAM only - a reboot or a battery " +
+                "change removes it.");
+            sendcmd('001E' + hex);
+        }
+
+        function clearPin() {
+            localStorage.removeItem('tagPin');
+            document.getElementById('cmdPin').value = '';
+            sendcmd('001E');
+        }
+
+        function unlockPin() {
+            const hex = pinHex(true);
+            if (hex === null) return;
+            localStorage.setItem('tagPin', document.getElementById('cmdPin').value);
+            sendcmd('001F' + hex);
+        }
+
+        // --- the tag's own readout, BLE_CMD_GET_SYSINFO (0x0021) ------------
+        //
+        // One command, one record: build, sensors, panel, flash, NFC chip,
+        // modes and protection, answered as BLE_CMD_ACK_SYSINFO (0x00D5).
+        // It is a plain command and not a debug sub-command on purpose -
+        // showing a tag's vital signs should not need the channel that can
+        // also erase its flash - and it answers over NFC exactly as it does
+        // over BLE.
+        //
+        // The layout is written out field by field in the firmware's
+        // app_bleCmdHandle.h and this table is that list in the same order.
+        // Byte 0 is the record version and byte 1 says where the build stamp
+        // starts, so a newer firmware that appends fields is still readable
+        // here, and one that changes the layout is detected instead of being
+        // mis-read: the stamp offset the tag gives and the one this table
+        // adds up to must agree.
+        const SYSINFO_FIELDS = [
+            ['rec_version', 'u8'], ['fixed_len', 'u8'],
+            ['fw_version', 'u16'], ['capabilities', 'u16'],
+            ['battery_mv', 'u16'], ['adc_temp_raw', 'u16'],
+            ['adc_temp', 'i8'], ['epd_temp', 'i8'],
+            ['uptime_ms', 'u32'], ['unixtime', 'u32'],
+            ['wakeup_reason', 'u8'], ['epd_update_state', 'u8'],
+            ['oepl_hw_type', 'u16'], ['screen_type', 'u16'],
+            ['screen_functions', 'u16'], ['screen_w', 'u16'], ['screen_h', 'u16'],
+            ['colors', 'u8'], ['gui_rotation', 'u8'],
+            ['img_slot', 'u8'], ['img_slots', 'u8'], ['img_slot_size', 'u32'],
+            ['flash_mid', 'u32'], ['flash_size', 'u32'], ['flash_status', 'u16'],
+            ['fw_size', 'u32'], ['eeprom_start', 'u32'], ['eeprom_size', 'u32'],
+            ['nfc_kind', 'u8'], ['nfc_caps', 'u8'], ['nfc_dev', 'u8'],
+            ['nfc_addrlen', 'u8'], ['nfc_ndef_bytes', 'u16'], ['nfc_uid_len', 'u8'],
+            ['nfc_uid', 7],
+            ['ndef_source', 'u8'], ['nfc_cmds', 'u8'], ['nfc_session', 'u8'],
+            ['nfc_field', 'u8'],
+            ['oepl_enabled', 'u8'], ['ble_enabled', 'u8'],
+            ['ble_interval', 'u32'], ['oepl_interval', 'u32'],
+            ['has_pin', 'u8'], ['locked', 'u8'], ['relock_s', 'u8'],
+            ['ble_mac', 6], ['oepl_mac', 8],
+        ];
+        // Kind 0 is "nobody has looked yet", not "there is none": the chip is
+        // identified the first time something uses it, and a readout
+        // deliberately does not probe - probing leaves this IC answering the
+        // wire instead of the air, and then a reader sees no tag at all.
+        const SYSINFO_CHIP = { 0: 'not identified yet', 1: 'FM11NT', 2: 'NT3H', 3: 'ST25' };
+        const SYSINFO_WAKE = {
+            0: 'boot', 1: 'timed', 2: 'button', 3: 'NFC tap', 4: 'first boot'
+        };
+        const SYSINFO_NDEF = {
+            0x00: "the firmware's default", 0xA0: 'a stored TLV',
+            0xA1: 'a stored URL', 0xA2: 'a stored NDEF message'
+        };
+
+        let sysInfoSeen = false;
+        // When the readout was last asked for, and whether this tag can
+        // answer it at all. A firmware older than the command replies 0xFFFF
+        // to anything it does not know, and there is no point asking a tag
+        // like that again every time its tab is opened - it will say the same
+        // thing. Asked once, told once, remembered.
+        let sysInfoAskedAt = 0;
+        let sysInfoUnsupported = false;
+
+        /**
+         * Ask the tag for its readout. [pressed] is true when a person asked,
+         * which is a new question rather than a repeat: the tag may have been
+         * reflashed since it last said it could not do this, and a button
+         * that silently does nothing is the worst answer available. The
+         * automatic reads on connect and on first opening the tab pass
+         * nothing, so they stay quiet about a tag that has already answered.
+         */
+        function readSysInfo(pressed) {
+            const state = document.getElementById('sysinfo-state');
+            if (!writeCharacteristic) {
+                if (state) state.textContent = 'not connected';
+                addLog('Tag info: not connected.');
+                return;
+            }
+            if (pressed) sysInfoUnsupported = false;
+            if (sysInfoUnsupported) {
+                if (state) state.textContent =
+                    'this firmware does not have the readout command';
+                return;
+            }
+            sysInfoAskedAt = Date.now();
+            if (state) state.textContent = 'reading...';
+            sendcmd('0021');
+            // Nothing at all is also an answer, and one this page used to sit
+            // through for ever. An older firmware refuses with 0xFFFF, which
+            // is handled, but a tag that is busy or gone says nothing.
+            setTimeout(() => {
+                if (sysInfoAskedAt && Date.now() - sysInfoAskedAt >= 4000) {
+                    sysInfoAskedAt = 0;
+                    if (state && state.textContent === 'reading...')
+                        state.textContent = 'no answer - press Read to try again';
+                    addLog('Tag info: no answer to the readout command.');
+                }
+            }, 4200);
+        }
+
+        /** Called when the tag refuses a command it does not know. */
+        function featureRefused() {
+            const now = Date.now();
+            if (sysInfoAskedAt && now - sysInfoAskedAt < 4000) {
+                sysInfoAskedAt = 0;
+                sysInfoUnsupported = true;
+                sysInfoSeen = true;
+                const el = document.getElementById('sysinfo-state');
+                if (el) el.textContent =
+                    'this firmware does not have the readout command';
+                addLog('Tag info: this firmware predates the readout command ' +
+                    '(0x0021); nothing else is affected.');
+                return true;
+            }
+            if (tagLogArmedAt && now - tagLogArmedAt < 4000) {
+                tagLogArmedAt = 0;
+                tagLogUnsupported = true;
+                tagLogStop();
+                tagLogSetState('this firmware cannot stream its log');
+                addLog('Tag log: this firmware predates the log stream ' +
+                    'command (0x0022); the box will stay quiet.');
+                return true;
+            }
+            return false;
+        }
+
+        function sysInfoParse(b) {
+            const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+            const v = {};
+            let at = 0;
+            for (const [name, type] of SYSINFO_FIELDS) {
+                if (typeof type === 'number') {
+                    v[name] = b.slice(at, at + type);
+                    at += type;
+                } else if (type === 'u8') { v[name] = dv.getUint8(at); at += 1; }
+                else if (type === 'i8') { v[name] = dv.getInt8(at); at += 1; }
+                else if (type === 'u16') { v[name] = dv.getUint16(at, true); at += 2; }
+                else { v[name] = dv.getUint32(at, true); at += 4; }
+            }
+            if (at !== v.fixed_len) {
+                throw new Error('the tag puts its build stamp at byte ' +
+                    v.fixed_len + ', this page reads ' + at +
+                    ' - the record has changed shape');
+            }
+            const bl = b[at];
+            v.build = String.fromCharCode.apply(null, b.slice(at + 1, at + 1 + bl));
+            return v;
+        }
+
+        function sysInfoReply(bytes) {
+            const state = document.getElementById('sysinfo-state');
+            const grid = document.getElementById('sysinfo-grid');
+            let v;
+            try {
+                v = sysInfoParse(bytes);
+            } catch (e) {
+                state.textContent = e.message;
+                addLog('Tag info: ' + e.message);
+                return;
+            }
+            if (v.rec_version !== 1) {
+                state.textContent = 'record version ' + v.rec_version +
+                    ', this page knows 1 - showing what it can';
+            } else {
+                const t = new Date();
+                state.textContent = 'read at ' +
+                    ('0' + t.getHours()).slice(-2) + ':' +
+                    ('0' + t.getMinutes()).slice(-2) + ':' +
+                    ('0' + t.getSeconds()).slice(-2);
+            }
+
+            sysInfoSeen = true;
+            sysInfoAskedAt = 0;
+            const hex = (n, w) => '0x' + (n >>> 0).toString(16).toUpperCase().padStart(w, '0');
+            const mac = a => Array.from(a).map(x => h8(x)).join(':');
+            const kib = n => (n / 1024).toFixed(n % 1024 ? 1 : 0) + ' KiB';
+            const rows = [];
+            const head = t => rows.push(['h', t, null]);
+            const row = (k, val) => rows.push(['r', k, val]);
+
+            head('Firmware');
+            row('version', v.fw_version);
+            row('built', v.build);
+            row('image size', v.fw_size + ' bytes');
+            row('capabilities', hex(v.capabilities, 4));
+
+            head('Right now');
+            row('battery', v.battery_mv + ' mV');
+            row('temperature', v.adc_temp + ' \u00B0C (raw ' + v.adc_temp_raw + ')');
+            row('panel temperature', v.epd_temp + ' \u00B0C');
+            row('uptime', Math.floor(v.uptime_ms / 60000) + ' min');
+            row('woke by', SYSINFO_WAKE[v.wakeup_reason] || v.wakeup_reason);
+            row('panel', v.epd_update_state ? 'updating (state ' + v.epd_update_state + ')' : 'idle');
+            row('clock', v.unixtime ? new Date(v.unixtime * 1000).toLocaleString() : 'never set');
+
+            head('Panel');
+            row('screen type', hex(v.screen_type, 4));
+            row('hardware type', hex(v.oepl_hw_type, 4));
+            row('driver', hex(v.screen_functions, 4));
+            row('size', v.screen_w + ' x ' + v.screen_h + ', ' + v.colors + ' colours');
+            row('GUI rotation', (v.gui_rotation * 90) + '\u00B0');
+            row('image slots', (v.img_slot === 0xFF ? 'none in use' : 'slot ' + v.img_slot) +
+                ' of ' + v.img_slots + ', ' + kib(v.img_slot_size) + ' each');
+
+            head('Flash');
+            row('chip', hex(v.flash_mid & 0xFFFFFF, 6) +
+                (v.flash_size ? ', ' + kib(v.flash_size) : ', unknown size'));
+            row('status register', hex(v.flash_status, 4));
+            row('writable area', hex(v.eeprom_start, 6) + ', ' + kib(v.eeprom_size));
+
+            head('NFC');
+            row('chip', (SYSINFO_CHIP[v.nfc_kind] || ('kind ' + v.nfc_kind)) +
+                (v.nfc_kind ? ' at ' + hex(v.nfc_dev, 2) + ', ' + v.nfc_addrlen +
+                    ' address byte(s), caps ' + hex(v.nfc_caps, 2)
+                    : ' (it is looked at when a reader taps, or from the NFC tab)'));
+            row('UID', Array.from(v.nfc_uid.slice(0, v.nfc_uid_len)).map(x => h8(x)).join(' ') || '-');
+            row('NDEF area', v.nfc_ndef_bytes + ' bytes, from ' +
+                (SYSINFO_NDEF[v.ndef_source] || ('source ' + hex(v.ndef_source, 2))));
+            row('command channel', v.nfc_cmds ? 'on' : 'off');
+            row('reader', v.nfc_session ? 'in a session' : (v.nfc_field ? 'field present' : 'none'));
+
+            head('Modes');
+            row('OEPL', (v.oepl_enabled ? 'on' : 'off') + ', checks in every ' + v.oepl_interval + ' s');
+            row('BLE', (v.ble_enabled ? 'on' : 'off') + ', advertises every ' +
+                Math.round(v.ble_interval * 0.625) + ' ms');
+            row('PIN', v.has_pin ? (v.locked ? 'set, LOCKED' : 'set, unlocked') : 'none');
+            row('relocks after', v.relock_s + ' s idle');
+
+            head('Addresses');
+            row('BLE MAC', mac(v.ble_mac));
+            row('OEPL MAC', mac(v.oepl_mac));
+
+            grid.innerHTML = '';
+            for (const [kind, a, b2] of rows) {
+                if (kind === 'h') {
+                    const d = document.createElement('div');
+                    d.className = 'h';
+                    d.textContent = a;
+                    grid.appendChild(d);
+                } else {
+                    const k = document.createElement('div');
+                    k.className = 'k';
+                    k.textContent = a;
+                    const val = document.createElement('div');
+                    val.className = 'v';
+                    val.textContent = b2;
+                    grid.appendChild(k);
+                    grid.appendChild(val);
+                }
+            }
+            addLog('Tag info: firmware ' + v.fw_version + ' built ' + v.build +
+                ', ' + v.battery_mv + ' mV, ' + v.adc_temp + ' C');
+        }
+
+        // --- the tag's own log, pushed over BLE -----------------------------
+        //
+        // The tag keeps everything it would have printed on its UART in a ring
+        // buffer. This box turns that into a stream: one command to start
+        // (BLE_CMD_LOG_STREAM, 0x0022, with 01), one to stop, and in between
+        // the tag sends what it prints as it prints it, as 0x00D6. What it
+        // sends is dropped from its ring on the way out, so nothing arrives
+        // twice and the buffer cannot fill while someone is listening.
+        //
+        // It used to poll, and polling was the wrong shape for this. A read is
+        // a command like any other: the dispatcher announces every one of
+        // them, and that announcement is then part of what the next read
+        // returns. Following a quiet tag cost two commands a second and the
+        // text that came back was the sound of the asking. Pushing costs one
+        // command each way, and nothing at all while the tag has nothing to
+        // say.
+        //
+        // The tag turns streaming off by itself when the link drops, so it is
+        // never left on for whoever connects next. This end re-arms every
+        // twenty seconds, which costs one command and means a tag that
+        // rebooted starts sending again without anyone noticing it stopped.
+        const TAGLOG_REARM_MS = 20000;
+        const CMD_LOG_STREAM = '0022';
+        let tagLogTimer = null;
+        let tagLogQuietAt = 0;
+        // Same as the readout: a firmware that does not know the command says
+        // 0xFFFF, and asking it again every twenty seconds would be noise on
+        // the link and a box that never explains itself.
+        let tagLogArmedAt = 0;
+        let tagLogUnsupported = false;
+
+        // When a block transfer last moved anything. A timestamp and not a
+        // flag, so an upload that is abandoned half way does not leave
+        // anything switched off: it simply goes stale.
+        let bleXferAt = 0;
+        function bleXferTouch() { bleXferAt = Date.now(); }
+        function bleXferActive() { return (Date.now() - bleXferAt) < 4000; }
+
+        function tagLogSetState(text) {
+            const el = document.getElementById('taglog-state');
+            if (el) el.textContent = text;
+        }
+
+        function tagLogAppend(text) {
+            if (!text) return;
+            const box = document.getElementById('taglog-text');
+            const follow = document.getElementById('taglog-follow').checked;
+            /*
+             * Follow the end only while the view is already at the end.
+             *
+             * It used to jump to the bottom on every arriving chunk, which
+             * makes the stream unreadable exactly when it is worth reading:
+             * scroll up to look at the line that went wrong and the next
+             * chunk - a few hundred milliseconds later - yanks you back down.
+             *
+             * So the position is measured first. Scrolled up means reading,
+             * and reading is left alone; at the bottom means watching, and
+             * watching keeps up. The checkbox stays as the way to pin the
+             * view even while it is at the bottom.
+             *
+             * Measured before the text goes in, because appending changes
+             * scrollHeight and afterwards there is nothing left to compare
+             * against. The tolerance is there because a textarea's scrollTop
+             * is fractional on a scaled display and settles a pixel or two
+             * short of the exact bottom - an exact test reads as "scrolled
+             * up" the moment anyone so much as touches the scrollbar.
+             */
+            const atEnd =
+                (box.scrollHeight - box.scrollTop - box.clientHeight) <= 24;
+            box.value += text;
+            // A browser textarea is not a terminal; keep it to something it can
+            // still scroll without stuttering.
+            if (box.value.length > 200000) {
+                // Trimming takes text off the front, so everything the reader
+                // was looking at moves up by however much was removed. Put
+                // the view back where it was, or a trim mid-read scrolls the
+                // page by itself - which is the same complaint from a
+                // different direction.
+                const wasHeight = box.scrollHeight;
+                const wasTop = box.scrollTop;
+                box.value = box.value.slice(-150000);
+                box.scrollTop =
+                    Math.max(0, wasTop - (wasHeight - box.scrollHeight));
+            }
+            if (follow && atEnd) box.scrollTop = box.scrollHeight;
+        }
+
+        // Only this window, not the tag's own ring: the tag keeps whatever it
+        // has not streamed yet, so a cleared view fills again from where the
+        // stream stands rather than from the beginning.
+        function tagLogClearView() {
+            const box = document.getElementById('taglog-text');
+            if (box) box.value = '';
+        }
+
+        function tagLogOpen() {
+            const d = document.getElementById('taglog-details');
+            return !!(d && d.open);
+        }
+
+        /** Called from img_state_handle() for cmd 0x00D6. */
+        function tagLogData(bytes) {
+            if (!bytes || !bytes.length) return;
+            tagLogQuietAt = Date.now();
+            tagLogSetState('streaming');
+            tagLogAppend(String.fromCharCode.apply(null, bytes));
+        }
+
+        function tagLogArm(on) {
+            if (!writeCharacteristic || tagLogUnsupported) return;
+            if (on) tagLogArmedAt = Date.now();
+            sendcmd(CMD_LOG_STREAM + (on ? '01' : '00'));
+        }
+
+        function tagLogTick() {
+            if (!tagLogOpen()) return;
+            if (!writeCharacteristic) {
+                tagLogSetState('waiting for a connection');
+                return;
+            }
+            // Not while a transfer is running: the re-arm is not worth an
+            // exchange an upload needs, and the tag keeps streaming anyway.
+            if (bleXferActive()) return;
+            tagLogArm(true);
+            if (tagLogQuietAt && Date.now() - tagLogQuietAt > TAGLOG_REARM_MS * 2)
+                tagLogSetState('listening, nothing printed since ' +
+                    Math.round((Date.now() - tagLogQuietAt) / 1000) + ' s');
+        }
+
+        function tagLogStart() {
+            if (tagLogUnsupported) {
+                tagLogSetState('this firmware cannot stream its log');
+                return;
+            }
+            tagLogQuietAt = Date.now();
+            if (!writeCharacteristic) {
+                tagLogSetState('waiting for a connection');
+            } else {
+                tagLogSetState('listening');
+                tagLogArm(true);
+            }
+            if (!tagLogTimer)
+                tagLogTimer = setInterval(tagLogTick, TAGLOG_REARM_MS);
+        }
+
+        function tagLogStop() {
+            if (tagLogTimer) {
+                clearInterval(tagLogTimer);
+                tagLogTimer = null;
+            }
+            tagLogArm(false);
+            tagLogSetState('closed');
+        }
+
+        function tagLogToggled() {
+            if (tagLogOpen()) tagLogStart(); else tagLogStop();
+        }
+
+        function tagLogClearDevice() {
+            if (!writeCharacteristic) { addLog('Not connected.'); return; }
+            dbgSend(0x64, 'A5').then(() => {
+                tagLogClearView();
+                addLog('Tag log cleared on the device.');
+            }).catch(e => addLog('Clearing the tag log failed: ' + e.message));
+        }
+
+        // --- the live protection state ---------------------------------------
+        //
+        // The tag answers 0x0020 with [has_pin][locked][nfc_cmds][relock_s].
+        // Everything the two sections show and every button they offer is
+        // driven from that one answer, so the page cannot claim a state the
+        // tag is not in - it used to print the answer into the log and leave
+        // every button enabled, which made "Unlock" look like a thing worth
+        // pressing on a tag that has no PIN.
+        let protState = null;
+
+        function readProtection() { sendcmd('0020'); }
+
+        // Anything that changes the protection state is followed by a read of
+        // it, because the tag does not announce the change and the page would
+        // otherwise go on showing what was true before the button was pressed.
+        // Setting a PIN left the badges saying "no PIN" until something else
+        // happened to ask.
+        //
+        // Keyed on the command id rather than wired into each button, so it
+        // also covers a command typed into the debug box by hand - and the
+        // delay is there because the tag answers the command first and would
+        // otherwise be asked two things at once.
+        const PROT_CHANGING = ['001E', '001F', '001C', '001D'];
+        function protectionRefreshAfter(commandIdHex) {
+            if (PROT_CHANGING.indexOf(commandIdHex.toUpperCase()) < 0) return;
+            setTimeout(() => { if (writeCharacteristic) readProtection(); }, 400);
+        }
+
+        function protBadge(id, text, kind) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = text;
+            el.className = 'prot-badge' + (kind ? ' prot-' + kind : '');
+        }
+
+        function protectionRender() {
+            const s = protState;
+            const enable = (id, on) => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = !on;
+            };
+            if (!s) {
+                // Nothing has been asked yet, which is not the same as an
+                // answer that failed to arrive: the plain badge says "not
+                // known", and red is kept for a question that was put to the
+                // tag and came back empty.
+                protBadge('prot-pin', 'PIN –');
+                protBadge('prot-lock', 'lock –');
+                protBadge('prot-nfc', 'NFC commands –');
+                document.getElementById('prot-relock').textContent = '';
+                // Unknown is not the same as "allowed": leave everything
+                // pressable so a tag that never answers can still be worked on.
+                ['prot-btn-setpin', 'prot-btn-clearpin', 'prot-btn-unlock',
+                 'prot-btn-lock', 'prot-btn-nfcon',
+                 'prot-btn-nfcoff'].forEach(id => enable(id, true));
+                return;
+            }
+            // Green for a protection that is on and working, grey for a
+            // deliberate setting, amber only for a state that stands in this
+            // page's way. A tag with no PIN is not a tag in trouble, and the
+            // NFC command channel being off is a choice its owner made - both
+            // used to be shouted about in amber, and a lock nobody set was
+            // reported in green as "open", which reads like an achievement.
+            protBadge('prot-pin', s.hasPin ? 'PIN set' : 'no PIN',
+                s.hasPin ? 'on' : 'off');
+            // Named, because "unlocked" on its own is now ambiguous: this
+            // page talks over BLE, and the tag can be open to it while still
+            // shut to a phone. Saying which is the difference between
+            // "I unlocked it" and "I unlocked it for me".
+            // What the tag said, before any reasoning about what it ought to
+            // have said. A tag reporting itself locked with no PIN set is a
+            // contradiction, and the first version of this showed "nothing to
+            // lock" for it - which hides exactly the state worth seeing.
+            // One lock, and it is BLE's: the PIN does not guard NFC. The
+            // per-way reporting that used to be read here is gone with the
+            // per-way lock itself.
+            protBadge('prot-lock',
+                s.locked ? 'BLE LOCKED'
+                         : (s.hasPin ? 'BLE unlocked' : 'nothing to lock'),
+                s.locked ? 'warn' : (s.hasPin ? 'on' : 'off'));
+            protBadge('prot-nfc', s.nfcCmds ? 'NFC commands on' : 'NFC commands off',
+                s.nfcCmds ? 'on' : 'off');
+            document.getElementById('prot-relock').textContent =
+                s.hasPin ? ('relocks after ' + s.relock + ' s idle') : '';
+            document.getElementById('prot-relock-s').textContent = s.relock;
+            // A firmware without the ceiling says so by not reporting one, and
+            // the sentence then has to stop claiming there is one.
+            const maxEl = document.getElementById('prot-maxlock-s');
+            const maxLine = document.getElementById('prot-maxlock-line');
+            if (maxEl) maxEl.textContent = s.maxlock || '';
+            if (maxLine) maxLine.style.display = s.maxlock ? '' : 'none';
+
+            enable('prot-btn-setpin', true);
+            enable('prot-btn-clearpin', s.hasPin);
+            enable('prot-btn-unlock', s.hasPin && s.locked);
+            enable('prot-btn-lock', s.hasPin && !s.locked);
+            // The command channel, greyed out in the direction it is already
+            // in - the same rule the pair in the NFC section follows, because
+            // they are two views of one setting and may not disagree.
+            enable('prot-btn-nfcon', !s.nfcCmds);
+            enable('prot-btn-nfcoff', s.nfcCmds);
+
+            // Deliberately not touching prot-hint any more.
+            //
+            // It is one short static line now, and it carries the spans that
+            // hold the two timeouts the tag reports. Writing textContent over
+            // it removes those spans, and the next read then has nowhere to
+            // put the numbers - the sentence would quietly stop updating. The
+            // live state is in the badges above it, which is where someone
+            // looks anyway.
+            nfcRenderCmds();
+        }
+
+        // --- the NFC section --------------------------------------------------
+
+        function nfcRenderCmds() {
+            const on = protState ? protState.nfcCmds : null;
+            protBadge('nfc-cmds',
+                on === null ? 'commands –' : (on ? 'commands on' : 'commands off'),
+                on === null ? '' : (on ? 'on' : 'off'));
+            const bOn = document.getElementById('nfc-btn-cmds-on');
+            const bOff = document.getElementById('nfc-btn-cmds-off');
+            if (bOn) bOn.disabled = (on === true);
+            if (bOff) bOff.disabled = (on === false);
+        }
+
+        function nfcNdefKindChanged() {
+            const kind = document.getElementById('nfcNdefKind').value;
+            const f = document.getElementById('nfcNdefValue');
+            f.placeholder = kind === 'url' ? 'https://example.com'
+                : kind === 'text' ? 'any text a phone should show'
+                : 'D1 01 03 54 02 65 6E';
+        }
+
+        /** An NDEF text record, which is what "Text" has to become. */
+        function ndefTextRecordHex(text) {
+            const body = new TextEncoder().encode(text);
+            // [status: UTF-8, 2 byte language][en][text]
+            const payload = [0x02, 0x65, 0x6E].concat(Array.from(body));
+            if (payload.length > 255) throw new Error('text too long');
+            const rec = [0xD1, 0x01, payload.length, 0x54].concat(payload);
+            return rec.map(b => h8(b)).join('');
+        }
+
+        function nfcWriteNdef() {
+            const kind = document.getElementById('nfcNdefKind').value;
+            const val = document.getElementById('nfcNdefValue').value;
+            const note = document.getElementById('nfc-ndef-note');
+            try {
+                let hex;
+                if (kind === 'url') {
+                    if (!val) throw new Error('type a URL first');
+                    // Source 0xA1: the firmware builds the record, including
+                    // the prefix byte that keeps a common URL short.
+                    const b = new TextEncoder().encode(val);
+                    hex = 'A1' + Array.from(b).map(x => h8(x)).join('');
+                } else if (kind === 'text') {
+                    if (!val) throw new Error('type some text first');
+                    hex = 'A2' + ndefTextRecordHex(val);
+                } else {
+                    const clean = val.replace(/[^0-9a-fA-F]/g, '');
+                    if (!clean || clean.length % 2) throw new Error('raw needs whole hex bytes');
+                    hex = 'A0' + clean.toUpperCase();
+                }
+                note.textContent = '';
+                addLog('Writing the NDEF message a tap will read (' + kind + ').');
+                sendcmd('0018' + hex);
+            } catch (e) {
+                note.textContent = e.message;
+                addLog('NDEF: ' + e.message);
+            }
+        }
+
+        function nfcClearNdef() {
+            addLog('Clearing the stored NDEF message; the tag falls back to its default.');
+            sendcmd('001A');
+        }
+
+        /** Chip identity for the badge, plus the protection state behind it. */
+        function nfcRefresh() {
+            readProtection();
+            if (!writeCharacteristic) return;
+            dbgSend(0x44).then(d => {
+                if (d.length < 7) { protBadge('nfc-chip', 'chip ?', 'bad'); return; }
+                const kinds = { 1: 'FM11NT', 2: 'NT3H', 3: 'ST25' };
+                protBadge('nfc-chip',
+                    (kinds[d[0]] || ('kind ' + d[0])) + ' @ 0x' +
+                    d[2].toString(16).toUpperCase(), 'on');
+                const uid = d.slice(6, 6 + 7).map(b => h8(b)).join(' ');
+                document.getElementById('nfc-uid').textContent = 'UID ' + uid;
+            }).catch(e => {
+                protBadge('nfc-chip', 'chip ?', 'bad');
+                document.getElementById('nfc-uid').textContent =
+                    (e && e.message) ? e.message : '';
+            });
+        }
+
+        function disableNfcCmds() {
+            if (!confirm("Switch the NFC command channel off?\n\n" +
+                "This is persistent and survives a reboot. NDEF, anticollision " +
+                "and the wakeup keep working, but after this the tag only " +
+                "takes commands over BLE - NFC cannot switch itself back on, " +
+                "and neither can the OEPL radio.")) {
+                return;
+            }
+            sendcmd('001C');
         }
 
         function reverseEndian(hex) {
@@ -1869,6 +3254,7 @@
 
         function nextBlkPart() {
             addLog(`Sending packet: ${packets[packetIndex]}`);
+            bleXferTouch();
             sendCommand(hexToBytes("0065" + packets[packetIndex]));
         }
         async function sendBlockData(blockId, largeHexData) {
@@ -2270,12 +3656,88 @@
                         addLog("Error parsing Debug Status Info (00D1): " + e);
                     }
                     break;
+                case "00D3":
+                    dbgReply(payloadHex);
+                    break;
+                case "00D5":
+                    sysInfoReply(hexToBytes(payloadHex));
+                    break;
+                case "00D6":
+                    tagLogData(hexToBytes(payloadHex));
+                    break;
+                case "00D4": {
+                    // [has_pin][locked][nfc_cmds_enabled][idle_relock_s]
+                    const p = hexToBytes(payloadHex);
+                    if (p.length >= 4) {
+                        protState = {
+                            hasPin: !!p[0], locked: !!p[1],
+                            nfcCmds: !!p[2], relock: p[3],
+                            // Appended by a later firmware. Older ones send
+                            // four bytes and get the ceiling they actually
+                            // have, which is none.
+                            maxlock: p.length >= 6 ? (p[4] | (p[5] << 8)) : 0
+                        };
+                        protectionRender();
+                        addLog("Protection: PIN " + (p[0] ? "set" : "not set") +
+                            ", currently " + (p[1] ? "LOCKED" : "open") +
+                            ", NFC commands " + (p[2] ? "enabled" : "DISABLED") +
+                            ", relocks after " + p[3] + " s idle");
+                        if (p[1]) {
+                            // Locked. Offer the PIN from the field without
+                            // being asked: the alternative is every command
+                            // from here on coming back FFFF with no hint why.
+                            const hex = pinHex(false);
+                            if (hex) {
+                                addLog("Tag is locked - sending the stored PIN.");
+                                sendcmd('001F' + hex);
+                            } else {
+                                setStatus("Tag is locked - type the PIN and press Unlock");
+                            }
+                        } else {
+                            setStatus(p[0] ? "Unlocked" : "Connected");
+                        }
+                    } else {
+                        addLog("Protection state: " + payloadHex);
+                    }
+                    break;
+                }
                 case "0063":
                     setStatus("Command ACK.");
                     break;
                 case "FFFF":
+                    // A command this firmware does not know answers the same
+                    // way as one it refuses, so the two are told apart by
+                    // what was just asked. An older tag has no readout and no
+                    // log stream; it should say so once and then be left
+                    // alone, not be asked again on every tab switch and every
+                    // twenty seconds.
+                    if (featureRefused()) break;
+                    // The tag names the reason when it has one: one byte, and
+                    // 01 means it refused because it is locked. Worth saying
+                    // in those words - "General CMD Error" on a tag with a
+                    // PIN sent people looking for a fault instead of for the
+                    // PIN field.
+                    if (payloadHex.length >= 2 &&
+                        payloadHex.substring(0, 2).toUpperCase() === '01') {
+                        addLog("Refused: this tag is locked. Put its PIN in " +
+                            "the PIN field under Protection and press Unlock.");
+                        setStatus("The tag is locked - it needs its PIN.");
+                        readProtection();
+                        break;
+                    }
                     addLog("ERROR: General CMD Error (FFFF).");
                     setStatus("Command Error (FFFF).");
+                    // A refusal is also what a locked tag answers, and the
+                    // tag relocks after a minute of silence - so a session
+                    // that was open can shut underneath a long pause. Asking
+                    // once here turns that into an automatic unlock instead
+                    // of a mystery; the answer either says "not locked", and
+                    // nothing more happens, or it unlocks above.
+                    if (!protectionAsked) {
+                        protectionAsked = true;
+                        setTimeout(() => { protectionAsked = false; }, 3000);
+                        sendcmd('0020');
+                    }
                     break;
                 default:
                     addLog("Unhandled CMD: " + cmdHex + " Payload: " + payloadHex.substring(0, 40) + "...");
@@ -2294,6 +3756,932 @@
             const hexString = bytesToHex(value.buffer);
             addLog("BLE< " + hexString);
             img_state_handle(hexString);
+        }
+
+        // =====================================================================
+        // Low Level tab: BLE_CMD_DEBUG (0x001B)
+        //
+        // Request  [sub][args...]   Reply  BLE_CMD_ACK_DEBUG (0x00D3) as
+        //                                  [sub][status][data...]
+        //
+        // Sub-commands and their argument layouts are defined in the firmware's
+        // src/debug_cmd.h; everything multi-byte is little endian. One request
+        // is in flight at a time, which keeps the reply unambiguous without
+        // needing a sequence number in the protocol.
+        // =====================================================================
+        const DBG = {
+            MEM_READ: 0x01, MEM_WRITE: 0x02, MEM_FILL: 0x03, MEM_SEARCH: 0x04,
+            MEM_DIFF: 0x05, REG_READ: 0x08, REG_WRITE: 0x09,
+            ANA_READ: 0x10, ANA_WRITE: 0x11,
+            FLASH_READ: 0x20, FLASH_WRITE: 0x21, FLASH_ERASE: 0x22,
+            FLASH_INFO: 0x23, FLASH_MAP: 0x24, FLASH_UNLOCK: 0x25, FLASH_LOCK: 0x26,
+            GPIO_GET: 0x30, GPIO_SET: 0x31, GPIO_CONFIG: 0x32,
+            GPIO_SNAPSHOT: 0x33, GPIO_PULSE: 0x34, GPIO_PINOUT: 0x35,
+            I2C_SCAN: 0x40, I2C_READ: 0x41, I2C_WRITE: 0x42, I2C_RAW: 0x43,
+            NFC_INFO: 0x44, NFC_RECOVER: 0x45,
+            ADC_READ: 0x50, SENSORS: 0x51,
+            SYSINFO: 0x60, SETTINGS_RAW: 0x61, RAM_INFO: 0x62,
+            EPD_CMD: 0x70, EPD_STATE: 0x71, EPD_POWER: 0x72,
+            ECHO: 0x7F
+        };
+        const DBG_MAGIC = 0xA5;
+        const DBG_STATUS = {
+            0: 'ok', 1: 'request too short', 2: 'unknown sub-command',
+            3: 'argument out of range', 4: 'address or length not aligned',
+            5: 'operation failed', 6: 'missing the confirmation byte',
+            7: 'hardware not fitted'
+        };
+        const DBG_ROLES = {
+            0x01: 'ADC', 0x02: 'UART',
+            0x10: 'EPD RESET', 0x11: 'EPD DC', 0x12: 'EPD BUSY', 0x13: 'EPD BUSY2',
+            0x14: 'EPD CS', 0x15: 'EPD CS2', 0x16: 'EPD CLK', 0x17: 'EPD MOSI',
+            0x18: 'EPD EN', 0x19: 'EPD EN2', 0x1A: 'EPD FLASH CS',
+            0x20: 'LED R', 0x21: 'LED G', 0x22: 'LED B',
+            0x30: 'NFC SDA', 0x31: 'NFC SCL', 0x32: 'NFC CS', 0x33: 'NFC IRQ',
+            0x40: 'FLASH CS', 0x41: 'FLASH CLK', 0x42: 'FLASH MISO', 0x43: 'FLASH MOSI'
+        };
+        const GPIO_FUNCS = {
+            0: 'GPIO', 1: 'MSPI', 2: 'SWIRE', 3: 'UART', 4: 'I2C', 5: 'SPI',
+            6: 'I2S', 7: 'AMIC', 8: 'DMIC', 9: 'SDM', 10: 'USB', 11: 'ADC',
+            12: 'CMP', 13: 'ATS', 20: 'PWM0', 21: 'PWM1', 22: 'PWM2',
+            23: 'PWM3', 24: 'PWM4', 25: 'PWM5'
+        };
+
+        let dbgPending = null;
+        let llWatchTimer = null;
+        let llGpioTimer = null;
+        let llGpioRoles = {};
+        let llGpioInUse = [0, 0, 0, 0, 0];
+
+        // --- plumbing --------------------------------------------------------
+
+        function llNum(v, dflt) {
+            if (v === undefined || v === null) return dflt;
+            const s = String(v).trim();
+            if (s === '') return dflt;
+            const n = (/^0x/i).test(s) ? parseInt(s.slice(2), 16) : parseInt(s, 10);
+            return isNaN(n) ? dflt : n;
+        }
+        function llField(id, dflt) { return llNum(document.getElementById(id).value, dflt); }
+        function llHexField(id) {
+            const s = document.getElementById(id).value.replace(/[^0-9a-fA-F]/g, '');
+            return s.length % 2 ? s.slice(0, -1) : s;
+        }
+        function h8(v) { return (v & 0xff).toString(16).padStart(2, '0').toUpperCase(); }
+        function h16le(v) { return h8(v) + h8(v >> 8); }
+        function h32le(v) { return h8(v) + h8(v >> 8) + h8(v >> 16) + h8(v >> 24); }
+        function hx(v, digits) {
+            return '0x' + (v >>> 0).toString(16).toUpperCase().padStart(digits || 2, '0');
+        }
+
+        /** Send one debug request and resolve with its reply bytes. */
+        function dbgSend(sub, argsHex) {
+            if (dbgPending) return Promise.reject(new Error('another debug request is in flight'));
+            if (!writeCharacteristic) return Promise.reject(new Error('not connected'));
+            return new Promise((resolve, reject) => {
+                dbgPending = {
+                    sub: sub, resolve: resolve, reject: reject,
+                    timer: setTimeout(() => {
+                        dbgPending = null;
+                        reject(new Error('no reply to sub 0x' + h8(sub)));
+                    }, 4000)
+                };
+                sendcmd('001B' + h8(sub) + (argsHex || '')).catch(e => {
+                    if (dbgPending) { clearTimeout(dbgPending.timer); dbgPending = null; }
+                    reject(e);
+                });
+            });
+        }
+
+        /** Called from img_state_handle() for cmd 0x00D3. */
+        function dbgReply(payloadHex) {
+            if (!dbgPending) {
+                addLog('Unexpected debug reply: ' + payloadHex);
+                return;
+            }
+            const p = dbgPending;
+            clearTimeout(p.timer);
+            dbgPending = null;
+            if (payloadHex.length < 4) { p.reject(new Error('truncated debug reply')); return; }
+            const sub = parseInt(payloadHex.substring(0, 2), 16);
+            const status = parseInt(payloadHex.substring(2, 4), 16);
+            const data = [];
+            for (let i = 4; i + 1 < payloadHex.length; i += 2)
+                data.push(parseInt(payloadHex.substring(i, i + 2), 16));
+            if (sub !== p.sub) {
+                p.reject(new Error('reply for sub 0x' + h8(sub) + ', expected 0x' + h8(p.sub)));
+                return;
+            }
+            if (status !== 0) {
+                p.reject(new Error((DBG_STATUS[status] || 'status ' + status) +
+                    ' (sub 0x' + h8(sub) + ')'));
+                return;
+            }
+            p.resolve(data);
+        }
+
+        function llOut(id, text) { document.getElementById(id).textContent = text; }
+        function llAppend(id, text) {
+            const el = document.getElementById(id);
+            el.textContent = text + '\n' + el.textContent;
+        }
+        function llErr(id, e) {
+            llAppend(id, 'ERROR: ' + (e && e.message ? e.message : e));
+            addLog('Low level error: ' + (e && e.message ? e.message : e));
+        }
+
+        function u16(d, i) { return d[i] | (d[i + 1] << 8); }
+        function u32(d, i) {
+            return ((d[i] | (d[i + 1] << 8) | (d[i + 2] << 16)) + d[i + 3] * 0x1000000) >>> 0;
+        }
+        function i8(d, i) { return d[i] > 127 ? d[i] - 256 : d[i]; }
+
+        /** Classic hex dump with an ASCII column. */
+        function llHexDump(base, bytes, width) {
+            const per = 16;
+            let out = '';
+            for (let o = 0; o < bytes.length; o += per) {
+                const row = bytes.slice(o, o + per);
+                let hexPart = '';
+                if (width === 2 || width === 4) {
+                    for (let i = 0; i < row.length; i += width) {
+                        let word = '';
+                        for (let k = width - 1; k >= 0; k--)
+                            word += (row[i + k] === undefined) ? '  ' : h8(row[i + k]);
+                        hexPart += word + ' ';
+                    }
+                } else {
+                    for (let i = 0; i < per; i++)
+                        hexPart += (i < row.length ? h8(row[i]) : '  ') + (i === 7 ? '  ' : ' ');
+                }
+                let ascii = '';
+                for (let i = 0; i < row.length; i++)
+                    ascii += (row[i] >= 32 && row[i] < 127) ? String.fromCharCode(row[i]) : '.';
+                out += hx(base + o, 6).slice(2).padStart(6, '0') + '  ' +
+                    hexPart.padEnd(width === 1 ? 50 : 42) + ' |' + ascii + '|\n';
+            }
+            return out || '(no data)\n';
+        }
+
+        // --- system ----------------------------------------------------------
+
+        async function llSysinfo() {
+            try {
+                const d = await dbgSend(DBG.SYSINFO);
+                const bl = d[26];
+                let build = '';
+                for (let i = 0; i < bl; i++) build += String.fromCharCode(d[27 + i]);
+                llOut('ll-sys-out',
+                    'firmware version   ' + u16(d, 0) + '\n' +
+                    'build              ' + build + '\n' +
+                    'oepl hw type       ' + hx(u16(d, 2), 4) + '\n' +
+                    'screen type        ' + u16(d, 4) + '\n' +
+                    'capabilities       ' + hx(u16(d, 6), 4) + '\n' +
+                    'clock_time         ' + u32(d, 8) + '\n' +
+                    'uptime ms          ' + u32(d, 12) + '\n' +
+                    'wakeup reason      ' + hx(d[16]) + '\n' +
+                    'epd update state   ' + d[17] + '\n' +
+                    'nfc session        ' + d[18] + '\n' +
+                    'ndef config source ' + hx(d[19]) + '\n' +
+                    'oepl enabled       ' + d[20] + '\n' +
+                    'ble enabled        ' + d[21] + '\n' +
+                    'bin size           ' + u32(d, 22) + ' bytes');
+            } catch (e) { llErr('ll-sys-out', e); }
+        }
+
+        async function llSensors() {
+            try {
+                const d = await dbgSend(DBG.SENSORS);
+                llOut('ll-sys-out',
+                    'battery            ' + u16(d, 0) + ' mV\n' +
+                    'adc raw            ' + u16(d, 2) + '\n' +
+                    'adc temperature    ' + i8(d, 4) + ' C\n' +
+                    'epd temperature    ' + i8(d, 5) + ' C\n' +
+                    'battery level      ' + d[6] + ' %\n' +
+                    'unix time (local)  ' + u32(d, 7) + '\n' +
+                    'uptime ms          ' + u32(d, 11) + '\n' +
+                    'wakeup reason      ' + hx(d[15]));
+            } catch (e) { llErr('ll-sys-out', e); }
+        }
+
+        async function llRamInfo() {
+            try {
+                const d = await dbgSend(DBG.RAM_INFO);
+                const n = ['data start', 'data end', 'bss start', 'bss end',
+                    'custom data start', 'custom data end',
+                    'custom bss start', 'custom bss end',
+                    'ram end', 'code size', 'ramcode size'];
+                let s = '';
+                for (let i = 0; i < n.length; i++)
+                    s += n[i].padEnd(20) + hx(u32(d, i * 4), 8) + '\n';
+                // Retained RAM is what the linker checks against 0x848000, so
+                // the headroom there is the number that actually constrains the
+                // firmware - a new retained variable is what breaks the build.
+                s += '\nretained bss ends at ' + hx(u32(d, 12), 8) +
+                    ', limit 0x00848000, headroom ' + (0x848000 - u32(d, 12)) + ' bytes';
+                llOut('ll-sys-out', s);
+            } catch (e) { llErr('ll-sys-out', e); }
+        }
+
+        async function llFlashInfo() {
+            try {
+                const d = await dbgSend(DBG.FLASH_INFO);
+                let uid = '';
+                for (let i = 0; i < 16; i++) uid += h8(d[4 + i]);
+                llOut('ll-sys-out',
+                    'JEDEC id           ' + hx(u32(d, 0), 6) + '\n' +
+                    'unique id          ' + uid + '\n' +
+                    'status register    ' + hx(u16(d, 20), 4));
+            } catch (e) { llErr('ll-sys-out', e); }
+        }
+
+        async function llFlashMap() {
+            try {
+                const d = await dbgSend(DBG.FLASH_MAP);
+                const n = ['firmware image at', 'write protected up to',
+                    'image / OTA area at', 'image / OTA area size',
+                    'settings sector', 'ndef config sector',
+                    'ble NV', 'factory MAC', 'factory calibration',
+                    'bytes per image slot'];
+                let s = '';
+                for (let i = 0; i < n.length; i++)
+                    s += n[i].padEnd(24) + hx(u32(d, i * 4), 5) + '\n';
+                llOut('ll-sys-out', s);
+            } catch (e) { llErr('ll-sys-out', e); }
+        }
+
+        async function llSettingsDump(which) {
+            try {
+                let off = 0, total = 1, all = [];
+                while (off < total) {
+                    const d = await dbgSend(DBG.SETTINGS_RAW,
+                        h8(which) + h16le(off) + h8(160));
+                    total = u16(d, 0);
+                    const chunk = d.slice(2);
+                    if (!chunk.length) break;
+                    all = all.concat(chunk);
+                    off += chunk.length;
+                }
+                llOut('ll-sys-out', (which ? 'settings_default_type_struct' : 'settings_struct') +
+                    ', ' + total + ' bytes\n\n' + llHexDump(0, all, 1));
+            } catch (e) { llErr('ll-sys-out', e); }
+        }
+
+        async function llEcho() {
+            try {
+                const probe = [];
+                for (let i = 0; i < 64; i++) probe.push((i * 7 + 3) & 0xff);
+                const d = await dbgSend(DBG.ECHO, probe.map(h8).join(''));
+                const same = d.length === probe.length && d.every((v, i) => v === probe[i]);
+                llOut('ll-sys-out', same
+                    ? 'Link test: 64 bytes echoed back unchanged.'
+                    : 'Link test FAILED: sent 64 bytes, got ' + d.length + ' back.');
+            } catch (e) { llErr('ll-sys-out', e); }
+        }
+
+        // --- memory ----------------------------------------------------------
+
+        function llGo(addr) {
+            document.getElementById('ll-mem-space').value = 'abs';
+            document.getElementById('ll-mem-addr').value = addr;
+            llMemRead();
+        }
+
+        function llMemIsReg() { return document.getElementById('ll-mem-space').value === 'reg'; }
+
+        /** One read of up to 176 bytes, honouring the space and width controls. */
+        async function llMemReadOnce(addr, len, width) {
+            if (llMemIsReg())
+                return dbgSend(DBG.REG_READ, h16le(addr) + h8(len) + h8(width));
+            return dbgSend(DBG.MEM_READ, h32le(addr) + h8(len) + h8(width));
+        }
+
+        async function llMemRead() {
+            const addr = llField('ll-mem-addr', 0);
+            const len = llField('ll-mem-len', 64);
+            const width = llField('ll-mem-width', 1);
+            try {
+                const d = await llMemReadOnce(addr, Math.min(len, 176), width);
+                llOut('ll-mem-out', llHexDump(llMemIsReg() ? 0x800000 + addr : addr, d, width));
+            } catch (e) { llErr('ll-mem-out', e); }
+        }
+
+        /** Walk a longer region in reply-sized chunks. */
+        async function llMemDump(total) {
+            const addr = llField('ll-mem-addr', 0);
+            const width = llField('ll-mem-width', 1);
+            const step = 176 - (176 % width);
+            let all = [];
+            try {
+                for (let o = 0; o < total; o += step) {
+                    const n = Math.min(step, total - o);
+                    all = all.concat(await llMemReadOnce(addr + o, n, width));
+                }
+                llOut('ll-mem-out', llHexDump(llMemIsReg() ? 0x800000 + addr : addr, all, width));
+            } catch (e) { llErr('ll-mem-out', e); }
+        }
+
+        async function llMemWrite() {
+            const addr = llField('ll-mem-addr', 0);
+            const width = llField('ll-mem-width', 1);
+            const data = llHexField('ll-mem-data');
+            if (!data) { llErr('ll-mem-out', 'nothing to write'); return; }
+            try {
+                const d = llMemIsReg()
+                    ? await dbgSend(DBG.REG_WRITE, h16le(addr) + h8(width) + data)
+                    : await dbgSend(DBG.MEM_WRITE, h32le(addr) + h8(width) + data);
+                llAppend('ll-mem-out', 'wrote ' + u16(d, 0) + ' bytes at ' + hx(addr, 6));
+            } catch (e) { llErr('ll-mem-out', e); }
+        }
+
+        async function llMemFill() {
+            const addr = llField('ll-mem-addr', 0);
+            const width = llField('ll-mem-width', 1);
+            const count = llField('ll-fill-count', 0);
+            const value = llField('ll-fill-value', 0);
+            if (llMemIsReg()) {
+                llErr('ll-mem-out', 'fill takes an absolute address, switch the space selector');
+                return;
+            }
+            try {
+                const d = await dbgSend(DBG.MEM_FILL,
+                    h32le(addr) + h16le(count) + h8(width) + h32le(value));
+                llAppend('ll-mem-out', 'filled ' + u16(d, 0) + ' x ' + width +
+                    ' bytes at ' + hx(addr, 6) + ' with ' + hx(value, 2));
+            } catch (e) { llErr('ll-mem-out', e); }
+        }
+
+        async function llMemSearch() {
+            const addr = llField('ll-mem-addr', 0);
+            const len = llField('ll-search-len', 0x1000);
+            const pat = llHexField('ll-search-pat');
+            if (!pat) { llErr('ll-mem-out', 'enter a hex pattern'); return; }
+            if (llMemIsReg()) {
+                llErr('ll-mem-out', 'search takes an absolute address, switch the space selector');
+                return;
+            }
+            try {
+                const d = await dbgSend(DBG.MEM_SEARCH,
+                    h32le(addr) + h32le(len) + h8(pat.length / 2) + pat);
+                const hits = d[0];
+                let s = hits + ' hit' + (hits === 1 ? '' : 's') +
+                    ' for ' + pat.replace(/(..)/g, '$1 ').trim() +
+                    ' in ' + len + ' bytes from ' + hx(addr, 6);
+                if (hits >= 24) s += ' (reply caps at 24, narrow the range for more)';
+                s += '\n';
+                for (let i = 0; i < hits; i++) s += '  ' + hx(u32(d, 1 + i * 4), 6) + '\n';
+                llOut('ll-mem-out', s);
+            } catch (e) { llErr('ll-mem-out', e); }
+        }
+
+        async function llMemDiff() {
+            const addr = llField('ll-mem-addr', 0);
+            const len = Math.min(llField('ll-mem-len', 64), 176);
+            if (llMemIsReg()) {
+                llErr('ll-mem-out', 'watch takes an absolute address, switch the space selector');
+                return;
+            }
+            try {
+                const d = await dbgSend(DBG.MEM_DIFF, h32le(addr) + h8(len));
+                if (!d[0]) {
+                    llOut('ll-mem-out', 'baseline taken at ' + hx(addr, 6) +
+                        ', ' + len + ' bytes. Diff again to see what moves.\n' +
+                        llHexDump(addr, d.slice(1), 1));
+                    return;
+                }
+                const changed = [];
+                for (let i = 1; i < d.length; i++) if (d[i]) changed.push(i - 1);
+                if (!changed.length) {
+                    llOut('ll-mem-out', 'no change at ' + hx(addr, 6) +
+                        ' (' + len + ' bytes) ' + new Date().toLocaleTimeString());
+                    return;
+                }
+                let s = changed.length + ' byte(s) changed at ' +
+                    new Date().toLocaleTimeString() + '\n';
+                for (const i of changed)
+                    s += '  ' + hx(addr + i, 6) + '  xor ' + h8(d[1 + i]) + '\n';
+                llOut('ll-mem-out', s);
+            } catch (e) { llErr('ll-mem-out', e); }
+        }
+
+        function llWatchToggle() {
+            if (llWatchTimer) { clearInterval(llWatchTimer); llWatchTimer = null; }
+            if (document.getElementById('ll-watch').checked) {
+                const ms = Math.max(100, llField('ll-watch-ms', 500));
+                llWatchTimer = setInterval(() => { if (!dbgPending) llMemDiff(); }, ms);
+            }
+        }
+
+        // --- analog ----------------------------------------------------------
+
+        async function llAnaRead() {
+            const addr = llField('ll-ana-addr', 0);
+            const len = Math.min(llField('ll-ana-len', 64), 176);
+            try {
+                const d = await dbgSend(DBG.ANA_READ, h8(addr) + h8(len));
+                llOut('ll-ana-out', llHexDump(addr, d, 1));
+            } catch (e) { llErr('ll-ana-out', e); }
+        }
+
+        async function llAnaDumpAll() {
+            try {
+                let all = [];
+                for (let o = 0; o < 256; o += 128)
+                    all = all.concat(await dbgSend(DBG.ANA_READ, h8(o) + h8(128)));
+                llOut('ll-ana-out', llHexDump(0, all, 1));
+            } catch (e) { llErr('ll-ana-out', e); }
+        }
+
+        async function llAnaWrite() {
+            const addr = llField('ll-ana-addr', 0);
+            const data = llHexField('ll-ana-data');
+            if (!data) { llErr('ll-ana-out', 'nothing to write'); return; }
+            try {
+                const d = await dbgSend(DBG.ANA_WRITE, h8(addr) + data);
+                llAppend('ll-ana-out', 'wrote ' + u16(d, 0) + ' analog byte(s) at ' + hx(addr));
+            } catch (e) { llErr('ll-ana-out', e); }
+        }
+
+        // --- flash -----------------------------------------------------------
+
+        async function llFlashRead() {
+            const addr = llField('ll-flash-addr', 0);
+            const len = Math.min(llField('ll-flash-len', 128), 176);
+            try {
+                const d = await dbgSend(DBG.FLASH_READ, h32le(addr) + h8(len));
+                llOut('ll-flash-out', llHexDump(addr, d, 1));
+            } catch (e) { llErr('ll-flash-out', e); }
+        }
+
+        async function llFlashDump(total) {
+            const addr = llField('ll-flash-addr', 0);
+            try {
+                let all = [];
+                for (let o = 0; o < total; o += 176) {
+                    const n = Math.min(176, total - o);
+                    all = all.concat(await dbgSend(DBG.FLASH_READ, h32le(addr + o) + h8(n)));
+                }
+                llOut('ll-flash-out', llHexDump(addr, all, 1));
+            } catch (e) { llErr('ll-flash-out', e); }
+        }
+
+        async function llFlashWrite() {
+            const addr = llField('ll-flash-addr', 0);
+            const data = llHexField('ll-flash-data');
+            if (!data) { llErr('ll-flash-out', 'nothing to write'); return; }
+            if (addr < 0x40000 && !confirm(
+                'Address ' + hx(addr, 5) + ' is inside the firmware image.\n\n' +
+                'With the flash protection in place this write does nothing. ' +
+                'Unlocked, it corrupts the running firmware.\n\nWrite anyway?')) return;
+            try {
+                const d = await dbgSend(DBG.FLASH_WRITE, h32le(addr) + h8(DBG_MAGIC) + data);
+                llAppend('ll-flash-out', 'wrote ' + u16(d, 0) + ' bytes at ' + hx(addr, 5) +
+                    ' (flash only clears bits, erase the sector first to set any)');
+            } catch (e) { llErr('ll-flash-out', e); }
+        }
+
+        async function llFlashErase() {
+            const addr = llField('ll-flash-addr', 0) & ~0xfff;
+            if (!confirm('Erase the 4 KiB sector at ' + hx(addr, 5) + '?\n\nThis cannot be undone.'))
+                return;
+            try {
+                const d = await dbgSend(DBG.FLASH_ERASE, h32le(addr) + h8(DBG_MAGIC));
+                llAppend('ll-flash-out', 'erased sector ' + hx(u32(d, 0), 5));
+            } catch (e) { llErr('ll-flash-out', e); }
+        }
+
+        async function llFlashUnlock() {
+            if (!confirm('Lift the flash write protection?\n\n' +
+                'While it is off, a write to the wrong address destroys the firmware ' +
+                'and the tag needs reflashing over SWS. Re-lock as soon as you are done.'))
+                return;
+            try {
+                const d = await dbgSend(DBG.FLASH_UNLOCK, h8(DBG_MAGIC));
+                llAppend('ll-flash-out', 'unlocked, status register now ' + hx(u16(d, 0), 4));
+            } catch (e) { llErr('ll-flash-out', e); }
+        }
+
+        async function llFlashLock() {
+            try {
+                const d = await dbgSend(DBG.FLASH_LOCK);
+                llAppend('ll-flash-out', 're-locked, status register now ' + hx(u16(d, 0), 4));
+            } catch (e) { llErr('ll-flash-out', e); }
+        }
+
+        // --- GPIO ------------------------------------------------------------
+
+        function llPinName(group, bit) { return 'P' + 'ABCDE'[group] + bit; }
+        function llPinValue(group, bit) { return (group << 8) | (1 << bit); }
+
+        function llBuildGpioUi() {
+            const grid = document.getElementById('ll-gpio-grid');
+            if (grid.childElementCount) return;
+            for (let g = 0; g < 5; g++) {
+                for (let b = 0; b < 8; b++) {
+                    if (g === 4 && b > 3) continue;   // port E only has 4 pins
+                    const cell = document.createElement('div');
+                    cell.className = 'll-pin';
+                    cell.id = 'll-pin-' + g + '-' + b;
+                    cell.title = 'click to toggle';
+                    cell.onclick = () => llPinToggle(g, b);
+                    cell.innerHTML = '<span class="ll-pin-name">' + llPinName(g, b) +
+                        '</span><span class="ll-pin-lvl">?</span>' +
+                        '<span class="ll-pin-role"></span>';
+                    grid.appendChild(cell);
+                }
+            }
+            const sel = document.getElementById('ll-gpio-pin');
+            for (let g = 0; g < 5; g++) {
+                for (let b = 0; b < 8; b++) {
+                    if (g === 4 && b > 3) continue;
+                    const o = document.createElement('option');
+                    o.value = llPinValue(g, b);
+                    o.textContent = llPinName(g, b);
+                    sel.appendChild(o);
+                }
+            }
+            const fsel = document.getElementById('ll-gpio-func');
+            for (const k of Object.keys(GPIO_FUNCS)) {
+                const o = document.createElement('option');
+                o.value = k;
+                o.textContent = k + ': ' + GPIO_FUNCS[k];
+                fsel.appendChild(o);
+            }
+        }
+
+        async function llGpioRefresh() {
+            try {
+                const d = await dbgSend(DBG.GPIO_SNAPSHOT);
+                // Six registers per group: in, ie, oen, out, pol, ds.
+                for (let g = 0; g < 5; g++) {
+                    const inReg = d[g * 6], ieReg = d[g * 6 + 1];
+                    const oenReg = d[g * 6 + 2], outReg = d[g * 6 + 3];
+                    for (let b = 0; b < 8; b++) {
+                        const cell = document.getElementById('ll-pin-' + g + '-' + b);
+                        if (!cell) continue;
+                        const mask = 1 << b;
+                        // oen is active low: a clear bit means the driver is on.
+                        const driving = !(oenReg & mask);
+                        const level = driving ? !!(outReg & mask) : !!(inReg & mask);
+                        cell.querySelector('.ll-pin-lvl').textContent = level ? '1' : '0';
+                        cell.className = 'll-pin' + (level ? ' ll-hi' : ' ll-lo') +
+                            (driving ? ' ll-drive' : '') +
+                            ((llGpioInUse[g] & mask) ? ' ll-used' : '');
+                        cell.title = llPinName(g, b) +
+                            (driving ? ' driving ' : ' reading ') + (level ? 'high' : 'low') +
+                            (ieReg & mask ? ', input enabled' : ', input disabled') +
+                            (llGpioRoles[llPinValue(g, b)] ? ' - ' + llGpioRoles[llPinValue(g, b)] : '') +
+                            '\nclick to toggle';
+                    }
+                }
+                llOut('ll-gpio-out', 'snapshot at ' + new Date().toLocaleTimeString() +
+                    '\n       in ie oen out pol ds\n' +
+                    [0, 1, 2, 3, 4].map(g => '  port ' + 'ABCDE'[g] + '  ' +
+                        d.slice(g * 6, g * 6 + 6).map(h8).join(' ')).join('\n'));
+            } catch (e) { llErr('ll-gpio-out', e); }
+        }
+
+        function llGpioAutoToggle() {
+            if (llGpioTimer) { clearInterval(llGpioTimer); llGpioTimer = null; }
+            if (document.getElementById('ll-gpio-auto').checked)
+                llGpioTimer = setInterval(() => { if (!dbgPending) llGpioRefresh(); }, 700);
+        }
+
+        async function llGpioPinout() {
+            try {
+                const d = await dbgSend(DBG.GPIO_PINOUT);
+                llGpioInUse = d.slice(0, 5);
+                llGpioRoles = {};
+                let s = 'pins in use per port: ' + llGpioInUse.map(h8).join(' ') + '\n';
+                for (let i = 5; i + 2 < d.length; i += 3) {
+                    const role = DBG_ROLES[d[i]] || ('role ' + hx(d[i]));
+                    const pin = u16(d, i + 1);
+                    llGpioRoles[pin] = role;
+                    const g = pin >> 8;
+                    let bit = -1;
+                    for (let b = 0; b < 8; b++) if (pin & (1 << b)) { bit = b; break; }
+                    s += '  ' + (bit >= 0 ? llPinName(g, bit) : hx(pin, 4)).padEnd(5) +
+                        role + '\n';
+                    const cell = document.getElementById('ll-pin-' + g + '-' + bit);
+                    if (cell) cell.querySelector('.ll-pin-role').textContent = role;
+                }
+                llOut('ll-gpio-out', s);
+                await llGpioRefresh();
+            } catch (e) { llErr('ll-gpio-out', e); }
+        }
+
+        async function llPinToggle(g, b) {
+            const pin = llPinValue(g, b);
+            if ((llGpioInUse[g] & (1 << b)) && !confirm(
+                llPinName(g, b) + ' is used for ' + (llGpioRoles[pin] || 'something') +
+                '.\n\nDriving it may upset the panel, the flash or the NFC chip. Continue?'))
+                return;
+            try {
+                const cur = await dbgSend(DBG.GPIO_GET, h16le(pin));
+                await dbgSend(DBG.GPIO_SET, h16le(pin) + h8(cur[0] ? 0 : 1));
+                llAppend('ll-gpio-out', llPinName(g, b) + ' -> ' + (cur[0] ? 0 : 1));
+                await llGpioRefresh();
+            } catch (e) { llErr('ll-gpio-out', e); }
+        }
+
+        function llSelectedPin() { return parseInt(document.getElementById('ll-gpio-pin').value, 10); }
+
+        async function llGpioSet(level) {
+            try {
+                const d = await dbgSend(DBG.GPIO_SET, h16le(llSelectedPin()) + h8(level));
+                llAppend('ll-gpio-out', 'set -> reads back ' + d[0]);
+                await llGpioRefresh();
+            } catch (e) { llErr('ll-gpio-out', e); }
+        }
+
+        async function llGpioConfig() {
+            const pin = llSelectedPin();
+            const func = llField('ll-gpio-func', 0);
+            const oe = document.getElementById('ll-gpio-oe').checked ? 1 : 0;
+            const ie = document.getElementById('ll-gpio-ie').checked ? 1 : 0;
+            const pull = llField('ll-gpio-pull', 0);
+            try {
+                const d = await dbgSend(DBG.GPIO_CONFIG,
+                    h16le(pin) + h8(func) + h8(oe) + h8(ie) + h8(pull));
+                llAppend('ll-gpio-out', 'configured, level ' + d[0] +
+                    ', group regs ' + d.slice(1).map(h8).join(' '));
+                await llGpioRefresh();
+            } catch (e) { llErr('ll-gpio-out', e); }
+        }
+
+        async function llGpioPulse(level) {
+            const pin = llSelectedPin();
+            const ms = llField('ll-gpio-ms', 50);
+            try {
+                const d = await dbgSend(DBG.GPIO_PULSE, h16le(pin) + h8(level) + h16le(ms));
+                llAppend('ll-gpio-out', 'pulsed to ' + level + ' for ' + d[1] +
+                    ' ms, restored to ' + d[0]);
+                await llGpioRefresh();
+            } catch (e) { llErr('ll-gpio-out', e); }
+        }
+
+        // --- I2C -------------------------------------------------------------
+
+        async function llI2cScan() {
+            try {
+                const d = await dbgSend(DBG.I2C_SCAN);
+                const found = [];
+                for (let a = 0; a < 128; a++)
+                    if (d[a >> 3] & (1 << (a & 7)))
+                        found.push(hx(a, 2) + ' (write ' + hx(a << 1, 2) + ')');
+                llOut('ll-i2c-out', found.length
+                    ? found.length + ' device(s):\n  ' + found.join('\n  ')
+                    : 'nothing answered on the bus');
+            } catch (e) { llErr('ll-i2c-out', e); }
+        }
+
+        async function llI2cRead() {
+            const dev = llField('ll-i2c-dev', 0xAE);
+            const alen = llField('ll-i2c-alen', 2);
+            const reg = llField('ll-i2c-reg', 0);
+            const len = Math.min(llField('ll-i2c-len', 8), 176);
+            try {
+                const d = await dbgSend(DBG.I2C_READ,
+                    h8(dev) + h8(alen) + h16le(reg) + h8(len));
+                llOut('ll-i2c-out', 'dev ' + hx(dev) + ' reg ' + hx(reg, 4) + '\n' +
+                    llHexDump(reg, d, 1));
+            } catch (e) { llErr('ll-i2c-out', e); }
+        }
+
+        async function llI2cWrite() {
+            const dev = llField('ll-i2c-dev', 0xAE);
+            const alen = llField('ll-i2c-alen', 2);
+            const reg = llField('ll-i2c-reg', 0);
+            const data = llHexField('ll-i2c-data');
+            if (!data) { llErr('ll-i2c-out', 'nothing to write'); return; }
+            try {
+                const d = await dbgSend(DBG.I2C_WRITE,
+                    h8(dev) + h8(alen) + h16le(reg) + data);
+                llAppend('ll-i2c-out', 'wrote ' + u16(d, 0) + ' byte(s) to ' +
+                    hx(dev) + ' reg ' + hx(reg, 4));
+            } catch (e) { llErr('ll-i2c-out', e); }
+        }
+
+        async function llI2cRaw() {
+            const dev = llField('ll-i2c-dev', 0xAE);
+            const data = llHexField('ll-i2c-data');
+            if (!data) { llErr('ll-i2c-out', 'nothing to write'); return; }
+            try {
+                const d = await dbgSend(DBG.I2C_RAW, h8(dev) + data);
+                llAppend('ll-i2c-out', 'sent ' + u16(d, 0) + ' raw byte(s) to ' + hx(dev));
+            } catch (e) { llErr('ll-i2c-out', e); }
+        }
+
+        // --- NFC ------------------------------------------------------------
+        // The chip is found at runtime, so nothing here hardcodes an address.
+        // Register names and bit meanings are the FM11NT082C ones. The earlier
+        // version of this panel had them from a guessed map, which is how
+        // 0xFFE6 came to be labelled a "mode unlock" when it is really
+        // RESET_SILENCE: write 0x33 there and the chip stops answering readers
+        // altogether.
+        const NFC_KINDS = {
+            0: 'none', 1: 'Fudan FM11NT082C / FM11NC08', 2: 'ST ST25DV',
+            3: 'NXP NTAG I2C plus', 4: 'unknown NFC IC'
+        };
+        const FM11_REGS = {
+            0xFFE0: 'USER_CFG0', 0xFFE1: 'USER_CFG1', 0xFFE2: 'USER_CFG2',
+            0xFFE6: 'RESET_SILENCE', 0xFFE7: 'STATUS', 0xFFE9: 'VOUT_EN_CFG',
+            0xFFEA: 'VOUT_RES_CFG', 0xFFF0: 'FIFO_ACCESS', 0xFFF1: 'FIFO_CLEAR',
+            0xFFF2: 'FIFO_WORDCNT', 0xFFF3: 'NFC_STATUS', 0xFFF4: 'NFC_TXEN',
+            0xFFF5: 'NFC_CFG', 0xFFF6: 'NFC_RATS', 0xFFF7: 'MAIN_IRQ',
+            0xFFF8: 'FIFO_IRQ', 0xFFF9: 'AUX_IRQ', 0xFFFA: 'MAIN_IRQ_MASK',
+            0xFFFB: 'FIFO_IRQ_MASK', 0xFFFC: 'AUX_IRQ_MASK'
+        };
+        const FM11_STATES = {
+            0x0: 'IDLE', 0x1: 'READY1', 0x2: 'READY2', 0x3: 'IDLE in inventory',
+            0x4: 'HALT', 0x7: 'QUIET', 0x8: 'channel L3 / RATS forwarded',
+            0x9: 'RATS back', 0xA: 'PPS back', 0xC: 'not authenticated',
+            0xD: 'authenticated'
+        };
+
+        /** Ask the firmware which chip it found and how it is configured. */
+        async function llNfcChip() {
+            const d = await dbgSend(DBG.NFC_INFO);
+            return {
+                raw: d,
+                kind: d[0], caps: d[1],
+                dev: d.length > 2 ? d[2] : 0xAE,
+                devUser: d.length > 3 ? d[3] : 0,
+                alen: d.length > 4 ? d[4] : 2
+            };
+        }
+
+        async function llNfcInfo() {
+            try {
+                const c = await llNfcChip();
+                const d = c.raw;
+                if (d.length < 18) { llOut('ll-nfc-out', 'short reply'); return; }
+                let s = 'chip      ' + (NFC_KINDS[c.kind] || ('kind ' + c.kind)) + '\n';
+                s += 'address   ' + hx(c.dev) + (c.devUser ? ' + user ' + hx(c.devUser) : '') +
+                     ', ' + c.alen + ' register address byte(s)\n';
+                s += 'caps      ' + hx(c.caps) +
+                     ((c.caps & 1) ? ' frame-FIFO' : '') +
+                     ((c.caps & 2) ? ' type-2-memory' : '') +
+                     ((c.caps & 4) ? ' user-device-select' : '') + '\n';
+                s += 'uid       ' + d.slice(6, 6 + Math.min(d[5], 7)).map(h8).join(' ') + '\n';
+                s += 'ndef area ' + u16(d, 13) + ' bytes\n';
+                s += 'field ' + d[15] + ', session ' + d[16] + ', ' +
+                     (d[17] ? 'NC channel mode' : 'NT tag mode') + '\n';
+                const order = [0xFFE0, 0xFFE1, 0xFFE2, 0xFFE7, 0xFFF2, 0xFFF3,
+                               0xFFF5, 0xFFF6, 0xFFFA];
+                for (let i = 0; i < order.length && 18 + i < d.length; i++) {
+                    const v = d[18 + i], a = order[i];
+                    let note = '';
+                    if (a === 0xFFE0)
+                        note = '  ' + ((v & 1) ? 'NC channel mode' : 'NT tag mode') +
+                               ', IRQ active ' + ((v & 0x10) ? 'low' : 'high') +
+                               ', harvesting ' + ((v & 0xC0) ? 'on' : 'off');
+                    else if (a === 0xFFE1)
+                        note = '  ISO14443-' + ((v & 0x0C) ? '3' : '4');
+                    else if (a === 0xFFF2)
+                        note = '  ' + (v & 0x3F) + ' byte(s) in the FIFO';
+                    else if (a === 0xFFF3)
+                        note = '  ' + (FM11_STATES[v >> 4] || ('state ' + (v >> 4)));
+                    s += (FM11_REGS[a] + '             ').slice(0, 14) + h8(v) + note + '\n';
+                }
+                if (d.length > 17 && !d[17])
+                    s += '\nNT mode: the chip answers a reader out of its own memory and\n' +
+                         'offers no frame channel, so the APDU path does not apply here -\n' +
+                         'the NDEF has to be written into the chip instead.\n';
+                llOut('ll-nfc-out', s);
+            } catch (e) { llErr('ll-nfc-out', e); }
+        }
+
+        /** The whole system register block, named. */
+        async function llNfcDump() {
+            try {
+                const c = await llNfcChip();
+                // MAIN_IRQ, FIFO_IRQ and AUX_IRQ are cleared by reading, so a
+                // burst read of the block consumes them. Acceptable for an
+                // explicit diagnostic, but it is why the flags may read zero.
+                const d = await dbgSend(DBG.I2C_READ,
+                    h8(c.dev) + h8(c.alen) + h16le(0xFFE0) + h8(32));
+                let s = llHexDump(0xFFE0, d, 1) + '\n';
+                for (const a of Object.keys(FM11_REGS).map(Number).sort()) {
+                    const off = a - 0xFFE0;
+                    if (off >= 0 && off < d.length)
+                        s += '  ' + hx(a, 4) + '  ' + h8(d[off]) + '  ' + FM11_REGS[a] + '\n';
+                }
+                s += '\n(the three interrupt flag registers are cleared by reading)\n';
+                llOut('ll-nfc-out', s);
+            } catch (e) { llErr('ll-nfc-out', e); }
+        }
+
+        /** The chip memory, with the Type-2 header and the NDEF decoded. */
+        async function llNfcEeprom() {
+            try {
+                const c = await llNfcChip();
+                let all = [];
+                for (let o = 0; o < 0x400; o += 176) {
+                    const n = Math.min(176, 0x400 - o);
+                    all = all.concat(await dbgSend(DBG.I2C_READ,
+                        h8(c.dev) + h8(c.alen) + h16le(o) + h8(n)));
+                }
+                let s = '';
+                if (all.length >= 16) {
+                    const bcc0 = 0x88 ^ all[0] ^ all[1] ^ all[2];
+                    const bcc1 = all[4] ^ all[5] ^ all[6] ^ all[7];
+                    s += 'uid    ' + [0, 1, 2, 4, 5, 6, 7].map(i => h8(all[i])).join(' ') + '\n';
+                    s += 'check  BCC0 ' + h8(all[3]) + (all[3] === bcc0 ? ' ok' : ' BAD') +
+                         ', BCC1 ' + h8(all[8]) + (all[8] === bcc1 ? ' ok' : ' BAD') + '\n';
+                    s += 'cc     ' + all.slice(12, 16).map(h8).join(' ');
+                    if (all[12] === 0xE1)
+                        s += '  -> NDEF, v' + (all[13] >> 4) + '.' + (all[13] & 15) +
+                             ', ' + (all[14] * 8) + ' bytes';
+                    s += '\n\n';
+                }
+                s += llNdefDecode(all.slice(16)) + '\n';
+                s += llHexDump(0, all, 1);
+                llOut('ll-nfc-out', s);
+            } catch (e) { llErr('ll-nfc-out', e); }
+        }
+
+        /** Walk the Type-2 TLV container and name what is in it. */
+        function llNdefDecode(d) {
+            const names = { 0x01: 'lock control', 0x02: 'memory control',
+                            0x03: 'NDEF message', 0xFD: 'proprietary' };
+            let s = '', i = 0;
+            while (i < d.length) {
+                const t = d[i];
+                if (t === 0x00) { i++; continue; }
+                if (t === 0xFE) { s += 'terminator at ' + hx(16 + i, 4) + '\n'; break; }
+                if (i + 1 >= d.length) break;
+                let len = d[i + 1], hdr = 2;
+                if (len === 0xFF) {
+                    if (i + 3 >= d.length) break;
+                    len = (d[i + 2] << 8) | d[i + 3];
+                    hdr = 4;
+                }
+                s += 'TLV ' + hx(t) + ' (' + (names[t] || 'unknown') + '), ' +
+                     len + ' bytes at ' + hx(16 + i, 4) + '\n';
+                if (t === 0x03)
+                    s += '  ' + d.slice(i + hdr, i + hdr + len).map(h8).join(' ') + '\n';
+                i += hdr + len;
+            }
+            return s || 'no NDEF TLV found\n';
+        }
+
+        async function llNfcRecover() {
+            if (!confirm('Clock the I2C bus free and scan for the NFC chip again?'))
+                return;
+            try {
+                const d = await dbgSend(DBG.NFC_RECOVER, h8(0xA5));
+                llAppend('ll-nfc-out',
+                    'bus free: ' + (d[0] ? 'yes' : 'NO') +
+                    ', detected: ' + (d[1] ? 'yes' : 'no') +
+                    ', chip: ' + (NFC_KINDS[d[2]] || d[2]) + ' at ' + hx(d[3]));
+            } catch (e) { llErr('ll-nfc-out', e); }
+        }
+
+        // --- panel -----------------------------------------------------------
+
+        async function llEpdState() {
+            try {
+                const d = await dbgSend(DBG.EPD_STATE);
+                const busy = v => v === 0xFF ? 'not wired' : String(v);
+                llOut('ll-epd-out',
+                    'update state       ' + d[0] + '\n' +
+                    'busy pin           ' + busy(d[1]) + '\n' +
+                    'busy pin 2         ' + busy(d[2]) + '\n' +
+                    'panel temperature  ' + i8(d, 3) + ' C\n' +
+                    'screen_w           ' + u16(d, 4) + '\n' +
+                    'screen_h           ' + u16(d, 6) + '\n' +
+                    'colors             ' + d[8] + '\n' +
+                    'controller family  ' + d[9]);
+            } catch (e) { llErr('ll-epd-out', e); }
+        }
+
+        async function llEpdPower(on) {
+            try {
+                await dbgSend(DBG.EPD_POWER, h8(on));
+                llAppend('ll-epd-out', on ? 'panel powered up' : 'panel powered down');
+            } catch (e) { llErr('ll-epd-out', e); }
+        }
+
+        async function llEpdCmd() {
+            const cmd = llField('ll-epd-cmd', 0);
+            const data = llHexField('ll-epd-data');
+            const rlen = Math.min(llField('ll-epd-rlen', 0), 176);
+            try {
+                const d = await dbgSend(DBG.EPD_CMD, h8(DBG_MAGIC) + h8(rlen) + h8(cmd) + data);
+                llAppend('ll-epd-out', 'cmd ' + hx(cmd) +
+                    (data ? ' data ' + data.replace(/(..)/g, '$1 ').trim() : '') +
+                    (d.length ? ' -> ' + d.map(h8).join(' ') : ' (no read back)'));
+            } catch (e) { llErr('ll-epd-out', e); }
+        }
+
+        function llStopTimers() {
+            if (llWatchTimer) { clearInterval(llWatchTimer); llWatchTimer = null; }
+            if (llGpioTimer) { clearInterval(llGpioTimer); llGpioTimer = null; }
+            const w = document.getElementById('ll-watch');
+            const g = document.getElementById('ll-gpio-auto');
+            if (w) w.checked = false;
+            if (g) g.checked = false;
         }
 
         function disconnect() {
@@ -2321,14 +4709,61 @@
             return variants;
         }
 
+        /**
+         * Which connection the page is on. Anything started for an older one
+         * - a retry waiting on a timer, a device chooser still open - checks
+         * this before doing anything, and finds that it is out of date.
+         *
+         * Without it, pressing Disconnect stopped the link and left a retry
+         * ticking: the page reconnected to the tag it had just been told to
+         * let go, in the background, while the chooser for a new one was
+         * already open.
+         */
+        let bleGeneration = 0;
+
+        /** Let go of the tag completely. Nothing afterwards speaks to it. */
+        function dropConnection(why) {
+            bleGeneration++;
+            reconnectTrys = 0;
+            connectBusy = false;
+            stopDebugPolling();
+            if (typeof llStopTimers === 'function') llStopTimers();
+            // The box may be open; it must stop listening. No command is
+            // sent to say so - the link is going away, and the tag turns its
+            // own streaming off when it does.
+            if (tagLogTimer) { clearInterval(tagLogTimer); tagLogTimer = null; }
+            tagLogSetState('closed');
+            const d = bleDevice;
+            bleDevice = null;
+            if (d) {
+                try { d.removeEventListener('gattserverdisconnected', disconnect); }
+                catch (e) { }
+                try { if (d.gatt && d.gatt.connected) d.gatt.disconnect(); }
+                catch (e) { }
+            }
+            resetVariables();
+            setStatus(why || "Disconnected");
+            document.getElementById("connectbutton").innerHTML = 'Connect';
+        }
+
         function preConnect() {
+            // Pressed while an attempt is in flight - the button says
+            // "Connecting..." - means stop that, not open a chooser for a
+            // second one. The attempt cannot be called off, but it can be
+            // disowned, which is what dropConnection() does: if it ever comes
+            // up, its link is closed again.
+            if (connectAttemptRunning()) {
+                addLog("Cancelling the connection attempt.");
+                dropConnection("Cancelled");
+                return;
+            }
             if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
-                addLog("Disconnecting...");
-                setStatus("Disconnecting...");
-                bleDevice.removeEventListener('gattserverdisconnected', disconnect);
-                document.getElementById("connectbutton").innerHTML = 'Connect';
-                bleDevice.gatt.disconnect();
+                addLog("Disconnecting, and forgetting this tag.");
+                dropConnection("Disconnected");
             } else {
+                // A press on Connect is a fresh start too: whatever was tried
+                // before is abandoned rather than raced against.
+                bleGeneration++;
                 reconnectTrys = 0;
                 const namePrefix = document.getElementById('namePrefix').value.trim();
                 if (!namePrefix) {
@@ -2350,8 +4785,13 @@
                 addLog("Requesting device with filters: " + JSON.stringify(deviceoptions.filters));
                 setStatus("Requesting device...");
                 document.getElementById("connectbutton").innerHTML = 'Scanning...';
+                const gen = bleGeneration;
                 navigator.bluetooth.requestDevice(deviceoptions)
                     .then(device => {
+                        if (gen !== bleGeneration) {
+                            addLog("Device chosen, but this page has moved on; ignoring it.");
+                            return;
+                        }
                         addLog(`Found: ${device.name || 'Unknown device'} (${device.id})`);
                         setStatus(`Found ${device.name || 'device'}`);
                         bleDevice = device;
@@ -2377,6 +4817,10 @@
                 return;
             }
             addLog("Reconnecting to: " + (bleDevice.name || bleDevice.id));
+            if (connectAttemptRunning()) {
+                addLog("A connection attempt is already running; leaving it to it.");
+                return;
+            }
             if (bleDevice.gatt && bleDevice.gatt.connected) {
                 addLog("Already connected. Disconnecting first...");
                 bleDevice.removeEventListener('gattserverdisconnected', disconnect);
@@ -2394,21 +4838,125 @@
             }
         }
 
+        /**
+         * The connection attempt in flight, if there is one, and when it
+         * started.
+         *
+         * Four different paths ask for an attempt - the Connect button,
+         * Reconnect, the disconnect handler and the retry in handleError -
+         * and they can ask at the same time. Nothing used to stop them, so a
+         * reconnect that failed twice ran three attempts side by side, all
+         * three succeeded, and the page held three links to one tag and sent
+         * everything three times.
+         *
+         * So the second caller is turned away. But a flag on its own is a
+         * worse bug than the one it fixes: gatt.connect() has no timeout of
+         * its own and can simply never come back, and then the flag is set
+         * for ever and every attempt after it is refused with "already
+         * running" - the page is stuck with no way out but a reload.
+         *
+         * Hence the deadline. An attempt that has not finished within
+         * CONNECT_STALL_MS is abandoned: the generation moves on, so if it
+         * ever does come back its result is dropped and its link closed, and
+         * the way is clear for a new one. Being turned away is then always
+         * temporary and bounded.
+         */
+        let connectBusy = false;
+        let connectStartedAt = 0;
+        /*
+         * Thirty seconds, not twelve.
+         *
+         * Twelve was below the thing it was waiting for. This tag advertises
+         * roughly every thirteen seconds and is connectable only in that
+         * window, so an attempt that started just after one went past had no
+         * chance of finishing inside the deadline - the page announced that
+         * the attempt "never finished" and threw away a connection that was
+         * merely waiting for the tag's next window. Which read as the page
+         * giving up on a perfectly healthy tag, because that is what it was
+         * doing.
+         *
+         * The deadline is only there so a genuinely stuck gatt.connect()
+         * cannot wedge the page for ever, and for that it wants to be well
+         * clear of the longest honest wait rather than near it. Two
+         * advertising windows plus room is thirty.
+         */
+        const CONNECT_STALL_MS = 30000;
+
+        /** Is an attempt really still running, or just stuck? */
+        function connectAttemptRunning() {
+            if (!connectBusy) return false;
+            if (Date.now() - connectStartedAt < CONNECT_STALL_MS) return true;
+            addLog("The previous connection attempt never finished; " +
+                "abandoning it and starting fresh.");
+            bleGeneration++;
+            connectBusy = false;
+            return false;
+        }
+
         function connect() {
             if (!bleDevice) {
                 addLog("Connect called, but no device selected.");
                 return;
             }
-            if (bleDevice.gatt && bleDevice.gatt.connected) {
+            if (connectAttemptRunning()) {
+                addLog("A connection attempt is already running; not starting " +
+                    "a second one.");
+                return;
+            }
+            // Connected is not the same as usable.
+            //
+            // A GATT link can be up while this page holds no characteristic
+            // on it: the disconnect handler clears everything it had, and a
+            // link that comes back - or an event that fires while the link
+            // stays up - leaves gatt.connected true and writeCharacteristic
+            // null. Returning here on gatt.connected alone then reported
+            // "Already connected." and went no further, so every command
+            // after it answered "Cannot send command: Not connected." with a
+            // link that was open the whole time. A firmware upload died that
+            // way with 151412 bytes ready to send.
+            //
+            // So the early return is for a connection this page can actually
+            // use. Otherwise it falls through: gatt.connect() resolves at
+            // once on a link that is already up, and the service and
+            // characteristic are fetched again on it.
+            if (bleDevice.gatt && bleDevice.gatt.connected && writeCharacteristic) {
                 addLog("Already connected.");
                 document.getElementById("connectbutton").innerHTML = 'Disconnect';
                 return;
             }
+            if (bleDevice.gatt && bleDevice.gatt.connected) {
+                addLog("The link is up but this page has no characteristic on " +
+                    "it; picking it up again.");
+            }
             addLog("Connecting to GATT Server on: " + (bleDevice.name || bleDevice.id) + "...");
             setStatus("Connecting...");
             document.getElementById("connectbutton").innerHTML = 'Connecting...';
+            connectBusy = true;
+            connectStartedAt = Date.now();
+            const gen = bleGeneration;
+            // The watchdog. It does not stop the attempt - nothing can - but
+            // it stops the page waiting on it: the attempt is disowned, the
+            // button goes back, and the next press works.
+            setTimeout(() => {
+                if (!connectBusy || gen !== bleGeneration) return;
+                addLog("The connection attempt has not finished in " +
+                    (CONNECT_STALL_MS / 1000) + " s; giving up on it.");
+                setStatus("Connection stalled - press Connect again");
+                document.getElementById("connectbutton").innerHTML = 'Connect';
+                bleGeneration++;
+                connectBusy = false;
+            }, CONNECT_STALL_MS);
             bleDevice.gatt.connect()
                 .then(server => {
+                    // Disowned while this was in flight, by a Disconnect, by
+                    // another Connect, or by the watchdog above. Close what
+                    // it opened rather than leaving a second link to the same
+                    // tag behind.
+                    if (gen !== bleGeneration) {
+                        addLog('A stale connection came up; closing it again.');
+                        try { server.disconnect(); } catch (e) { }
+                        throw new Error('abandoned');
+                    }
                     addLog('> GATT Server connected');
                     gattServer = server;
                     return gattServer.getPrimaryService(0x1337);
@@ -2419,6 +4967,7 @@
                     return Theservice.getCharacteristic(0x1337);
                 })
                 .then(characteristic => {
+                    if (gen !== bleGeneration) throw new Error('abandoned');
                     addLog('> Characteristic 0x1337 found');
                     writeCharacteristic = characteristic;
                     return writeCharacteristic.startNotifications();
@@ -2426,6 +4975,11 @@
                 .then(() => {
                     addLog('> Notifications started');
                     writeCharacteristic.addEventListener('characteristicvaluechanged', bleNotificationHandler);
+                    // A fresh link, so nothing learned from the last one
+                    // carries over - see forgetTagFacts(). Done here as well
+                    // as on the way out because a link can come up without
+                    // this page having seen the old one go.
+                    forgetTagFacts();
                     addLog('Connection successful!');
                     setStatus('Connected');
                     document.getElementById("connectbutton").innerHTML = 'Disconnect';
@@ -2438,14 +4992,38 @@
                         }
                     }
                     setTimeout(() => {
+                        // Ask whether this tag is locked before anything else
+                        // is sent to it. On a tag with no PIN this costs one
+                        // command and the answer says "no PIN"; on a locked
+                        // one everything after it would be refused.
+                        sendcmd('0020');
                         readDynamicConfig();
+                        // The tag's own readout, so the Tag Info tab has
+                        // something in it the moment it is opened rather than
+                        // after another round trip.
+                        readSysInfo();
 						if (currentView === 'debug') {
 							addLog("Connection established while in Debug view, starting polling.");
 							startDebugPolling();
 						}
+                        // A link that has just come up is a tag with
+                        // streaming off - it turns it off itself when a link
+                        // drops - so an open box asks again now rather than
+                        // waiting for its re-arm.
+                        if (tagLogOpen()) tagLogStart();
                     }, 450);
                 })
-                .catch(handleError);
+                .catch(err => {
+                    // An attempt that was disowned is not a failure to report
+                    // or retry: something else has taken over.
+                    if (gen !== bleGeneration || (err && err.message === 'abandoned')) return;
+                    handleError(err);
+                })
+                // Cleared however it ended, and after handleError has had its
+                // say: a retry it schedules is a new attempt and must find
+                // the way clear. Only by the attempt that set it, so a late
+                // arrival cannot clear the flag of the one that replaced it.
+                .finally(() => { if (gen === bleGeneration) connectBusy = false; });
         }
 
         function setStatus(statusText) {
@@ -2890,8 +5468,15 @@
 
         function showView(viewToShow) {
 			currentView = viewToShow;
+            if (viewToShow !== 'lowlevel') {
+                // The low level tab polls on timers; leaving it must stop them.
+                llStopTimers();
+            }
             if (viewToShow !== 'debug') {
                 stopDebugPolling();
+                // The tag log is not in this view any more - it is in the dock
+                // at the foot of the page, and whether it polls is decided by
+                // whether its box is open, not by which tab is in front.
                 if (myDebugChart) {
                     myDebugChart.destroy();
                     myDebugChart = null;
@@ -2901,7 +5486,10 @@
             document.getElementById('display-type-set').style.display = 'none';
             document.getElementById('lut-upload').style.display = 'none';
             document.getElementById('uart-flash-content').style.display = 'none';
+            document.getElementById('info-view').style.display = 'none';
             document.getElementById('debug-view').style.display = 'none';
+            document.getElementById('lowlevel-view').style.display = 'none';
+            document.getElementById('nfc-view').style.display = 'none';
 
             document.getElementById('log-area').style.display = 'none';
             document.getElementById('uart-log-area').style.display = 'none';
@@ -2910,7 +5498,10 @@
             document.getElementById('btn-show-config').classList.remove('active');
             document.getElementById('btn-show-lut').classList.remove('active');
             document.getElementById('btn-show-uart').classList.remove('active');
+            document.getElementById('btn-show-info').classList.remove('active');
             document.getElementById('btn-show-debug').classList.remove('active');
+            document.getElementById('btn-show-lowlevel').classList.remove('active');
+            document.getElementById('btn-show-nfc').classList.remove('active');
 
             if (viewToShow === 'ble') {
                 document.getElementById('ble-upload').style.display = 'block';
@@ -2924,12 +5515,31 @@
                 document.getElementById('lut-upload').style.display = 'block';
                 document.getElementById('log-area').style.display = 'block';
                 document.getElementById('btn-show-lut').classList.add('active');
+            } else if (viewToShow === 'nfc') {
+                document.getElementById('nfc-view').style.display = 'block';
+                document.getElementById('log-area').style.display = 'block';
+                document.getElementById('btn-show-nfc').classList.add('active');
+                nfcRefresh();
+            } else if (viewToShow === 'info') {
+                document.getElementById('info-view').style.display = 'block';
+                document.getElementById('log-area').style.display = 'block';
+                document.getElementById('btn-show-info').classList.add('active');
+                // Only if nothing has been read yet. The record is fetched on
+                // connect, and re-reading it every time the tab is opened
+                // would be traffic nobody asked for; the Read button is there
+                // for when a fresh one is wanted.
+                if (writeCharacteristic && !sysInfoSeen) readSysInfo();
             } else if (viewToShow === 'debug') {
                 document.getElementById('debug-view').style.display = 'block';
                 document.getElementById('log-area').style.display = 'block';
                 document.getElementById('btn-show-debug').classList.add('active');
                 initDebugChart();
                 startDebugPolling();
+            } else if (viewToShow === 'lowlevel') {
+                document.getElementById('lowlevel-view').style.display = 'block';
+                document.getElementById('log-area').style.display = 'block';
+                document.getElementById('btn-show-lowlevel').classList.add('active');
+                llBuildGpioUi();
             } else if (viewToShow === 'uart') {
                 document.getElementById('uart-flash-content').style.display = 'block';
                 document.getElementById('uart-log-area').style.display = 'block';
@@ -3197,6 +5807,16 @@
             }
 
             doAll();
+
+            // The PIN comes back with the page, like the device name does.
+            // It is not a secret this side of the link - the tag forgets it
+            // on a reboot, so anyone holding the tag can clear it - and
+            // retyping it on every reload would be the end of using it.
+            const storedPin = localStorage.getItem('tagPin');
+            if (storedPin) {
+                document.getElementById('cmdPin').value = storedPin;
+                addLog('Loaded the stored PIN; locked tags will be unlocked automatically.');
+            }
 
             const rememberEnabled = localStorage.getItem('rememberDeviceEnabled') === 'true';
             const lastDeviceName = localStorage.getItem('lastDeviceName');
