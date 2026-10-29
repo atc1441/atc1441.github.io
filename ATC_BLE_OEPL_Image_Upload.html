@@ -1419,9 +1419,11 @@
                     </div>
                     <div>
                         <button type="button" id="nfc-btn-write" onclick="nfcWriteNdef()">Write</button>
+                        <button type="button" id="nfc-btn-read" onclick="nfcReadNdef()">Read</button>
                         <button type="button" id="nfc-btn-clear" onclick="nfcClearNdef()">Clear</button>
                         <span id="nfc-ndef-note" class="prot-relock"></span>
                     </div>
+                    <div id="nfc-ndef-read" class="prot-relock"></div>
                     <small>Written to flash and kept across reboots. Clearing puts the
                         tag's own default message back rather than leaving a phone with
                         nothing to read.</small>
@@ -3139,6 +3141,73 @@
             }
         }
 
+        // --- reading the stored message back ----------------------------------
+        //
+        // The tag can hold half a kilobyte of NDEF and a notification carries
+        // far less, so GET_NDEF is windowed: the request names an offset, the
+        // answer says which source the message came from, how long the whole
+        // thing is and where this piece starts. This walks it to the end and
+        // then shows what a tap would read.
+        let ndefRead = null;
+
+        function nfcReadNdef() {
+            ndefRead = { hex: '', src: 0, total: 0 };
+            document.getElementById('nfc-ndef-read').textContent = 'reading...';
+            sendcmd('0019' + toHexUint16LE(0));
+        }
+
+        /**
+         * Turn a stored NDEF message back into the thing somebody typed.
+         *
+         * Only the two records this page can write are worth decoding; a
+         * message from anywhere else is shown as bytes rather than guessed at.
+         * A URI record keeps its prefix as a single code byte, so the URL has
+         * to be put back together - a read that showed "a.de/t4" for
+         * "https://a.de/t4" would look like the tag had lost half of it.
+         */
+        function ndefDescribe(hex) {
+            const b = hexToBytes(hex);
+            if (!b.length) return { kind: 'none', value: '' };
+            // Short record, type length 1: [flags][1][payload len][type][payload]
+            if (b.length >= 4 && (b[0] & 0x10) && b[1] === 1
+                && b[2] === b.length - 4) {
+                const type = b[3];
+                const payload = b.slice(4);
+                const text = (bytes) => new TextDecoder().decode(bytes);
+                if (type === 0x55) {
+                    const prefixes = ['', 'http://www.', 'https://www.',
+                        'http://', 'https://', 'tel:', 'mailto:'];
+                    const pre = prefixes[payload[0]] || '';
+                    return { kind: 'url', value: pre + text(payload.slice(1)) };
+                }
+                if (type === 0x54) {
+                    // [status: utf8 flag + language length][language][text]
+                    const lang = payload[0] & 0x3F;
+                    return { kind: 'text', value: text(payload.slice(1 + lang)) };
+                }
+            }
+            return { kind: 'raw', value: hex.toUpperCase() };
+        }
+
+        function nfcRenderNdefRead() {
+            const el = document.getElementById('nfc-ndef-read');
+            const src = SYSINFO_NDEF[ndefRead.src] || ('source 0x' + h8(ndefRead.src));
+            if (!ndefRead.total) {
+                el.textContent = 'Nothing stored - a tap reads ' + src + '.';
+                return;
+            }
+            const d = ndefDescribe(ndefRead.hex);
+            el.textContent = ndefRead.total + ' bytes from ' + src + ': ' + d.value
+                + (d.kind === 'raw' ? '  (not a record this page writes)' : '');
+            // Put it in the field it was typed in, so a read can be edited and
+            // written straight back.
+            if (d.kind === 'url' || d.kind === 'text') {
+                document.getElementById('nfcNdefKind').value = d.kind;
+                nfcNdefKindChanged();
+                document.getElementById('nfcNdefValue').value = d.value;
+            }
+        }
+
         function nfcClearNdef() {
             addLog('Clearing the stored NDEF message; the tag falls back to its default.');
             sendcmd('001A');
@@ -3659,6 +3728,40 @@
                 case "00D3":
                     dbgReply(payloadHex);
                     break;
+                case "00D2": {
+                    // [src][total:u16][offset:u16][bytes of the message]
+                    const p = hexToBytes(payloadHex);
+                    if (p.length < 5) {
+                        addLog("NDEF read: reply too short (" + p.length + "B).");
+                        break;
+                    }
+                    if (!ndefRead) ndefRead = { hex: '', src: 0, total: 0 };
+                    ndefRead.src = p[0];
+                    ndefRead.total = p[1] | (p[2] << 8);
+                    const off = p[3] | (p[4] << 8);
+                    const piece = payloadHex.substring(10);
+                    // Each window is asked for by offset, so one arriving out
+                    // of step means a reply crossed with a request. Taking it
+                    // anyway would splice the message together wrongly, and a
+                    // wrong URL that looks right is worse than no read.
+                    if (off !== ndefRead.hex.length / 2) {
+                        addLog("NDEF read: window at " + off + " but "
+                            + (ndefRead.hex.length / 2) + " bytes are in hand; "
+                            + "starting again.");
+                        ndefRead = null;
+                        document.getElementById('nfc-ndef-read').textContent =
+                            'the read got out of step - press Read again';
+                        break;
+                    }
+                    ndefRead.hex += piece;
+                    addLog("NDEF read: " + (ndefRead.hex.length / 2) + " of "
+                        + ndefRead.total + " bytes.");
+                    if (piece.length && ndefRead.hex.length / 2 < ndefRead.total)
+                        sendcmd('0019' + toHexUint16LE(ndefRead.hex.length / 2));
+                    else
+                        nfcRenderNdefRead();
+                    break;
+                }
                 case "00D5":
                     sysInfoReply(hexToBytes(payloadHex));
                     break;
