@@ -3442,26 +3442,48 @@
             const dataInfo = new AvailDataInfo(255, computeCRC32(imgArray), imgArrayLen / 2, (secondColorEnabled || thirdColorEnabled) ? 0x21 : 0x20, 0, 0);
             sendcmd("0064" + dataInfo.toHexString());
         }
+        function fwIdentify(hex) {
+            // Bytes are addressed by byte offset, not by hex index. Every
+            // off-by-one in this check used to be a doubled offset.
+            const at = (byte, count) =>
+                hex.substring(byte * 2, (byte + count) * 2).toUpperCase();
+            const le32 = (byte) => {
+                const h = at(byte, 4);
+                if (h.length !== 8) return NaN;
+                return parseInt(h.substring(6, 8) + h.substring(4, 6) +
+                                h.substring(2, 4) + h.substring(0, 2), 16);
+            };
+            const size = hex.length / 2;
+
+            if (at(8, 4) === "4B4E4C54" && size === le32(24)) {
+                return { name: "TLSR (KNLT)", headerLen: le32(24) };
+            }
+            if (at(0, 2) === "7051" && at(2, 1) === "AA" &&
+                at(12, 8) === "4154435F4F45504C" && size === 64 + le32(4)) {
+                return { name: "DA14585 ATC_OEPL boot image", headerLen: le32(4) };
+            }
+            if (at(4, 2) === "9327") {
+                return { name: "prefixed boot image", headerLen: NaN };
+            }
+            if (at(438, 2) === "9327") {
+                return { name: "prefixed boot image (marker at 438)", headerLen: NaN };
+            }
+            return null;
+        }
 
         function sendFw(cmdFW) {
             imgArray = cmdFW.replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
             imgArrayLen = imgArray.length;
 
-            fw_header_img_len = parseInt(
-                imgArray.substring(54, 56).toUpperCase() + 
-                imgArray.substring(52, 54).toUpperCase() + 
-                imgArray.substring(50, 52).toUpperCase() + 
-                imgArray.substring(48, 50).toUpperCase(), 
-                16
-            );
-            addLog(fw_header_img_len);
-            const isStandardOk = (imgArray.substring(16, 24).toUpperCase() === "4B4E4C54") && ((imgArrayLen / 2) === fw_header_img_len);
-            const isSpecialOk = (imgArray.substring(8, 12).toUpperCase() === "9327");              
-            const isSpecial1Ok = (imgArray.substring(876, 880).toUpperCase() === "9327");                    
-            if (!isStandardOk && !isSpecialOk && !isSpecial1Ok) {
-                addLog("ERROR: Firmware integrity check failed.");
+            const kind = fwIdentify(imgArray);
+            if (!kind) {
+                addLog("ERROR: Firmware integrity check failed. " +
+                    "Not a TLSR (KNLT) file and not an ATC_OEPL boot image.");
                 return;
             }
+            fw_header_img_len = kind.headerLen;
+            addLog(`Firmware recognised as: ${kind.name}` +
+                (isNaN(kind.headerLen) ? "" : ` (header length ${kind.headerLen})`));
             uploadPart = 0;
             addLog('Sending Firmware size: ' + imgArrayLen / 2);
             const dataInfo = new AvailDataInfo(255, 123, imgArrayLen / 2, 0x03, 0, 0);
