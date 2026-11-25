@@ -7,13 +7,137 @@
     <title>ATC_BLE_OEPL Uploader</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Night mode has to be on the html element before the first paint, or
+        // every reload flashes the light page. Nothing else has run this early,
+        // so this reads the stored choice itself and otherwise takes whatever
+        // the operating system asks for.
+        (function () {
+            var theme = null;
+            try { theme = localStorage.getItem('theme'); } catch (e) { }
+            // Night unless this browser was told otherwise. Not what the
+            // operating system asks for: this page is used in front of a shelf
+            // and at a bench, and a white page at full brightness there is the
+            // thing people complain about. The choice made with the button
+            // wins and is kept in this browser.
+            if (theme !== 'dark' && theme !== 'light') theme = 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <style>
+        /* Day. These are the colours the page had before they were named,
+           so nothing about the light view changes here. */
+        :root {
+            --page-bg: #e9ecef;
+            --fg: #333;
+            --fg-muted: #555;
+            --fg-dim: #6c757d;
+            --fg-dim2: #5a6268;
+            --accent-text: #007bff;
+            --accent-text-strong: #0056b3;
+            --btn-bg: #007bff;
+            --btn-bg-hover: #0056b3;
+            --btn-disabled-bg: #6c757d;
+            --btn-grey-bg: #6c757d;
+            --btn-grey-hover-bg: #5a6268;
+            --btn-green-bg: #28a745;
+            --btn-green-hover-bg: #218838;
+            --text-on-accent: #fff;
+            --panel-bg: #007bff;
+            --panel-shadow: rgba(0, 0, 0, 0.1);
+            --panel-btn-bg: #fff;
+            --panel-btn-fg: #007bff;
+            --panel-btn-hover-bg: #ddd;
+            --panel-btn-dis-bg: #aaa;
+            --panel-btn-dis-fg: #777;
+            --panel-line: #fff;
+            --panel-line-soft: rgba(255, 255, 255, 0.35);
+            --panel-hr: #aae;
+            --input-bg: #fff;
+            --input-fg: #333;
+            --input-border: #ccc;
+            --input-border-strong: #0056b3;
+            --surface: #f8f9fa;
+            --surface-border: #dee2e6;
+            --surface-border-2: #d3d8dd;
+            --dock-line: #c6ccd2;
+            --log-bg: #333;
+            --log-fg: #f0f0f0;
+            --canvas-bg: white;
+            --canvas-border: black;
+            --note-bg: #fff8e1;
+            --note-fg: #5a4b16;
+            --note-accent: #d6a21a;
+            --box-border: #bbb;
+            --prot-bg: rgba(255, 255, 255, 0.92);
+            --prot-fg: #4a5056;
+            --prot-border: #b9c0c7;
+            --pin-border: #aaa;
+            --pin-hi-bg: #c8e6c9;
+            --pin-lo-bg: #e2e2e2;
+            --pin-used-fg: #c05621;
+            --chart-bg: #f8f9fa;
+        }
+
+        /* Night. */
+        html[data-theme="dark"] {
+            --page-bg: #15181d;
+            --fg: #e4e7ea;
+            --fg-muted: #b3bac1;
+            --fg-dim: #98a2ac;
+            --fg-dim2: #a7b0b9;
+            --accent-text: #5fa8ff;
+            --accent-text-strong: #8cc2ff;
+            --btn-bg: #1565c0;
+            --btn-bg-hover: #1a6ec9;
+            --btn-disabled-bg: #3f474e;
+            --btn-grey-bg: #39434c;
+            --btn-grey-hover-bg: #4a555f;
+            --btn-green-bg: #1f7f37;
+            --btn-green-hover-bg: #19692c;
+            --text-on-accent: #f3f6f9;
+            --panel-bg: #1d2733;
+            --panel-shadow: rgba(0, 0, 0, 0.5);
+            --panel-btn-bg: #2c3845;
+            --panel-btn-fg: #9ccbff;
+            --panel-btn-hover-bg: #3a4857;
+            --panel-btn-dis-bg: #242c35;
+            --panel-btn-dis-fg: #6d7782;
+            --panel-line: #3c4b5a;
+            --panel-line-soft: rgba(255, 255, 255, 0.18);
+            --panel-hr: #3c4b5a;
+            --input-bg: #0f141a;
+            --input-fg: #e4e7ea;
+            --input-border: #3b454f;
+            --input-border-strong: #41566a;
+            --surface: #1a1f25;
+            --surface-border: #2e363e;
+            --surface-border-2: #2e363e;
+            --dock-line: #2a3138;
+            --log-bg: #0d1116;
+            --log-fg: #dfe4e8;
+            --canvas-bg: white;
+            --canvas-border: #6a7580;
+            --note-bg: #2c2512;
+            --note-fg: #ecdcab;
+            --note-accent: #c89a2a;
+            --box-border: #3b454f;
+            --prot-bg: rgba(255, 255, 255, 0.10);
+            --prot-fg: #d8dee4;
+            --prot-border: rgba(255, 255, 255, 0.28);
+            --pin-border: #46505a;
+            --pin-hi-bg: #1f4024;
+            --pin-lo-bg: #262c33;
+            --pin-used-fg: #ffab76;
+            --chart-bg: #1a1f25;
+        }
+
         body {
             font-family: "Roboto", sans-serif;
             margin: 0;
             padding: 15px;
-            background-color: #e9ecef;
-            color: #333;
+            background-color: var(--page-bg);
+            color: var(--fg);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -28,7 +152,7 @@
         }
 
         h1 {
-            color: #007bff;
+            color: var(--accent-text);
             margin-top: 0;
             margin-bottom: 15px;
         }
@@ -36,13 +160,13 @@
         h2 {
             margin-top: 10px;
             margin-bottom: 10px;
-            color: #fff;
+            color: var(--text-on-accent);
         }
 
         label {
             font-weight: bold;
             margin-right: 5px;
-            color: #555;
+            color: var(--fg-muted);
             display: inline-block;
             margin-bottom: 5px;
             min-width: 80px;
@@ -56,7 +180,7 @@
             padding: 6px 8px;
             margin-bottom: 8px;
             border-radius: 4px;
-            border: 1px solid #ccc;
+            border: 1px solid var(--input-border);
             margin-right: 8px;
             vertical-align: middle;
             box-sizing: border-box;
@@ -77,8 +201,8 @@
         button,
         input[type="button"] {
             padding: 6px 15px;
-            background-color: #007bff;
-            color: #fff;
+            background-color: var(--btn-bg);
+            color: var(--text-on-accent);
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -91,25 +215,25 @@
 
         button:hover,
         input[type="button"]:hover {
-            background-color: #0056b3;
+            background-color: var(--btn-bg-hover);
         }
 
         button:disabled,
         input[type="button"]:disabled {
-            background-color: #6c757d;
+            background-color: var(--btn-disabled-bg);
             cursor: not-allowed;
         }
 
 
         #myCanvas {
-			border: 1px solid black;
-			background-color: white;
+			border: 1px solid var(--canvas-border);
+			background-color: var(--canvas-bg);
 			display: block;
 			margin: 10px auto;
 		}
 
         textarea {
-            border: 1px solid #ccc;
+            border: 1px solid var(--input-border);
             border-radius: 4px;
             width: 95%;
             font-family: monospace;
@@ -136,10 +260,10 @@
             min-width: 380px;
             max-width: 600px;
             padding: 12px;
-            background-color: #007bff;
-            color: #fff;
+            background-color: var(--panel-bg);
+            color: var(--text-on-accent);
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px var(--panel-shadow);
             box-sizing: border-box;
             margin: 0 auto 15px auto;
         }
@@ -155,8 +279,8 @@
         #uart-flash-content input[type="button"],
         #info-view button,
         #debug-view button {
-            background-color: #fff;
-            color: #007bff;
+            background-color: var(--panel-btn-bg);
+            color: var(--panel-btn-fg);
         }
 
         #ble-upload button:hover,
@@ -169,7 +293,7 @@
         #uart-flash-content input[type="button"]:hover,
         #info-view button:hover,
         #debug-view button:hover {
-            background-color: #ddd;
+            background-color: var(--panel-btn-hover-bg);
         }
 
         #ble-upload button:disabled,
@@ -180,8 +304,8 @@
         #display-type-set input[type="button"]:disabled,
         #uart-flash-content button:disabled,
         #uart-flash-content input[type="button"]:disabled {
-            background-color: #aaa;
-            color: #777;
+            background-color: var(--panel-btn-dis-bg);
+            color: var(--panel-btn-dis-fg);
         }
 
 
@@ -190,7 +314,7 @@
         #lut-upload label,
         #display-type-set label,
         #uart-flash-content label {
-            color: #fff;
+            color: var(--text-on-accent);
             min-width: 140px;
         }
 
@@ -198,7 +322,7 @@
         #lut-upload input[type="checkbox"]+label,
         #display-type-set input[type="checkbox"]+label,
         #uart-flash-content input[type="checkbox"]+label {
-            color: #fff;
+            color: var(--text-on-accent);
             min-width: unset;
             text-align: left;
             margin-left: 3px;
@@ -222,9 +346,9 @@
         #uart-flash-content input[type="number"],
         #uart-flash-content input[type="file"],
         #uart-flash-content select {
-            background-color: #fff;
-            color: #333;
-            border: 1px solid #0056b3;
+            background-color: var(--input-bg);
+            color: var(--input-fg);
+            border: 1px solid var(--input-border-strong);
             max-width: 200px;
         }
 
@@ -245,7 +369,7 @@
 
 
         #display-type-set fieldset {
-            border: 1px solid #fff;
+            border: 1px solid var(--panel-line);
             border-radius: 4px;
             padding: 8px;
             margin-bottom: 10px;
@@ -253,7 +377,7 @@
 
         #display-type-set legend {
             font-weight: bold;
-            color: #fff;
+            color: var(--text-on-accent);
             padding: 0 5px;
         }
 
@@ -278,7 +402,7 @@
 
         #status {
             font-weight: bold;
-            color: #333;
+            color: var(--fg);
         }
 
         #log-area,
@@ -299,26 +423,26 @@
 
         .log-header span {
             font-weight: bold;
-            color: #333;
+            color: var(--fg);
         }
 
         .log-header button {
             padding: 4px 10px;
-            background-color: #6c757d;
-            color: #fff;
+            background-color: var(--btn-grey-bg);
+            color: var(--text-on-accent);
         }
 
         .log-header button:hover {
-            background-color: #5a6268;
+            background-color: var(--btn-grey-hover-bg);
         }
 
         #uart-flash-content .log-header button {
-            background-color: #fff;
-            color: #007bff;
+            background-color: var(--panel-btn-bg);
+            color: var(--panel-btn-fg);
         }
 
         #uart-flash-content .log-header button:hover {
-            background-color: #ddd;
+            background-color: var(--panel-btn-hover-bg);
         }
 
 
@@ -326,10 +450,10 @@
         #uart-log {
             text-align: left;
             padding: 8px;
-            border: 1px solid #ccc;
+            border: 1px solid var(--input-border);
             border-radius: 4px;
-            background-color: #333;
-            color: #f0f0f0;
+            background-color: var(--log-bg);
+            color: var(--log-fg);
             height: 180px;
             overflow-y: scroll;
             font-family: monospace;
@@ -339,9 +463,9 @@
         }
 
         #uart-flash-content #uart-log {
-            border: 1px solid #0056b3;
-            background-color: #fff;
-            color: #333;
+            border: 1px solid var(--input-border-strong);
+            background-color: var(--input-bg);
+            color: var(--input-fg);
         }
 
         /* The tag's own log sits at the foot of the page, outside the tabs,
@@ -360,20 +484,20 @@
             max-width: 1300px;
             margin: 20px auto 0 auto;
             padding-top: 12px;
-            border-top: 2px solid #c6ccd2;
+            border-top: 2px solid var(--dock-line);
             text-align: left;
         }
 
         #log-dock > details {
-            background-color: #f8f9fa;
-            border: 1px solid #d3d8dd;
+            background-color: var(--surface);
+            border: 1px solid var(--surface-border-2);
             border-radius: 6px;
             margin-bottom: 10px;
         }
 
         #log-dock > details > summary {
             align-items: center;
-            color: #333;
+            color: var(--fg);
             cursor: pointer;
             display: flex;
             flex-wrap: wrap;
@@ -389,7 +513,7 @@
 
         #log-dock > details > summary::before {
             content: "\25B8";
-            color: #6c757d;
+            color: var(--fg-dim);
         }
 
         #log-dock > details[open] > summary::before {
@@ -397,7 +521,7 @@
         }
 
         #log-dock .dock-sub {
-            color: #5a6268;
+            color: var(--fg-dim2);
             font-weight: normal;
             font-size: 0.85em;
         }
@@ -407,7 +531,7 @@
         }
 
         #log-dock .dock-note {
-            color: #555;
+            color: var(--fg-muted);
             font-size: 0.8em;
             line-height: 1.45;
             margin: 6px 0 0 0;
@@ -425,9 +549,9 @@
 
         /* ---- Low Level tab ---- */
         .ll-note {
-            background-color: #fff8e1;
-            border-left: 4px solid #d6a21a;
-            color: #5a4b16;
+            background-color: var(--note-bg);
+            border-left: 4px solid var(--note-accent);
+            color: var(--note-fg);
             padding: 8px 12px;
             margin: 0 0 12px 0;
             font-size: 0.9em;
@@ -435,7 +559,7 @@
         }
 
         .ll-box {
-            border: 1px solid #bbb;
+            border: 1px solid var(--box-border);
             border-radius: 4px;
             margin-bottom: 14px;
             padding: 8px 12px 12px 12px;
@@ -472,7 +596,7 @@
 
         #nfc-view h2,
         #lowlevel-view h2 {
-            color: #0056b3;
+            color: var(--accent-text-strong);
         }
 
         .prot-state { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0; }
@@ -494,8 +618,8 @@
                      e.g. a locked tag
              bad     the answer did not arrive, so the state is not known */
         .prot-badge { display: inline-block; padding: 3px 10px; border-radius: 11px;
-            border: 1px solid #b9c0c7; background-color: rgba(255, 255, 255, 0.92);
-            color: #4a5056; font-size: 0.85em; font-weight: bold;
+            border: 1px solid var(--prot-border); background-color: var(--prot-bg);
+            color: var(--prot-fg); font-size: 0.85em; font-weight: bold;
             white-space: nowrap; }
         .prot-badge.prot-on { background-color: #1b7f35; border-color: #14682a; color: #fff; }
         .prot-badge.prot-off { background-color: #eceff1; border-color: #cfd8dc; color: #455a64; }
@@ -510,7 +634,7 @@
         .sysinfo-grid .v { font-family: monospace; word-break: break-word; }
         .sysinfo-grid .h { grid-column: 1 / -1; font-weight: bold;
             margin-top: 8px; padding-bottom: 2px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.35); }
+            border-bottom: 1px solid var(--panel-line-soft); }
         .sysinfo-grid .h:first-child { margin-top: 0; }
         .prot-box small { display: block; margin-top: 4px; opacity: 0.85; }
         #taglog-details { margin-top: 12px; }
@@ -543,7 +667,7 @@
         }
 
         .ll-pin {
-            border: 1px solid #aaa;
+            border: 1px solid var(--pin-border);
             border-radius: 3px;
             cursor: pointer;
             font-family: monospace;
@@ -554,7 +678,7 @@
         }
 
         .ll-pin:hover {
-            border-color: #007bff;
+            border-color: var(--accent-text);
         }
 
         .ll-pin-name {
@@ -578,11 +702,11 @@
         }
 
         .ll-pin.ll-hi {
-            background-color: #c8e6c9;
+            background-color: var(--pin-hi-bg);
         }
 
         .ll-pin.ll-lo {
-            background-color: #e2e2e2;
+            background-color: var(--pin-lo-bg);
         }
 
         /* An output driver is on: the level shown is what we are driving, not
@@ -594,46 +718,107 @@
 
         /* The firmware has a role for this pin, so poking it has consequences. */
         .ll-pin.ll-used .ll-pin-name {
-            color: #c05621;
+            color: var(--pin-used-fg);
         }
 
 
         .view-toggle-buttons button {
-            background-color: #6c757d;
-            color: #fff;
+            background-color: var(--btn-grey-bg);
+            color: var(--text-on-accent);
         }
 
         .view-toggle-buttons button:hover {
-            background-color: #5a6268;
+            background-color: var(--btn-grey-hover-bg);
         }
 
         .view-toggle-buttons button.active {
-            background-color: #007bff;
-            color: #fff;
+            background-color: var(--btn-bg);
+            color: var(--text-on-accent);
         }
 
+        /* Tells you whether the image in front of you is the one already on
+           the panel. Information only - it never blocks an upload. */
+        .shownimg-row {
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        /* Filled, like .prot-badge above and for the same reason: this line
+           has to read on the blue card in the advanced view and on the plain
+           page in the simple one. Coloured text inside a coloured pill could
+           not do that - amber on #007bff was the worst of it - so the badge
+           brings its own background, and borrows the three colours the
+           protection badges already use so the page speaks one language.
+           A touch larger than those, because in the simple view this is the
+           one line somebody reads before pressing Upload. */
+        .shownimg-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 11px;
+            font-size: 0.9em;
+            font-weight: bold;
+            border: 1px solid;
+            white-space: nowrap;
+        }
+        .shownimg-unknown { background-color: #eceff1; border-color: #cfd8dc; color: #455a64; }
+        .shownimg-same    { background-color: #1b7f35; border-color: #14682a; color: #fff; }
+        .shownimg-differs { background-color: #f0a500; border-color: #c98700; color: #2f2200; }
+
+        /* The two neutral pills are the only badges that are nearly white, and
+           a white pill on the night page glares. The three that carry a real
+           colour - green, amber, red - are left alone in both themes, so that
+           what somebody describes over the phone, or sends as a screenshot,
+           means the same thing either way. */
+        html[data-theme="dark"] .shownimg-unknown,
+        html[data-theme="dark"] .prot-badge.prot-off {
+            background-color: #2a323b;
+            border-color: #6b7884;
+            color: #d2d9df;
+        }
         #pixelData {
             width: 95%;
             margin-top: 5px;
         }
 
 
-        #viewModeToggleButton {
+        /* The view switch and the day/night switch share the top right corner.
+           They sit in one fixed flex row rather than being two fixed buttons,
+           because the view button's label changes width - "Simple View" and
+           "Advanced View" are not the same size - and a second fixed button
+           would have to guess that width to stay beside it. */
+        #top-right-controls {
             position: fixed;
             top: 10px;
             right: 10px;
             z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #viewModeToggleButton,
+        #themeToggleButton {
+            margin: 0;
             padding: 10px 15px;
-            background-color: #6c757d;
-            color: white;
+            background-color: var(--btn-grey-bg);
+            color: var(--text-on-accent);
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.9em;
         }
 
-        #viewModeToggleButton:hover {
-            background-color: #5a6268;
+        /* Fixed width, so swapping the sun for the moon does not shove the
+           view button sideways under the cursor. */
+        #themeToggleButton {
+            min-width: 96px;
+        }
+
+        #viewModeToggleButton:hover,
+        #themeToggleButton:hover {
+            background-color: var(--btn-grey-hover-bg);
         }
 
         body.simple-view .container {
@@ -652,7 +837,7 @@
             display: block !important;
             order: 0;
             font-size: 1.5em;
-            color: #333;
+            color: var(--fg);
             margin-top: 0;
             margin-bottom: 15px;
             text-align: center;
@@ -690,12 +875,12 @@
             min-width: unset !important;
             max-width: unset !important;
             border: none !important;
-            color: #333;
+            color: var(--fg);
         }
 
         body.simple-view #ble-upload label,
         body.simple-view #ble-upload input[type="checkbox"]+label {
-            color: #555;
+            color: var(--fg-muted);
         }
 
 
@@ -718,7 +903,7 @@
             margin-bottom: 5px;
             margin-right: 5px;
             font-weight: bold;
-            color: #333;
+            color: var(--fg);
             text-align: right;
             min-width: unset;
             flex-shrink: 0;
@@ -733,10 +918,10 @@
             margin-bottom: 5px;
             padding: 8px;
             box-sizing: border-box;
-            border: 1px solid #ccc;
+            border: 1px solid var(--input-border);
             border-radius: 4px;
-            background-color: white;
-            color: #333;
+            background-color: var(--input-bg);
+            color: var(--input-fg);
         }
 
         body.simple-view #ble-upload .ble-config-options .remember-group {
@@ -753,7 +938,7 @@
 
         body.simple-view #ble-upload .ble-config-options .remember-group label[for="rememberDeviceCheckbox"] {
             font-weight: normal;
-            color: #333;
+            color: var(--fg);
             min-width: unset;
             text-align: left;
             margin-left: 0;
@@ -772,6 +957,22 @@
             display: none;
         }
 
+        /* Kept in the simple view, where a line saying "the display already
+           shows this" is worth more than anywhere else - it is the one place
+           somebody uploads without reading the log. On its own row under the
+           buttons, and without its Re-check button: this view asks by itself
+           on connect and after every upload. */
+        body.simple-view #ble-upload .simple-mode-ble-actions .shownimg-row {
+            display: flex !important;
+            flex-basis: 100%;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        body.simple-view .shownimg-row button {
+            display: none;
+        }
+
         body.simple-view #ble-upload .simple-mode-ble-actions #connectbutton,
         body.simple-view #ble-upload .simple-mode-ble-actions #uploadCompressedImageButton {
             display: inline-block !important;
@@ -781,23 +982,23 @@
             padding: 10px 12px;
             font-size: 0.9em;
             margin: 5px;
-            color: white;
+            color: var(--text-on-accent);
         }
 
         body.simple-view #ble-upload .simple-mode-ble-actions #connectbutton {
-            background-color: #007bff;
+            background-color: var(--btn-bg);
         }
 
         body.simple-view #ble-upload .simple-mode-ble-actions #connectbutton:hover {
-            background-color: #0056b3;
+            background-color: var(--btn-bg-hover);
         }
 
         body.simple-view #ble-upload .simple-mode-ble-actions #uploadCompressedImageButton {
-            background-color: #28a745;
+            background-color: var(--btn-green-bg);
         }
 
         body.simple-view #ble-upload .simple-mode-ble-actions #uploadCompressedImageButton :hover {
-            background-color: #218838;
+            background-color: var(--btn-green-hover-bg);
         }
 
         body.simple-view #ble-upload .simple-mode-ble-actions #mainUploadButton {
@@ -829,7 +1030,7 @@
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
-            color: #333;
+            color: var(--fg);
             text-align: center;
             min-width: unset;
         }
@@ -839,9 +1040,9 @@
             max-width: none;
             padding: 8px;
             box-sizing: border-box;
-            border: 1px solid #ccc;
+            border: 1px solid var(--input-border);
             border-radius: 4px;
-            background-color: white;
+            background-color: var(--input-bg);
             display: block;
             margin-left: auto;
             margin-right: auto;
@@ -869,7 +1070,7 @@
         body.simple-view .top-controls .canvas-options label[for="flipVerticalCheckbox"] {
             display: inline-block !important;
             font-weight: normal;
-            color: #333;
+            color: var(--fg);
             min-width: unset;
             text-align: left;
             margin-left: 0;
@@ -882,8 +1083,8 @@
             max-width: 100%;
             height: auto;
             margin-bottom: 20px;
-            border: 1px solid #ccc;
-            background-color: white;
+            border: 1px solid var(--input-border);
+            background-color: var(--canvas-bg);
         }
 
         body.simple-view #status-area {
@@ -896,10 +1097,10 @@
 
         body.simple-view #status {
             font-weight: bold;
-            color: #333;
+            color: var(--fg);
             padding: 8px 12px;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
+            background-color: var(--surface);
+            border: 1px solid var(--surface-border);
             border-radius: 4px;
             display: inline-block;
         }
@@ -923,12 +1124,12 @@
 
 
         #uart-flash-content h2 {
-            color: #fff;
+            color: var(--text-on-accent);
             margin-bottom: 15px;
         }
 
         #uart-flash-content .uart-links a {
-            color: #fff;
+            color: var(--text-on-accent);
             text-decoration: underline;
             margin-right: 15px;
         }
@@ -972,7 +1173,7 @@
         }
 
         #uart-flash-content hr {
-            border-color: #aae;
+            border-color: var(--panel-hr);
             margin-top: 15px;
             margin-bottom: 15px;
         }
@@ -982,7 +1183,7 @@
         }
 
         #debug-chart-container {
-            background-color: #f8f9fa;
+            background-color: var(--chart-bg);
             padding: 10px;
             border-radius: 5px;
             margin-top: 15px;
@@ -995,9 +1196,9 @@
         }
         
         #debug-status-display {
-            background-color: #fff;
-            color: #333;
-            border: 1px solid #0056b3;
+            background-color: var(--input-bg);
+            color: var(--input-fg);
+            border: 1px solid var(--input-border-strong);
             border-radius: 5px;
             padding: 10px;
             margin-top: 15px;
@@ -1005,7 +1206,7 @@
         }
         #debug-status-display h3 {
             margin-top: 0;
-            color: #007bff;
+            color: var(--accent-text);
             margin-bottom: 10px;
             text-align: center;
         }
@@ -1020,7 +1221,11 @@
 </head>
 
 <body>
-    <button id="viewModeToggleButton" onclick="toggleViewMode()">Advanced View</button>
+    <div id="top-right-controls">
+        <button id="themeToggleButton" type="button" onclick="toggleTheme()"
+            title="Switch to night colours">🌙 Night</button>
+        <button id="viewModeToggleButton" onclick="toggleViewMode()">Advanced View</button>
+    </div>
 
     <div class="container">
         <h1>ATC_BLE_OEPL Uploader</h1>
@@ -1114,6 +1319,11 @@
                         onclick="sendimg(document.getElementById('pixelData').value);">Upload Image Raw</button>
                     <button id="uploadCompressedImageButton" type="button"
                         onclick="sendimgCompressed(document.getElementById('pixelData').value);">Upload Image</button>
+                    <div class="shownimg-row">
+                        <span id="shownimg-state" class="shownimg-badge shownimg-unknown">display: not read yet</span>
+                        <button type="button" onclick="readShownImage(true);"
+                            title="Ask the tag which image is on its panel">Re-check</button>
+                    </div>
                 </div>
                 <div>
                     <label for="cmdTXT">Debug CMD (Hex):</label>
@@ -1291,7 +1501,7 @@
                             <input type="checkbox" id="conf_epd_ENABLE_INVERT" />
                             <label for="conf_epd_ENABLE_INVERT">Invert ENABLE Pin</label>
                         </div>
-                        <hr style="border-color: #fff; margin: 6px 0;" />
+                        <hr style="border-color: var(--panel-line); margin: 6px 0;" />
                         <div><label>Pull CFG Sleep:</label><select class="pull-type-select"
                                 id="conf_epd_PIN_CONFIG_SLEEP"></select></div>
                         <div><label>Pull ENABLE:</label><select class="pull-type-select"
@@ -1382,7 +1592,7 @@
                         onclick="sendCustomSSDLUT(document.getElementById('ssd_reg_32').value);">Upload SSD LUT</button>
                 </div>
                 <hr />
-                <label for="lutData" style="color: #fff; min-width: unset; text-align: left;">Raw LUT Data
+                <label for="lutData" style="color: var(--text-on-accent); min-width: unset; text-align: left;">Raw LUT Data
                     (Hex):</label>
                 <textarea id="lutData" rows="8"></textarea><br />
                 <button type="button" onclick="sendCustomLUT(document.getElementById('lutData').value);">Upload RAW
@@ -1763,7 +1973,7 @@
                         disabled>
                     <input type="button" title="Write firmware and device type (0x79000) to Flash"
                         id="uart_butWriteAndType" value="Write Firmware & Type" disabled>
-                    <span id="uart_swrite" style="color: #fff; margin-left: 10px;">Open COM & Select file</span>
+                    <span id="uart_swrite" style="color: var(--text-on-accent); margin-left: 10px;">Open COM & Select file</span>
                 </div>
                 <hr>
                 <div class="uart-action-buttons uart-control-group" style="justify-content: flex-start;">
@@ -2090,6 +2300,7 @@
             if (!canvas || canvas.width === 0 || canvas.height === 0) {
                 addLog("Cannot get pixel data: Canvas not ready.");
                 document.getElementById('pixelData').value = "";
+                shownImgScheduleCompare();
                 return;
             }
             const ctx = canvas.getContext('2d', {
@@ -2167,6 +2378,9 @@
                     }
                 }
                 document.getElementById('pixelData').value = bytesToHex(byteDataCombined);
+                // The image changed, so say again whether it is the one on
+                // the panel.
+                shownImgScheduleCompare();
             } else {
                 console.error("rotateImageData returned null.");
             }
@@ -2296,6 +2510,10 @@
          * once, by a firmware that was no longer there.
          */
         function forgetTagFacts() {
+            shownImg = null;
+            shownImgAskedAt = 0;
+            shownImgUnsupported = false;
+            shownImgCompare();
             sysInfoSeen = false;
             sysInfoUnsupported = false;
             sysInfoAskedAt = 0;
@@ -2605,6 +2823,166 @@
             0xA1: 'a stored URL', 0xA2: 'a stored NDEF message'
         };
 
+        // ------------------------------------------------------------------
+        // Which image is on the panel.
+        //
+        // The tag keeps the dataVer of what it last drew and answers
+        // BLE_CMD_GET_IMG_VER (0x0023) with it, with a CRC-16 of it beside it
+        // - the same CRC it puts in its advertisement, which is how the access
+        // point notices a display that was changed from somewhere else. Over a
+        // connection there is room for all 64 bits, so the comparison here is
+        // exact rather than a 16 bit hint.
+        //
+        // This is information and nothing else. It never disables an upload:
+        // sending the same image again is a reasonable thing to want, and a
+        // tag that cannot answer leaves the badge on "unknown" rather than
+        // standing in the way.
+        let shownImg = null;             // {ver, crc, slot} as reported
+        let shownImgAskedAt = 0;
+        let shownImgUnsupported = false;
+        let shownImgTimer = null;
+
+        // CRC-16/CCITT-FALSE: poly 0x1021, init 0xFFFF, no reflection, no
+        // final xor. The same routine as crc16_ccitt() in the tag's drawing.c
+        // and crc16Ccitt() in the access point's newproto.cpp - all three have
+        // to agree. Check value for "123456789" is 0x29B1.
+        function crc16Ccitt(bytes) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < bytes.length; i++) {
+                crc ^= (bytes[i] & 0xFF) << 8;
+                for (let b = 0; b < 8; b++)
+                    crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF
+                                         : (crc << 1) & 0xFFFF;
+            }
+            return crc;
+        }
+
+        // The dataVer the tag would store for the image in front of us. It is
+        // a CRC32 over exactly the bytes that go out, so the two upload
+        // buttons do not give the same number: "Upload Image Raw" hashes the
+        // pixel data, "Upload Image" hashes the deflate stream with its length
+        // prefix. Both are worked out, because the panel holds whichever
+        // button was used last and checking against only one of them would
+        // report a difference that is not there.
+        function localImageVers() {
+            const raw = (document.getElementById('pixelData').value || '')
+                .replace(/(?:\r\n|\r|\n|,|0x| )/g, '');
+            if (!raw || raw.length % 2) return null;
+            const out = { raw: null, compressed: null };
+            try { out.raw = computeCRC32(raw); } catch (e) { }
+            try {
+                // Mirrors sendimgCompressed() step for step, including that
+                // the uncompressed size it writes is the pixel data alone,
+                // counted before the six byte header is put in front of it.
+                const width = parseInt(document.getElementById('widthInput').value);
+                const height = parseInt(document.getElementById('heightInput').value);
+                const second = document.getElementById('secondColorCheckbox').checked;
+                const third = document.getElementById('thirdColorCheckbox').checked;
+                const unCompressedSize = raw.length / 2;
+                const withHeader = "06" + toHexUint16LE(width) + toHexUint16LE(height) +
+                    ((second || third) ? "02" : "01") + raw;
+                const deflated = pako.deflate(hexStringToUint8Array(withHeader),
+                    { level: 9, windowBits: 12 });
+                out.compressed = computeCRC32(
+                    toHexUint32LE(unCompressedSize) + bytesToHex(deflated));
+            } catch (e) { }
+            return out;
+        }
+
+        function shownImgBadge(cls, text, title) {
+            const el = document.getElementById('shownimg-state');
+            if (!el) return;
+            el.className = 'shownimg-badge ' + cls;
+            el.textContent = text;
+            el.title = title || '';
+        }
+
+        // A dataVer as the tag reports it, written the way it is written
+        // everywhere else: the 64 bit value, big end first.
+        function shownImgVerText(verHexLE) {
+            return verHexLE.match(/.{2}/g).reverse().join('').toUpperCase();
+        }
+
+        function shownImgCompare() {
+            if (!shownImg) {
+                shownImgBadge('shownimg-unknown',
+                    shownImgUnsupported ? 'display: firmware cannot report it'
+                        : 'display: not read yet');
+                return;
+            }
+            const blank = /^0+$/.test(shownImg.ver);
+            const shownText = blank ? 'nothing transferred'
+                : 'image ' + shownImgVerText(shownImg.ver);
+            const detail = 'Panel: ' + (blank
+                ? 'no transferred image - the tag is drawing its own screen'
+                : 'dataVer ' + shownImgVerText(shownImg.ver)) +
+                ', CRC 0x' + shownImg.crc.toString(16).toUpperCase().padStart(4, '0') +
+                (shownImg.slot === 0xFF ? ', no slot' : ', slot ' + shownImg.slot);
+            const local = localImageVers();
+            if (!local || (local.raw === null && local.compressed === null)) {
+                shownImgBadge('shownimg-unknown', 'display shows ' + shownText,
+                    detail + '\nNothing loaded here to compare it with.');
+                return;
+            }
+            const shownVer = BigInt('0x' + shownImgVerText(shownImg.ver));
+            const hex8 = (v) => (v >>> 0).toString(16).toUpperCase().padStart(8, '0');
+            const sameRaw = local.raw !== null && BigInt(local.raw >>> 0) === shownVer;
+            const sameCmp = local.compressed !== null && BigInt(local.compressed >>> 0) === shownVer;
+            const mine = [
+                local.raw === null ? null : 'raw ' + hex8(local.raw),
+                local.compressed === null ? null : 'compressed ' + hex8(local.compressed)
+            ].filter(Boolean).join(', ');
+            if (sameRaw || sameCmp) {
+                shownImgBadge('shownimg-same',
+                    'display already shows this image' +
+                    (sameCmp && !sameRaw ? ' (compressed)' : sameRaw && !sameCmp ? ' (raw)' : ''),
+                    detail + '\nThis image would be: ' + mine +
+                    '\nUploading it again is allowed and simply redraws it.');
+            } else if (blank) {
+                // Not "a different image": there is no transferred image on it
+                // at all. That is what a tag looks like after a reboot or an
+                // image erase, and it is worth saying in those words.
+                shownImgBadge('shownimg-differs', 'display has no transferred image',
+                    detail + '\nThis image would be: ' + mine);
+            } else {
+                shownImgBadge('shownimg-differs', 'display shows a different image',
+                    detail + '\nThis image would be: ' + mine);
+            }
+        }
+
+        // Debounced: the compressed candidate deflates the whole frame, and
+        // the pixel data is rewritten on every canvas touch.
+        function shownImgScheduleCompare() {
+            if (shownImgTimer) clearTimeout(shownImgTimer);
+            shownImgTimer = setTimeout(() => {
+                shownImgTimer = null;
+                shownImgCompare();
+            }, 250);
+        }
+
+        function readShownImage(pressed) {
+            if (!writeCharacteristic) {
+                shownImgBadge('shownimg-unknown', 'display: not connected');
+                if (pressed) addLog('Shown image: not connected.');
+                return;
+            }
+            if (pressed) shownImgUnsupported = false;
+            if (shownImgUnsupported) {
+                shownImgBadge('shownimg-unknown', 'display: firmware cannot report it');
+                return;
+            }
+            shownImgAskedAt = Date.now();
+            if (!shownImg) shownImgBadge('shownimg-unknown', 'display: reading...');
+            sendcmd('0023');
+            setTimeout(() => {
+                if (shownImgAskedAt && Date.now() - shownImgAskedAt >= 4000) {
+                    shownImgAskedAt = 0;
+                    if (!shownImg)
+                        shownImgBadge('shownimg-unknown', 'display: no answer');
+                }
+            }, 4200);
+        }
+
         let sysInfoSeen = false;
         // When the readout was last asked for, and whether this tag can
         // answer it at all. A firmware older than the command replies 0xFFFF
@@ -2665,6 +3043,14 @@
                     '(0x0021); nothing else is affected.');
                 return true;
             }
+            if (shownImgAskedAt && now - shownImgAskedAt < 4000) {
+                shownImgAskedAt = 0;
+                shownImgUnsupported = true;
+                shownImgCompare();
+                addLog('Shown image: this firmware predates the command that ' +
+                    'reports it (0x0023); uploading is unaffected.');
+                return true;
+            }
             if (tagLogArmedAt && now - tagLogArmedAt < 4000) {
                 tagLogArmedAt = 0;
                 tagLogUnsupported = true;
@@ -2700,6 +3086,85 @@
             return v;
         }
 
+        // --- what the tag reports, put where it is set ----------------------
+        //
+        // The advertising interval, the MAC and the type are all in the sysinfo
+        // record the page already reads on connect, and all three have a control
+        // somewhere that sets them. Reading them in the Info view and then
+        // typing them again in the settings view was the gap.
+        //
+        // Nothing is sent here. These controls still only act when their own
+        // button is pressed; this just stops them starting from a guess.
+
+        // The stored MAC is low byte first, and the firmware's set_custom_mac()
+        // reverses the eight bytes it is given (settings.c). So the string that
+        // belongs in the Set MAC field - and the one the access point logs, and
+        // the one the tag's own name ends with - is the stored order reversed.
+        // Round trip: what this writes into the field, sent back unchanged,
+        // stores exactly the MAC that is there now.
+        function macFromTag(bytes) {
+            return Array.from(bytes).reverse().map(x => h8(x)).join('');
+        }
+
+        // A field somebody is typing in is left alone. Anything else would
+        // overwrite a half-typed MAC the moment a readout came back.
+        function fillIfNotBusy(id, value) {
+            const el = document.getElementById(id);
+            if (!el || el === document.activeElement) return false;
+            el.value = value;
+            return true;
+        }
+
+        function applyTagSettingsToUI(v) {
+            const took = [];
+
+            // The select is in 625 us units, which is exactly what the record
+            // carries, so the tag's value either is one of the options or it is
+            // not - and if it is not, adding it beats quietly selecting a
+            // neighbouring one as if it were the truth.
+            const sel = document.getElementById('cmdBLESpeed');
+            if (sel && sel !== document.activeElement && v.ble_interval > 0) {
+                let hit = Array.from(sel.options).find(o => Number(o.value) === v.ble_interval);
+                if (!hit) {
+                    hit = document.createElement('option');
+                    hit.value = String(v.ble_interval);
+                    hit.textContent = Math.round(v.ble_interval * 0.625) + 'ms';
+                    sel.appendChild(hit);
+                }
+                sel.value = hit.value;
+                took.push('interval ' + Math.round(v.ble_interval * 0.625) + ' ms');
+            }
+
+            // All zeroes or all 0xFF is a tag that has no MAC of its own yet;
+            // writing that into the field would invite sending it back.
+            const macBytes = Array.from(v.oepl_mac);
+            if (!macBytes.every(x => x === 0) && !macBytes.every(x => x === 0xFF)) {
+                const macHex = macFromTag(v.oepl_mac);
+                if (fillIfNotBusy('cmdCustomMac', macHex)) took.push('MAC ' + macHex);
+            }
+
+            // settings.screen_type is what both of these selects set: Set Type
+            // sends it as BLE_CMD_SET_TYPE and the HW Config form carries it as
+            // the special screen type. Same number, two places, so both start
+            // from what the tag actually is instead of from entry 1.
+            for (const id of ['cmdTYPE', 'conf_screen_type']) {
+                const el = document.getElementById(id);
+                if (!el || el === document.activeElement) continue;
+                if (Array.from(el.options).some(o => Number(o.value) === v.screen_type)) {
+                    el.value = String(v.screen_type);
+                    if (id === 'cmdTYPE') took.push('device type ' + v.screen_type);
+                } else {
+                    addLog('The display reports screen type ' + v.screen_type +
+                        ', which this page has no entry for - ' + id + ' left as it was.');
+                }
+            }
+
+            const hwHex = (v.oepl_hw_type >>> 0).toString(16).padStart(4, '0').toUpperCase();
+            if (fillIfNotBusy('conf_hw_type', hwHex)) took.push('OEPL type 0x' + hwHex);
+
+            if (took.length) addLog('Taken from the display: ' + took.join(', ') + '.');
+        }
+
         function sysInfoReply(bytes) {
             const state = document.getElementById('sysinfo-state');
             const grid = document.getElementById('sysinfo-grid');
@@ -2725,7 +3190,9 @@
             sysInfoSeen = true;
             sysInfoAskedAt = 0;
             const hex = (n, w) => '0x' + (n >>> 0).toString(16).toUpperCase().padStart(w, '0');
-            const mac = a => Array.from(a).map(x => h8(x)).join(':');
+            // Reversed on the way out: see macFromTag() below for why the
+            // stored order is the mirror of the one everything else shows.
+            const mac = a => Array.from(a).reverse().map(x => h8(x)).join(':');
             const kib = n => (n / 1024).toFixed(n % 1024 ? 1 : 0) + ' KiB';
             const rows = [];
             const head = t => rows.push(['h', t, null]);
@@ -2803,6 +3270,8 @@
             }
             addLog('Tag info: firmware ' + v.fw_version + ' built ' + v.build +
                 ', ' + v.battery_mv + ' mV, ' + v.adc_temp + ' C');
+
+            applyTagSettingsToUI(v);
         }
 
         // --- the tag's own log, pushed over BLE -----------------------------
@@ -3634,6 +4103,12 @@
                     imgArrayLen = 0;
                     packets = [];
                     sendcmd("0003");
+                    // What the panel holds has just changed, so what was read
+                    // before is stale. Asked twice because the tag answers
+                    // from its main loop, which is inside the refresh for the
+                    // first few seconds - up to tens of them on a 10".
+                    setTimeout(() => readShownImage(), 2000);
+                    setTimeout(() => readShownImage(), 15000);
                     break;
                 case "00C8":
                     addLog("Device: Data already present.");
@@ -3642,6 +4117,7 @@
                     imgArrayLen = 0;
                     packets = [];
                     sendcmd("0003");
+                    setTimeout(() => readShownImage(), 2000);
                     break;
                 case "00C9":
                     addLog("Firmware update successful ACK.");
@@ -3790,6 +4266,29 @@
                 case "00D5":
                     sysInfoReply(hexToBytes(payloadHex));
                     break;
+                // BLE_CMD_ACK_IMG_VER: [0..7] dataVer little end first,
+                // [8..9] its CRC-16, [10] the slot it came from (0xFF: none).
+                case "00D7": {
+                    const p = hexToBytes(payloadHex);
+                    if (p.length < 11) {
+                        addLog("Shown image: short answer (" + p.length + "B).");
+                        break;
+                    }
+                    shownImgAskedAt = 0;
+                    const verLE = payloadHex.substring(0, 16).toUpperCase();
+                    const crc = p[8] | (p[9] << 8);
+                    const own = crc16Ccitt(p.slice(0, 8));
+                    if (own !== crc)
+                        addLog("Shown image: the tag's CRC (0x" +
+                            crc.toString(16).toUpperCase() + ") is not the CRC of the " +
+                            "version it sent (0x" + own.toString(16).toUpperCase() + ").");
+                    shownImg = { ver: verLE, crc: crc, slot: p[10] };
+                    addLog("Shown image: dataVer " + shownImgVerText(verLE) +
+                        ", CRC 0x" + crc.toString(16).toUpperCase().padStart(4, '0') +
+                        (p[10] === 0xFF ? ", no slot" : ", slot " + p[10]));
+                    shownImgCompare();
+                    break;
+                }
                 case "00D6":
                     tagLogData(hexToBytes(payloadHex));
                     break;
@@ -5130,6 +5629,10 @@
                         // something in it the moment it is opened rather than
                         // after another round trip.
                         readSysInfo();
+                        // And what is on its panel, so the badge under the
+                        // upload buttons means something before the first
+                        // upload rather than after it.
+                        readShownImage();
 						if (currentView === 'debug') {
 							addLog("Connection established while in Debug view, starting polling.");
 							startDebugPolling();
@@ -5698,6 +6201,45 @@
             }
         }
 
+        // Day / night. The choice lives in an attribute on <html> so that the
+        // small script in the head can set it before the first paint; a reload
+        // in night mode that flashes the light page once is exactly the kind of
+        // thing that gets noticed.
+        function currentTheme() {
+            return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        }
+
+        // Chart.js reads its axis, legend and grid colours from globals at draw
+        // time, and those are the only parts of the debug chart without an
+        // explicit colour - the per-series colours are bright enough for both
+        // themes as they are. update('none') redraws without re-animating.
+        function applyChartTheme(dark) {
+            try {
+                if (typeof Chart === 'undefined' || !Chart.defaults) return;
+                Chart.defaults.color = dark ? '#c9d0d7' : '#666';
+                Chart.defaults.borderColor = dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)';
+                if (myDebugChart) myDebugChart.update('none');
+            } catch (e) { }
+        }
+
+        function applyTheme(theme) {
+            const dark = theme === 'dark';
+            document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+            const button = document.getElementById('themeToggleButton');
+            if (button) {
+                button.textContent = dark ? '☀ Day' : '🌙 Night';
+                button.title = dark ? 'Switch to day colours' : 'Switch to night colours';
+            }
+            applyChartTheme(dark);
+        }
+
+        function toggleTheme() {
+            const next = currentTheme() === 'dark' ? 'light' : 'dark';
+            try { localStorage.setItem('theme', next); } catch (e) { }
+            applyTheme(next);
+            addLog('Switched to ' + (next === 'dark' ? 'night' : 'day') + ' colours.');
+        }
+
         function toggleViewMode() {
             const body = document.body;
             const button = document.getElementById('viewModeToggleButton');
@@ -5933,6 +6475,8 @@
                     uploadCompressedBtn.textContent = 'Upload Image';
                 }
             }
+
+            applyTheme(currentTheme());
 
             doAll();
 
